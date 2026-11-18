@@ -1,4 +1,4 @@
-import type { Course, CourseDetail, TokenResponse, User } from "../types/api";
+import type { Course, CourseDetail, Material, Page, TokenResponse, User } from "../types/api";
 
 const TOKEN_KEY = "gapmap.token";
 
@@ -42,20 +42,21 @@ export function setUnauthorizedHandler(handler: () => void) {
   onUnauthorized = handler;
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}, as: "json" | "blob" = "json"): Promise<T> {
   const headers = new Headers(init.headers);
   const token = tokenStore.get();
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (init.body && !(init.body instanceof FormData)) headers.set("Content-Type", "application/json");
 
-  const res = await fetch(`/api${path}`, { ...init, headers });
+  const res = await fetch(path.startsWith("/api/") ? path : `/api${path}`, { ...init, headers });
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     const detail = typeof body?.detail === "string" ? body.detail : `Request failed (${res.status})`;
     if (res.status === 401 && token) onUnauthorized();
     throw new ApiError(res.status, detail);
   }
-  return res.status === 204 ? (undefined as T) : res.json();
+  if (res.status === 204) return undefined as T;
+  return as === "blob" ? ((await res.blob()) as T) : res.json();
 }
 
 export const api = {
@@ -64,4 +65,13 @@ export const api = {
   me: () => request<User>("/me"),
   courses: () => request<Course[]>("/courses"),
   course: (id: string) => request<CourseDetail>(`/courses/${id}`),
+  materials: (courseId: string) => request<Material[]>(`/courses/${courseId}/materials`),
+  uploadMaterial: (courseId: string, file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    return request<Material>(`/courses/${courseId}/materials`, { method: "POST", body });
+  },
+  page: (materialId: string, page: number) => request<Page>(`/materials/${materialId}/pages/${page}`),
+  // Images need the bearer token, so they are fetched as blobs instead of plain <img src>.
+  blob: (url: string) => request<Blob>(url, {}, "blob"),
 };

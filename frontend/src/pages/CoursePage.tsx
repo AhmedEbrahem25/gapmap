@@ -1,10 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 
+import { useAuth } from "../features/auth/AuthContext";
+import { MaterialsSection } from "../features/materials/MaterialsSection";
 import { api } from "../services/api";
 
 export function CoursePage() {
   const { courseId = "" } = useParams();
+  const { user } = useAuth();
   const course = useQuery({ queryKey: ["course", courseId], queryFn: () => api.course(courseId) });
 
   if (course.isPending) return <p className="text-slate-500">Loading course…</p>;
@@ -44,6 +47,8 @@ export function CoursePage() {
           </li>
         ))}
       </ul>
+
+      <MaterialsSection courseId={c.id} canUpload={user?.role === "instructor" || user?.role === "admin"} />
     </div>
   );
 }
