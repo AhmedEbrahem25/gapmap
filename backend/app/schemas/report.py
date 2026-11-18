@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 
 class SlideRef(BaseModel):
+    slide_chunk_id: uuid.UUID
     material_id: uuid.UUID
     filename: str
     page_number: int
@@ -48,6 +49,7 @@ class StudentReport(BaseModel):
     earned: float
     max: float
     weak_threshold_percent: float
+    recovery_plan_id: uuid.UUID | None  # None when no concept needs review
     concepts: list[ConceptReport]  # weakest first
     questions: list[QuestionResult]
 
@@ -57,6 +59,7 @@ class AnalysisSummary(BaseModel):
     students: int
     answers: int
     score_mismatches: int
+    recovery_plans: int
     weak_threshold_percent: float
 
 

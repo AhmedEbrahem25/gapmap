@@ -5,6 +5,11 @@ import type {
   Exam,
   Material,
   Page,
+  PracticeCheck,
+  BankQuestion,
+  RecoveryPlan,
+  Retest,
+  RetestResults,
   StudentReport,
   StudentResultRow,
   TokenResponse,
@@ -91,4 +96,15 @@ export const api = {
   studentReport: (examId: string, studentId: string) =>
     request<StudentReport>(`/exams/${examId}/students/${studentId}/report`),
   myReport: (examId: string) => request<StudentReport>(`/students/me/reports/${examId}`),
+  plan: (planId: string) => request<RecoveryPlan>(`/recovery-plans/${planId}`),
+  completeTask: (taskId: string) => request<void>(`/recovery-tasks/${taskId}/complete`, { method: "POST" }),
+  practice: (conceptId: string) => request<BankQuestion[]>(`/concepts/${conceptId}/practice`),
+  checkPractice: (questionId: string, answer: string) =>
+    request<PracticeCheck>(`/practice/${questionId}/check`, { method: "POST", body: JSON.stringify({ answer }) }),
+  startRetest: (planId: string) =>
+    request<Retest>("/retests", { method: "POST", body: JSON.stringify({ recovery_plan_id: planId }) }),
+  retest: (retestId: string) => request<Retest>(`/retests/${retestId}`),
+  submitRetest: (retestId: string, answers: Record<string, string>) =>
+    request<RetestResults>(`/retests/${retestId}/submit`, { method: "POST", body: JSON.stringify({ answers }) }),
+  retestResults: (retestId: string) => request<RetestResults>(`/retests/${retestId}/results`),
 };

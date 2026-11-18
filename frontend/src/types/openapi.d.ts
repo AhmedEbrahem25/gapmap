@@ -278,6 +278,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/recovery-plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Plan */
+        get: operations["get_plan_api_recovery_plans__plan_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recovery-tasks/{task_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Task */
+        post: operations["complete_task_api_recovery_tasks__task_id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/concepts/{concept_id}/practice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Practice */
+        get: operations["practice_api_concepts__concept_id__practice_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/practice/{bank_question_id}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check Practice */
+        post: operations["check_practice_api_practice__bank_question_id__check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Retest */
+        post: operations["create_retest_api_retests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retests/{retest_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Retest */
+        get: operations["get_retest_api_retests__retest_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retests/{retest_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Retest */
+        post: operations["submit_retest_api_retests__retest_id__submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/retests/{retest_id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Retest Results */
+        get: operations["get_retest_results_api_retests__retest_id__results_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -295,13 +431,62 @@ export interface components {
             answers: number;
             /** Score Mismatches */
             score_mismatches: number;
+            /** Recovery Plans */
+            recovery_plans: number;
             /** Weak Threshold Percent */
             weak_threshold_percent: number;
+        };
+        /** BankOption */
+        BankOption: {
+            /** Key */
+            key: string;
+            /** Text */
+            text: string;
+        };
+        /**
+         * BankQuestionOut
+         * @description A practice or retest question as students see it: never with the answer key.
+         */
+        BankQuestionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Concept Id
+             * Format: uuid
+             */
+            concept_id: string;
+            /** Prompt */
+            prompt: string;
+            /** Options */
+            options: components["schemas"]["BankOption"][];
         };
         /** Body_upload_material_api_courses__course_id__materials_post */
         Body_upload_material_api_courses__course_id__materials_post: {
             /** File */
             file: string;
+        };
+        /** ConceptGain */
+        ConceptGain: {
+            /**
+             * Concept Id
+             * Format: uuid
+             */
+            concept_id: string;
+            /** Name */
+            name: string;
+            /** Before Percent */
+            before_percent: number;
+            /** Before Question Count */
+            before_question_count: number;
+            /** After Percent */
+            after_percent: number;
+            /** After Question Count */
+            after_question_count: number;
+            /** Gain Points */
+            gain_points: number;
         };
         /** ConceptOut */
         ConceptOut: {
@@ -465,6 +650,37 @@ export interface components {
             /** Image Url */
             image_url: string | null;
         };
+        /** PlanConcept */
+        PlanConcept: {
+            /**
+             * Concept Id
+             * Format: uuid
+             */
+            concept_id: string;
+            /** Name */
+            name: string;
+            /** Percent Before */
+            percent_before: number;
+            /** Practice Count */
+            practice_count: number;
+            /** Tasks */
+            tasks: components["schemas"]["TaskOut"][];
+        };
+        /** PracticeCheckIn */
+        PracticeCheckIn: {
+            /** Answer */
+            answer: string;
+        };
+        /** PracticeCheckOut */
+        PracticeCheckOut: {
+            /** Correct */
+            correct: boolean;
+            /** Correct Answer */
+            correct_answer: string;
+            /** Correct Answer Text */
+            correct_answer_text: string | null;
+            source: components["schemas"]["SlideRef"] | null;
+        };
         /** QuestionResult */
         QuestionResult: {
             /** Question Code */
@@ -490,8 +706,137 @@ export interface components {
             /** Evidence */
             evidence: string | null;
         };
+        /** RecoveryPlanOut */
+        RecoveryPlanOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Exam Id
+             * Format: uuid
+             */
+            exam_id: string;
+            /** Exam Title */
+            exam_title: string;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Status */
+            status: string;
+            /** Concepts */
+            concepts: components["schemas"]["PlanConcept"][];
+            /** Retest Question Count */
+            retest_question_count: number;
+            /** Retests */
+            retests: components["schemas"]["RetestSummary"][];
+        };
+        /** RetestCreate */
+        RetestCreate: {
+            /**
+             * Recovery Plan Id
+             * Format: uuid
+             */
+            recovery_plan_id: string;
+        };
+        /** RetestOut */
+        RetestOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Plan Id
+             * Format: uuid
+             */
+            plan_id: string;
+            /** Status */
+            status: string;
+            /** Questions */
+            questions: components["schemas"]["BankQuestionOut"][];
+        };
+        /** RetestQuestionResult */
+        RetestQuestionResult: {
+            /**
+             * Bank Question Id
+             * Format: uuid
+             */
+            bank_question_id: string;
+            /** Concept Name */
+            concept_name: string;
+            /** Prompt */
+            prompt: string;
+            /** Your Answer */
+            your_answer: string | null;
+            /** Correct Answer */
+            correct_answer: string;
+            /** Correct Answer Text */
+            correct_answer_text: string | null;
+            /** Correct */
+            correct: boolean;
+        };
+        /** RetestResults */
+        RetestResults: {
+            /**
+             * Retest Id
+             * Format: uuid
+             */
+            retest_id: string;
+            /**
+             * Plan Id
+             * Format: uuid
+             */
+            plan_id: string;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+            /** Total Score */
+            total_score: number;
+            /** Max Score */
+            max_score: number;
+            /** Concepts */
+            concepts: components["schemas"]["ConceptGain"][];
+            /** Questions */
+            questions: components["schemas"]["RetestQuestionResult"][];
+            /** Note */
+            note: string;
+        };
+        /** RetestSubmit */
+        RetestSubmit: {
+            /** Answers */
+            answers: {
+                [key: string]: string;
+            };
+        };
+        /** RetestSummary */
+        RetestSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status */
+            status: string;
+            /** Submitted At */
+            submitted_at: string | null;
+            /** Total Score */
+            total_score: number | null;
+            /** Max Score */
+            max_score: number;
+        };
         /** SlideRef */
         SlideRef: {
+            /**
+             * Slide Chunk Id
+             * Format: uuid
+             */
+            slide_chunk_id: string;
             /**
              * Material Id
              * Format: uuid
@@ -537,6 +882,8 @@ export interface components {
             max: number;
             /** Weak Threshold Percent */
             weak_threshold_percent: number;
+            /** Recovery Plan Id */
+            recovery_plan_id: string | null;
             /** Concepts */
             concepts: components["schemas"]["ConceptReport"][];
             /** Questions */
@@ -559,6 +906,19 @@ export interface components {
             max: number;
             /** Weak Concepts */
             weak_concepts: string[];
+        };
+        /** TaskOut */
+        TaskOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Task Type */
+            task_type: string;
+            /** Status */
+            status: string;
+            slide?: components["schemas"]["SlideRef"] | null;
         };
         /** TokenResponse */
         TokenResponse: {
@@ -1057,6 +1417,262 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StudentReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_plan_api_recovery_plans__plan_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryPlanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_task_api_recovery_tasks__task_id__complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    practice_api_concepts__concept_id__practice_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                concept_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankQuestionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_practice_api_practice__bank_question_id__check_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bank_question_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PracticeCheckIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PracticeCheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_retest_api_retests_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetestCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_retest_api_retests__retest_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                retest_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_retest_api_retests__retest_id__submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                retest_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetestSubmit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetestResults"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_retest_results_api_retests__retest_id__results_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                retest_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetestResults"];
                 };
             };
             /** @description Validation Error */
