@@ -35,3 +35,32 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run build
+
+  e2e:
+    # The full demo journey on Docker Compose + Postgres (the unit tests use SQLite).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: |
+          cp .env.example .env
+          sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/" .env
+      - name: Start the stack
+        run: docker compose up -d --build
+      - name: Wait for the API
+        run: |
+          for i in $(seq 1 60); do curl -fs http://localhost:8000/api/health && exit 0; sleep 2; done
+          docker compose logs backend; exit 1
+      - name: Seed without results
+        run: docker compose exec -T backend python -m app.seed --no-results
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install httpx python-docx
+      - name: Smoke test
+        run: python scripts/smoke_test.py
+      - name: Frontend is served
+        run: curl -fs http://localhost:5173 | grep -q "<title>GapMap</title>"
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs

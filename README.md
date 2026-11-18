@@ -86,7 +86,22 @@ cd backend && pytest
 
 The suite covers the plan's test cases (TC-xx in the test names), role-based access, and the demo
 dataset's own rules (at least 2 questions per concept, separate practice and retest items,
-approved slide mappings).
+approved slide mappings). Results per test case: [docs/test-results.md](docs/test-results.md).
+
+## Smoke test
+
+Checks the whole demo journey against a running API in about 20 seconds (run it after
+`python -m app.seed --no-results`, then reseed before presenting):
+
+```bash
+python scripts/smoke_test.py
+```
+
+CI runs it on Docker Compose with Postgres for every pull request.
+
+## Demo
+
+Step-by-step script with accounts, clicks and a fallback plan: [docs/demo-script.md](docs/demo-script.md).
 
 ## Layout
 
@@ -113,10 +128,11 @@ After adding endpoints, regenerate the frontend API types while the backend is r
 
 | Slice | Scope | Status |
 |---|---|---|
-| S0 | Skeleton, login/JWT, roles, seed, Docker Compose | done; Docker Compose not yet run end to end |
+| S0 | Skeleton, login/JWT, roles, seed, Docker Compose | done |
 | S1 | PDF or Word upload → pages and images → Slide Viewer | done |
 | S2 | Exam builder + answer key → CSV/Excel import → validation → correct → approve | done |
 | S3 | Analysis → per-concept performance → student report with real slides | done |
 | S4 | Recovery plan → practice → retest → learning gain | done |
 | S5 | Instructor class analytics with re-teaching suggestions | done |
 | S6 | P1: grounded LLM explanation per concept, audit log screen | done; explanations need `ANTHROPIC_API_KEY` |
+| S7 | QA, demo script, smoke test, Docker Compose verified in CI | done |
