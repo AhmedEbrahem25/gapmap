@@ -29,7 +29,17 @@ export function CoursePage() {
       <Link to="/" className="text-sm text-slate-500 hover:text-slate-800">
         ← My courses
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight">{c.title}</h1>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">{c.title}</h1>
+        {user && user.role !== "student" && (
+          <Link
+            to={`/courses/${c.id}/analytics`}
+            className="rounded-md border border-brand-600 px-3 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-50"
+          >
+            Class analytics
+          </Link>
+        )}
+      </div>
       <p className="text-slate-600">
         {[c.code, c.term, c.instructor_name].filter(Boolean).join(" · ")}
       </p>
