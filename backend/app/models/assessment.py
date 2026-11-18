@@ -97,7 +97,9 @@ class ImportRow(IdMixin, Base):
     question_code: Mapped[str | None] = mapped_column(String(20))
     answer: Mapped[str | None] = mapped_column(String(50))
     score: Mapped[float | None] = mapped_column(Float)
-    errors: Mapped[list[str]] = mapped_column(JSON, default=list)
+    raw_score: Mapped[str | None] = mapped_column(String(40))  # as typed, so "abc" stays an error
+    errors: Mapped[list[str]] = mapped_column(JSON, default=list)  # block approval
+    warnings: Mapped[list[str]] = mapped_column(JSON, default=list)  # shown, do not block
     status: Mapped[str] = mapped_column(String(20), default=ImportRowStatus.VALID)
 
     batch: Mapped[ImportBatch] = relationship(back_populates="rows")

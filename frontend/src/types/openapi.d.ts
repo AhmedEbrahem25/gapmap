@@ -170,23 +170,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/courses/{course_id}/exams": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Exams */
-        get: operations["list_exams_api_courses__course_id__exams_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/exams/{exam_id}/analyze": {
         parameters: {
             query?: never;
@@ -434,6 +417,203 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/courses/{course_id}/exams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Exams */
+        get: operations["list_exams_api_courses__course_id__exams_get"];
+        put?: never;
+        /** Create Exam */
+        post: operations["create_exam_api_courses__course_id__exams_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/exams/{exam_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Exam
+         * @description Includes the answer key, so instructors only.
+         */
+        get: operations["get_exam_api_exams__exam_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/exams/{exam_id}/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Question */
+        post: operations["add_question_api_exams__exam_id__questions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/questions/{question_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Question */
+        put: operations["update_question_api_questions__question_id__put"];
+        post?: never;
+        /** Delete Question */
+        delete: operations["delete_question_api_questions__question_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/exams/{exam_id}/approve-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Key */
+        post: operations["approve_key_api_exams__exam_id__approve_key_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/exams/{exam_id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reopen Exam */
+        post: operations["reopen_exam_api_exams__exam_id__reopen_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/exams/{exam_id}/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Imports */
+        get: operations["list_imports_api_exams__exam_id__imports_get"];
+        put?: never;
+        /**
+         * Upload Results
+         * @description FR-14/FR-15: the file is checked row by row; nothing is official until approved.
+         */
+        post: operations["upload_results_api_exams__exam_id__imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{import_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Import */
+        get: operations["get_import_api_imports__import_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{import_id}/rows/{row_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Row */
+        delete: operations["delete_row_api_imports__import_id__rows__row_id__delete"];
+        options?: never;
+        head?: never;
+        /** Correct Row */
+        patch: operations["correct_row_api_imports__import_id__rows__row_id__patch"];
+        trace?: never;
+    };
+    "/api/imports/{import_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Import */
+        post: operations["approve_import_api_imports__import_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{import_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Import */
+        post: operations["reject_import_api_imports__import_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -485,6 +665,11 @@ export interface components {
         };
         /** Body_upload_material_api_courses__course_id__materials_post */
         Body_upload_material_api_courses__course_id__materials_post: {
+            /** File */
+            file: string;
+        };
+        /** Body_upload_results_api_exams__exam_id__imports_post */
+        Body_upload_results_api_exams__exam_id__imports_post: {
             /** File */
             file: string;
         };
@@ -627,6 +812,42 @@ export interface components {
             /** Instructor Name */
             instructor_name: string;
         };
+        /**
+         * ErrorType
+         * @description FR-28. `UNKNOWN` is always allowed (BR-07).
+         * @enum {string}
+         */
+        ErrorType: "conceptual" | "formula_application" | "calculation" | "missing_prerequisite" | "incomplete_answer" | "unknown";
+        /** ExamCreate */
+        ExamCreate: {
+            /** Title */
+            title: string;
+            /** Exam Date */
+            exam_date?: string | null;
+        };
+        /** ExamDetail */
+        ExamDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Title */
+            title: string;
+            /** Exam Date */
+            exam_date: string | null;
+            /** Status */
+            status: string;
+            /** Can Reopen */
+            can_reopen: boolean;
+            /** Questions */
+            questions: components["schemas"]["QuestionOut"][];
+        };
         /** ExamOut */
         ExamOut: {
             /**
@@ -664,6 +885,112 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ImportDetail */
+        ImportDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Exam Id
+             * Format: uuid
+             */
+            exam_id: string;
+            /** Original Filename */
+            original_filename: string | null;
+            /** Status */
+            status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Approved At */
+            approved_at: string | null;
+            /** Total Rows */
+            total_rows: number;
+            /** Invalid Rows */
+            invalid_rows: number;
+            /** Warning Rows */
+            warning_rows: number;
+            /** Students */
+            students: number;
+            /** Rows */
+            rows: components["schemas"]["ImportRowOut"][];
+        };
+        /** ImportRowOut */
+        ImportRowOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Row Number */
+            row_number: number;
+            /** Student Ref */
+            student_ref: string | null;
+            /** Question Code */
+            question_code: string | null;
+            /** Answer */
+            answer: string | null;
+            /** Score */
+            score: number | null;
+            /** Errors */
+            errors: string[];
+            /** Warnings */
+            warnings: string[];
+            /** Status */
+            status: string;
+        };
+        /** ImportRowPatch */
+        ImportRowPatch: {
+            /** Student Ref */
+            student_ref?: string | null;
+            /** Question Code */
+            question_code?: string | null;
+            /** Answer */
+            answer?: string | null;
+            /** Score */
+            score?: number | null;
+            /**
+             * Clear Score
+             * @default false
+             */
+            clear_score: boolean;
+        };
+        /** ImportSummary */
+        ImportSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Exam Id
+             * Format: uuid
+             */
+            exam_id: string;
+            /** Original Filename */
+            original_filename: string | null;
+            /** Status */
+            status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Approved At */
+            approved_at: string | null;
+            /** Total Rows */
+            total_rows: number;
+            /** Invalid Rows */
+            invalid_rows: number;
+            /** Warning Rows */
+            warning_rows: number;
+            /** Students */
+            students: number;
         };
         /** LoginRequest */
         LoginRequest: {
@@ -712,6 +1039,14 @@ export interface components {
             is_correct: boolean;
             /** Error Type */
             error_type: string | null;
+        };
+        /** OptionIn */
+        OptionIn: {
+            /** Key */
+            key: string;
+            /** Text */
+            text: string;
+            error_type?: components["schemas"]["ErrorType"] | null;
         };
         /** PageOut */
         PageOut: {
@@ -770,6 +1105,49 @@ export interface components {
             /** Correct Answer Text */
             correct_answer_text: string | null;
             source: components["schemas"]["SlideRef"] | null;
+        };
+        /** QuestionIn */
+        QuestionIn: {
+            /** Question Code */
+            question_code: string;
+            /** Prompt */
+            prompt: string;
+            /** Options */
+            options: components["schemas"]["OptionIn"][];
+            /** Answer Key */
+            answer_key: string;
+            /**
+             * Max Score
+             * @default 1
+             */
+            max_score: number;
+            /**
+             * Concept Id
+             * Format: uuid
+             */
+            concept_id: string;
+        };
+        /** QuestionOut */
+        QuestionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Question Code */
+            question_code: string;
+            /** Position */
+            position: number;
+            /** Prompt */
+            prompt: string;
+            /** Options */
+            options: components["schemas"]["OptionIn"][];
+            /** Answer Key */
+            answer_key: string | null;
+            /** Max Score */
+            max_score: number;
+            /** Concept Id */
+            concept_id: string | null;
         };
         /** QuestionResult */
         QuestionResult: {
@@ -1376,37 +1754,6 @@ export interface operations {
             };
         };
     };
-    list_exams_api_courses__course_id__exams_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                course_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ExamOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     analyze_exam_api_exams__exam_id__analyze_post: {
         parameters: {
             query?: never;
@@ -1828,6 +2175,493 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClassAnalytics"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_exams_api_courses__course_id__exams_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_exam_api_courses__course_id__exams_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExamCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_exam_api_exams__exam_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_question_api_exams__exam_id__questions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_question_api_questions__question_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                question_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_question_api_questions__question_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                question_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_key_api_exams__exam_id__approve_key_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reopen_exam_api_exams__exam_id__reopen_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_imports_api_exams__exam_id__imports_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_results_api_exams__exam_id__imports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_results_api_exams__exam_id__imports_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_import_api_imports__import_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_row_api_imports__import_id__rows__row_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+                row_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    correct_row_api_imports__import_id__rows__row_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+                row_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportRowPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_import_api_imports__import_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_import_api_imports__import_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetail"];
                 };
             };
             /** @description Validation Error */

@@ -49,7 +49,12 @@ npm run dev
 - 20 synthetic students `STU001`–`STU020`, with results imported and approved
   (`data/sample/exam1_results.csv`). STU001 misses Q1, Q2, Q4 and Q5; most of the class misses Scrum Roles.
 
-Use `--no-results` to skip the results import and demo the CSV upload live.
+Use `--no-results` to skip the results import and demo the upload live. Two sample files:
+
+- `data/sample/exam1_results.csv`: clean, 180 rows
+- `data/sample/exam1_results_with_errors.csv`: the same results with 3 errors to fix on the review
+  screen (an answer outside the options, an unknown question, a duplicate row) and 1 warning
+  (an official score that disagrees with the answer key)
 
 | Account | Email |
 |---|---|
@@ -67,8 +72,9 @@ Every demo account uses the password from `DEMO_PASSWORD` in `.env`.
 cd backend && pytest
 ```
 
-The suite covers login, role-based access (TC-01, TC-20) and the demo dataset's own rules
-(at least 2 questions per concept, separate practice and retest items, approved slide mappings).
+The suite covers the plan's test cases (TC-xx in the test names), role-based access, and the demo
+dataset's own rules (at least 2 questions per concept, separate practice and retest items,
+approved slide mappings).
 
 ## Layout
 
@@ -78,11 +84,12 @@ backend/app/
   core/       config, database, security, auth dependencies
   models/     SQLAlchemy models (the full plan ERD + import_rows)
   schemas/    Pydantic request/response models
-  services/   domain logic (pdf_ingest.py; analysis, recovery and others to come)
+  services/   domain logic: scoring and import validation (pure), analysis, recovery,
+              class analytics, imports, exams, PDF and Word ingestion
   seed/       demo dataset, lecture PDF builder, results CSV generator
 frontend/src/
   pages/ components/ features/ services/ types/
-data/sample/     exam1_results.csv (Long Format, plan 9.6)
+data/sample/     results CSVs (Long Format, plan 9.6), clean and with errors
 data/templates/  empty CSV template for instructors
 docs/            plan, decisions
 ```
@@ -94,10 +101,10 @@ After adding endpoints, regenerate the frontend API types while the backend is r
 
 | Slice | Scope | Status |
 |---|---|---|
-| S0 | Skeleton, login/JWT, roles, seed, Docker Compose | done |
-| S1 | PDF upload → pages and images → Slide Viewer | `services/pdf_ingest.py` ready; needs the endpoint and UI |
-| S2 | Exam + answer key → CSV import → validation → preview/correct → approve | |
-| S3 | Analysis → per-concept performance → student report with real slides | can start now on seed data |
-| S4 | Recovery plan → practice → retest → learning gain | |
-| S5 | Instructor class analytics | |
+| S0 | Skeleton, login/JWT, roles, seed, Docker Compose | done; Docker Compose not yet run end to end |
+| S1 | PDF or Word upload → pages and images → Slide Viewer | done |
+| S2 | Exam builder + answer key → CSV/Excel import → validation → correct → approve | done |
+| S3 | Analysis → per-concept performance → student report with real slides | done |
+| S4 | Recovery plan → practice → retest → learning gain | done |
+| S5 | Instructor class analytics with re-teaching suggestions | done |
 | S6 | P1: grounded LLM explanation, audit log screen | |
