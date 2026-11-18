@@ -17,7 +17,7 @@ export const CAUSE_LABEL: Record<string, string> = {
   unknown: "Cause unknown",
 };
 
-export function ReportView({ report }: { report: StudentReport }) {
+export function ReportView({ report, isStudent = false }: { report: StudentReport; isStudent?: boolean }) {
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -42,6 +42,21 @@ export function ReportView({ report }: { report: StudentReport }) {
         A concept needs review when its score is below {report.weak_threshold_percent}% across at least 2
         questions. Causes below are likely explanations, not final judgements.
       </p>
+
+      {report.recovery_plan_id && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-100 bg-white p-4 shadow-sm">
+          <p className="text-sm">
+            <span className="font-semibold">{isStudent ? "Your recovery plan is ready." : "A recovery plan was created."}</span>{" "}
+            Review the slides, practise, then take a short retest.
+          </p>
+          <Link
+            to={`/plans/${report.recovery_plan_id}`}
+            className="rounded-md bg-brand-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-800"
+          >
+            {isStudent ? "Open my plan" : "View plan"}
+          </Link>
+        </div>
+      )}
 
       <h2 className="mt-8 text-lg font-semibold">By concept</h2>
       <div className="mt-3 grid gap-4 md:grid-cols-3">
