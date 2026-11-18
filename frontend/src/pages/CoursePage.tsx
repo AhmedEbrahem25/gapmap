@@ -31,14 +31,24 @@ export function CoursePage() {
       </Link>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{c.title}</h1>
-        {user && user.role !== "student" && (
-          <Link
-            to={`/courses/${c.id}/analytics`}
-            className="rounded-md border border-brand-600 px-3 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-50"
-          >
-            Class analytics
-          </Link>
-        )}
+        <div className="flex gap-2">
+          {isInstructor && (
+            <Link
+              to={`/courses/${c.id}/audit`}
+              className="rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+            >
+              Audit log
+            </Link>
+          )}
+          {user && user.role !== "student" && (
+            <Link
+              to={`/courses/${c.id}/analytics`}
+              className="rounded-md border border-brand-600 px-3 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-50"
+            >
+              Class analytics
+            </Link>
+          )}
+        </div>
       </div>
       <p className="text-slate-600">
         {[c.code, c.term, c.instructor_name].filter(Boolean).join(" · ")}

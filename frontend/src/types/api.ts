@@ -350,3 +350,21 @@ export interface ImportRowPatch {
   score?: number;
   clear_score?: boolean;
 }
+
+export interface ConceptExplanation {
+  status: "ready" | "unavailable";
+  explanation: string | null;
+  key_points: string[];
+  sources: SlideRef[];
+  model: string | null;
+  message: string | null;
+}
+
+export interface AuditEntry {
+  id: string;
+  timestamp: string;
+  actor_name: string | null;
+  action: string;
+  target_type: string | null;
+  details: Record<string, unknown> | null;
+}

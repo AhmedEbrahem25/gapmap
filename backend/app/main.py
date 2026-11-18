@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import analysis, analytics, auth, courses, exams, materials, recovery
+from app.api import analysis, analytics, auth, courses, exams, explanations, materials, recovery
 from app.core.config import settings
 from app.core.db import create_all
 
@@ -38,3 +38,4 @@ app.include_router(analysis.router, prefix="/api")
 app.include_router(recovery.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 app.include_router(exams.router, prefix="/api")
+app.include_router(explanations.router, prefix="/api")

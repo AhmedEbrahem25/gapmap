@@ -12,6 +12,7 @@ from app.models.content import Concept, ConceptSlideChunk, Material, SlideChunk
 from app.models.learning import (
     AuditLog,
     BankQuestion,
+    ConceptExplanation,
     RecoveryPlan,
     RecoveryTask,
     Retest,
@@ -24,6 +25,7 @@ __all__ = [
     "AuditLog",
     "BankQuestion",
     "Concept",
+    "ConceptExplanation",
     "ConceptSlideChunk",
     "Course",
     "CourseEnrollment",

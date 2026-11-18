@@ -28,6 +28,14 @@ class Settings(BaseSettings):
     # A concept is suggested for re-teaching at or above this class error rate (FR-47).
     reteach_error_rate_percent: float = 40.0
 
+    # Grounded explanations (P1). Off when no credentials resolve; the app works without them.
+    # The SDK also reads ANTHROPIC_API_KEY or an `ant auth login` profile; this field lets .env work locally.
+    anthropic_api_key: str | None = None
+    explanations_enabled: bool = True
+    llm_model: str = "claude-opus-5-5"
+    llm_effort: str = "medium"
+    llm_timeout_seconds: float = 60.0
+
     # Used only by the seed script for demo accounts.
     demo_password: str = "demo1234"
 

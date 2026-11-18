@@ -41,3 +41,14 @@ LLM off (NFR-05).
 `python -m app.seed` loads `data/sample/exam1_results.csv` as an already-approved import, so the
 analysis and report slices (S3+) can start before the import UI (S2) exists. For the live demo of the
 import flow, run `python -m app.seed --no-results` and upload the same CSV through the UI.
+
+## 5. AI explanations (S6, P1)
+
+- One explanation per concept, not per student. It is grounded in the approved slides, which are
+  the same for every student, and a per-concept cache keeps cost and wait time near zero after the
+  first request. It also keeps student data out of the prompt by construction (BR-12).
+- Structured output (`explanation`, `key_points`, `cited_pages`) so citations can be checked:
+  any cited page that was not sent is dropped (FR-35).
+- The plan page loads first and the explanation loads after it. Any failure (no key, network,
+  refusal, malformed output) returns `status: "unavailable"` and the card is hidden (NFR-05, TC-18).
+- `ConceptExplanation` and `audit_logs.course_id` are new: run `python -m app.seed` on local databases.
