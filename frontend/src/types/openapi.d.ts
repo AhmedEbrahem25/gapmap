@@ -107,7 +107,7 @@ export interface paths {
         put?: never;
         /**
          * Upload Material
-         * @description FR-06/FR-07. PDF only in the MVP; processed inside the request (docs/decisions/0001).
+         * @description FR-06/FR-07. PDF or Word (.docx); processed inside the request (docs/decisions/0001).
          */
         post: operations["upload_material_api_courses__course_id__materials_post"];
         delete?: never;
@@ -452,6 +452,8 @@ export interface components {
             course_id: string;
             /** Filename */
             filename: string;
+            /** File Type */
+            file_type: string;
             /** Page Number */
             page_number: number;
             /** Page Count */

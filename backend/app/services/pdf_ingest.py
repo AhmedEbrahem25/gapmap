@@ -1,6 +1,8 @@
 """PDF -> one SlideChunk per page, with a rendered page image (FR-07, FR-33).
 
-Used by the seed script now and by the material upload endpoint in S1.
+Word files are converted to PDF first (docx_convert.py).
+
+Used by the seed script and the material upload endpoint.
 """
 
 from pathlib import Path
@@ -15,8 +17,12 @@ from app.models.enums import MaterialStatus
 PAGE_IMAGE_DPI = 110
 
 
-def ingest_pdf(db: Session, material: Material) -> None:
-    """Extract text and render every page. Sets `material.status`; never raises on a bad PDF."""
+def ingest_pdf(db: Session, material: Material, page_texts: list[tuple[str | None, str]] | None = None) -> None:
+    """Extract text and render every page. Sets `material.status`; never raises on a bad PDF.
+
+    `page_texts` overrides the extracted (title, text) per page, for PDFs we generated
+    ourselves from a better text source (Word files, see docx_convert.py).
+    """
     material.status = MaterialStatus.PROCESSING
     db.flush()
     pdf_path = settings.storage_dir / material.stored_path
@@ -27,14 +33,18 @@ def ingest_pdf(db: Session, material: Material) -> None:
         with pymupdf.open(pdf_path) as doc:
             for index, page in enumerate(doc):
                 page_number = index + 1
-                text = page.get_text("text").strip()
+                if page_texts is not None:
+                    title, text = page_texts[index]
+                else:
+                    text = page.get_text("text").strip()
+                    title = _first_line(text)
                 image_rel = pages_dir / f"{page_number}.png"
                 page.get_pixmap(dpi=PAGE_IMAGE_DPI).save(settings.storage_dir / image_rel)
                 db.add(
                     SlideChunk(
                         material_id=material.id,
                         page_number=page_number,
-                        title=_first_line(text),
+                        title=title,
                         content=text,
                         image_path=image_rel.as_posix(),
                     )
@@ -44,7 +54,7 @@ def ingest_pdf(db: Session, material: Material) -> None:
         material.error = None
     except Exception as exc:  # corrupt or encrypted PDF: report it, keep the app running
         material.status = MaterialStatus.FAILED
-        material.error = f"Could not read this PDF: {exc}"
+        material.error = f"Could not read this file: {exc}"
     db.flush()
 
 

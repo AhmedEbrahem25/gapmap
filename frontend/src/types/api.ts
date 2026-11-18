@@ -55,6 +55,7 @@ export interface Page {
   material_id: string;
   course_id: string;
   filename: string;
+  file_type: "pdf" | "docx";
   page_number: number;
   page_count: number;
   title: string | null;

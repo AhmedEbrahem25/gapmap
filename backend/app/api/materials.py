@@ -10,6 +10,7 @@ from app.core.deps import CurrentUser, DbSession, get_accessible_course, require
 from app.models import Material, SlideChunk
 from app.schemas.material import MaterialOut, PageOut
 from app.services.audit import audit
+from app.services.docx_convert import DocxError, docx_to_pdf
 from app.services.pdf_ingest import ingest_pdf
 
 router = APIRouter(tags=["materials"])
@@ -25,25 +26,37 @@ def list_materials(course_id: uuid.UUID, user: CurrentUser, db: DbSession) -> li
 
 @router.post("/courses/{course_id}/materials", response_model=MaterialOut, status_code=status.HTTP_201_CREATED)
 async def upload_material(course_id: uuid.UUID, file: UploadFile, user: CurrentUser, db: DbSession) -> Material:
-    """FR-06/FR-07. PDF only in the MVP; processed inside the request (docs/decisions/0001)."""
+    """FR-06/FR-07. PDF or Word (.docx); processed inside the request (docs/decisions/0001)."""
     course = require_course_instructor(db, user, course_id)
     filename = _safe_filename(file.filename or "lecture.pdf")
-    if not filename.lower().endswith(".pdf"):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Only PDF files are supported. Export slides to PDF first.")
-
+    file_type = _file_type(filename)
     data = await _read_limited(file)
-    if not data.startswith(b"%PDF"):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This file is not a valid PDF.")
 
-    material = Material(course_id=course.id, filename=filename, stored_path="", file_type="pdf")
+    page_texts = None
+    if file_type == "pdf":
+        if not data.startswith(b"%PDF"):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "This file is not a valid PDF.")
+        pdf = data
+    else:
+        if not data.startswith(b"PK"):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "This file is not a valid Word (.docx) file.")
+        try:
+            converted = docx_to_pdf(data)
+        except DocxError as exc:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from None
+        pdf, page_texts = converted.pdf, converted.pages
+
+    material = Material(course_id=course.id, filename=filename, stored_path="", file_type=file_type)
     db.add(material)
     db.flush()
-    material.stored_path = f"materials/{material.id}/{filename}"
-    target = settings.storage_dir / material.stored_path
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_bytes(data)
+    folder = settings.storage_dir / "materials" / str(material.id)
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / filename).write_bytes(data)  # the original, as uploaded
+    pdf_name = filename if file_type == "pdf" else f"{filename.rsplit('.', 1)[0]}.pdf"
+    (folder / pdf_name).write_bytes(pdf)
+    material.stored_path = f"materials/{material.id}/{pdf_name}"
 
-    ingest_pdf(db, material)
+    ingest_pdf(db, material, page_texts)
     audit(db, user, "material.uploaded", material, {"filename": filename, "status": material.status})
     db.commit()
     return material
@@ -63,6 +76,7 @@ def get_page(material_id: uuid.UUID, page_number: int, user: CurrentUser, db: Db
         material_id=material.id,
         course_id=material.course_id,
         filename=material.filename,
+        file_type=material.file_type,
         page_number=chunk.page_number,
         page_count=material.page_count or 0,
         title=chunk.title,
@@ -108,6 +122,17 @@ async def _read_limited(file: UploadFile) -> bytes:
                 status.HTTP_400_BAD_REQUEST, f"The file is larger than the {settings.max_upload_mb} MB limit."
             )
     return bytes(data)
+
+
+def _file_type(filename: str) -> str:
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    if ext in ("pdf", "docx"):
+        return ext
+    if ext == "doc":
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Old Word .doc files are not supported. Save it as .docx or PDF.")
+    if ext in ("ppt", "pptx"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "PowerPoint is not supported yet. Export the slides to PDF.")
+    raise HTTPException(status.HTTP_400_BAD_REQUEST, "Only PDF and Word (.docx) files are supported.")
 
 
 def _safe_filename(name: str) -> str:
