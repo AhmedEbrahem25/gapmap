@@ -61,3 +61,81 @@ export interface Page {
   content: string;
   image_url: string | null;
 }
+
+export type ExamStatus = "draft" | "key_approved" | "analyzed";
+
+export interface Exam {
+  id: string;
+  course_id: string;
+  title: string;
+  exam_date: string | null;
+  status: ExamStatus;
+  question_count: number;
+}
+
+export interface AnalysisSummary {
+  exam_id: string;
+  students: number;
+  answers: number;
+  score_mismatches: number;
+  weak_threshold_percent: number;
+}
+
+export interface SlideRef {
+  material_id: string;
+  filename: string;
+  page_number: number;
+  title: string | null;
+  excerpt: string;
+}
+
+export type ConceptStatus = "weak" | "ok" | "not_enough_data";
+
+export interface ConceptReport {
+  concept_id: string;
+  name: string;
+  earned: number;
+  max: number;
+  percent: number;
+  question_count: number;
+  status: ConceptStatus;
+  slides: SlideRef[];
+}
+
+export interface QuestionResult {
+  question_code: string;
+  prompt: string;
+  concept_names: string[];
+  your_answer: string | null;
+  your_answer_text: string | null;
+  correct_answer: string;
+  correct_answer_text: string | null;
+  score: number;
+  max_score: number;
+  likely_cause: string | null;
+  evidence: string | null;
+}
+
+export interface StudentReport {
+  exam_id: string;
+  exam_title: string;
+  course_id: string;
+  course_title: string;
+  student_id: string;
+  student_name: string;
+  student_ref: string | null;
+  earned: number;
+  max: number;
+  weak_threshold_percent: number;
+  concepts: ConceptReport[];
+  questions: QuestionResult[];
+}
+
+export interface StudentResultRow {
+  student_id: string;
+  student_ref: string | null;
+  student_name: string;
+  earned: number;
+  max: number;
+  weak_concepts: string[];
+}

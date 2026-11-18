@@ -170,10 +170,134 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/courses/{course_id}/exams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Exams */
+        get: operations["list_exams_api_courses__course_id__exams_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/exams/{exam_id}/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Analyze Exam */
+        post: operations["analyze_exam_api_exams__exam_id__analyze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/exams/{exam_id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Exam Results
+         * @description Instructor view of every student's result (student-level data: no coordinators, TC-27).
+         */
+        get: operations["exam_results_api_exams__exam_id__results_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/exams/{exam_id}/students/{student_id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Student Report For Instructor */
+        get: operations["student_report_for_instructor_api_exams__exam_id__students__student_id__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/students/me/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Reports
+         * @description FR-03: always the caller's own data; there is no student id to tamper with.
+         */
+        get: operations["my_reports_api_students_me_reports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/students/me/reports/{exam_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Report */
+        get: operations["my_report_api_students_me_reports__exam_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AnalysisSummary */
+        AnalysisSummary: {
+            /**
+             * Exam Id
+             * Format: uuid
+             */
+            exam_id: string;
+            /** Students */
+            students: number;
+            /** Answers */
+            answers: number;
+            /** Score Mismatches */
+            score_mismatches: number;
+            /** Weak Threshold Percent */
+            weak_threshold_percent: number;
+        };
         /** Body_upload_material_api_courses__course_id__materials_post */
         Body_upload_material_api_courses__course_id__materials_post: {
             /** File */
@@ -190,6 +314,28 @@ export interface components {
             name: string;
             /** Description */
             description?: string | null;
+        };
+        /** ConceptReport */
+        ConceptReport: {
+            /**
+             * Concept Id
+             * Format: uuid
+             */
+            concept_id: string;
+            /** Name */
+            name: string;
+            /** Earned */
+            earned: number;
+            /** Max */
+            max: number;
+            /** Percent */
+            percent: number;
+            /** Question Count */
+            question_count: number;
+            /** Status */
+            status: string;
+            /** Slides */
+            slides: components["schemas"]["SlideRef"][];
         };
         /** CourseDetailOut */
         CourseDetailOut: {
@@ -230,6 +376,27 @@ export interface components {
             term?: string | null;
             /** Instructor Name */
             instructor_name: string;
+        };
+        /** ExamOut */
+        ExamOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Title */
+            title: string;
+            /** Exam Date */
+            exam_date: string | null;
+            /** Status */
+            status: string;
+            /** Question Count */
+            question_count: number;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -295,6 +462,101 @@ export interface components {
             content: string;
             /** Image Url */
             image_url: string | null;
+        };
+        /** QuestionResult */
+        QuestionResult: {
+            /** Question Code */
+            question_code: string;
+            /** Prompt */
+            prompt: string;
+            /** Concept Names */
+            concept_names: string[];
+            /** Your Answer */
+            your_answer: string | null;
+            /** Your Answer Text */
+            your_answer_text: string | null;
+            /** Correct Answer */
+            correct_answer: string;
+            /** Correct Answer Text */
+            correct_answer_text: string | null;
+            /** Score */
+            score: number;
+            /** Max Score */
+            max_score: number;
+            /** Likely Cause */
+            likely_cause: string | null;
+            /** Evidence */
+            evidence: string | null;
+        };
+        /** SlideRef */
+        SlideRef: {
+            /**
+             * Material Id
+             * Format: uuid
+             */
+            material_id: string;
+            /** Filename */
+            filename: string;
+            /** Page Number */
+            page_number: number;
+            /** Title */
+            title: string | null;
+            /** Excerpt */
+            excerpt: string;
+        };
+        /** StudentReport */
+        StudentReport: {
+            /**
+             * Exam Id
+             * Format: uuid
+             */
+            exam_id: string;
+            /** Exam Title */
+            exam_title: string;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Course Title */
+            course_title: string;
+            /**
+             * Student Id
+             * Format: uuid
+             */
+            student_id: string;
+            /** Student Name */
+            student_name: string;
+            /** Student Ref */
+            student_ref: string | null;
+            /** Earned */
+            earned: number;
+            /** Max */
+            max: number;
+            /** Weak Threshold Percent */
+            weak_threshold_percent: number;
+            /** Concepts */
+            concepts: components["schemas"]["ConceptReport"][];
+            /** Questions */
+            questions: components["schemas"]["QuestionResult"][];
+        };
+        /** StudentResultRow */
+        StudentResultRow: {
+            /**
+             * Student Id
+             * Format: uuid
+             */
+            student_id: string;
+            /** Student Ref */
+            student_ref: string | null;
+            /** Student Name */
+            student_name: string;
+            /** Earned */
+            earned: number;
+            /** Max */
+            max: number;
+            /** Weak Concepts */
+            weak_concepts: string[];
         };
         /** TokenResponse */
         TokenResponse: {
@@ -618,6 +880,182 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_exams_api_courses__course_id__exams_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_exam_api_exams__exam_id__analyze_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    exam_results_api_exams__exam_id__results_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentResultRow"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    student_report_for_instructor_api_exams__exam_id__students__student_id__report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_reports_api_students_me_reports_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentReport"][];
+                };
+            };
+        };
+    };
+    my_report_api_students_me_reports__exam_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentReport"];
+                };
             };
             /** @description Validation Error */
             422: {

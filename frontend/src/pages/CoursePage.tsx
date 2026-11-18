@@ -3,11 +3,13 @@ import { Link, useParams } from "react-router-dom";
 
 import { useAuth } from "../features/auth/AuthContext";
 import { MaterialsSection } from "../features/materials/MaterialsSection";
+import { ExamsSection } from "../features/reports/ExamsSection";
 import { api } from "../services/api";
 
 export function CoursePage() {
   const { courseId = "" } = useParams();
   const { user } = useAuth();
+  const isInstructor = user?.role === "instructor" || user?.role === "admin";
   const course = useQuery({ queryKey: ["course", courseId], queryFn: () => api.course(courseId) });
 
   if (course.isPending) return <p className="text-slate-500">Loading course…</p>;
@@ -48,7 +50,9 @@ export function CoursePage() {
         ))}
       </ul>
 
-      <MaterialsSection courseId={c.id} canUpload={user?.role === "instructor" || user?.role === "admin"} />
+      {(isInstructor || user?.role === "student") && <ExamsSection courseId={c.id} isInstructor={isInstructor} />}
+
+      <MaterialsSection courseId={c.id} canUpload={isInstructor} />
     </div>
   );
 }
