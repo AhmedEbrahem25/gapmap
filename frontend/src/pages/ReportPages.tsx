@@ -14,7 +14,7 @@ export function MyReportPage() {
   return (
     <>
       <BackToCourse courseId={report.data.course_id} />
-      <ReportView report={report.data} />
+      <ReportView report={report.data} isStudent />
     </>
   );
 }

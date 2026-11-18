@@ -78,10 +78,12 @@ export interface AnalysisSummary {
   students: number;
   answers: number;
   score_mismatches: number;
+  recovery_plans: number;
   weak_threshold_percent: number;
 }
 
 export interface SlideRef {
+  slide_chunk_id: string;
   material_id: string;
   filename: string;
   page_number: number;
@@ -127,6 +129,7 @@ export interface StudentReport {
   earned: number;
   max: number;
   weak_threshold_percent: number;
+  recovery_plan_id: string | null;
   concepts: ConceptReport[];
   questions: QuestionResult[];
 }
@@ -138,4 +141,88 @@ export interface StudentResultRow {
   earned: number;
   max: number;
   weak_concepts: string[];
+}
+
+export interface RecoveryTask {
+  id: string;
+  task_type: "review_slide" | "practice";
+  status: "pending" | "completed";
+  slide: SlideRef | null;
+}
+
+export interface PlanConcept {
+  concept_id: string;
+  name: string;
+  percent_before: number;
+  practice_count: number;
+  tasks: RecoveryTask[];
+}
+
+export interface RetestSummary {
+  id: string;
+  status: "in_progress" | "submitted";
+  submitted_at: string | null;
+  total_score: number | null;
+  max_score: number;
+}
+
+export interface RecoveryPlan {
+  id: string;
+  exam_id: string;
+  exam_title: string;
+  course_id: string;
+  status: "active" | "completed";
+  concepts: PlanConcept[];
+  retest_question_count: number;
+  retests: RetestSummary[];
+}
+
+export interface BankQuestion {
+  id: string;
+  concept_id: string;
+  prompt: string;
+  options: { key: string; text: string }[];
+}
+
+export interface PracticeCheck {
+  correct: boolean;
+  correct_answer: string;
+  correct_answer_text: string | null;
+  source: SlideRef | null;
+}
+
+export interface Retest {
+  id: string;
+  plan_id: string;
+  status: "in_progress" | "submitted";
+  questions: BankQuestion[];
+}
+
+export interface ConceptGain {
+  concept_id: string;
+  name: string;
+  before_percent: number;
+  before_question_count: number;
+  after_percent: number;
+  after_question_count: number;
+  gain_points: number;
+}
+
+export interface RetestResults {
+  retest_id: string;
+  plan_id: string;
+  submitted_at: string;
+  total_score: number;
+  max_score: number;
+  concepts: ConceptGain[];
+  questions: {
+    bank_question_id: string;
+    concept_name: string;
+    prompt: string;
+    your_answer: string | null;
+    correct_answer: string;
+    correct_answer_text: string | null;
+    correct: boolean;
+  }[];
+  note: string;
 }

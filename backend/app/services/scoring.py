@@ -40,6 +40,12 @@ def normalize(value: str | None) -> str:
     return " ".join((value or "").split()).casefold()
 
 
+def option_text(options: list[dict], key: str | None) -> str | None:
+    if not normalize(key):
+        return None
+    return next((o["text"] for o in options if normalize(o.get("key")) == normalize(key)), None)
+
+
 def score_answer(question: QuestionSpec, answer: str | None) -> float:
     return question.max_score if normalize(answer) and normalize(answer) == normalize(question.answer_key) else 0.0
 
