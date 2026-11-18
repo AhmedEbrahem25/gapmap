@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     data_dir: Path = _REPO_ROOT / "data"
     max_upload_mb: int = 25
 
+    # Plan Section 12. Provisional; tune with the instructor on pilot data.
+    weak_threshold_percent: float = 60.0
+    min_questions_per_concept: int = 2
+
     # Used only by the seed script for demo accounts.
     demo_password: str = "demo1234"
 

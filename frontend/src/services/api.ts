@@ -1,4 +1,15 @@
-import type { Course, CourseDetail, Material, Page, TokenResponse, User } from "../types/api";
+import type {
+  AnalysisSummary,
+  Course,
+  CourseDetail,
+  Exam,
+  Material,
+  Page,
+  StudentReport,
+  StudentResultRow,
+  TokenResponse,
+  User,
+} from "../types/api";
 
 const TOKEN_KEY = "gapmap.token";
 
@@ -74,4 +85,10 @@ export const api = {
   page: (materialId: string, page: number) => request<Page>(`/materials/${materialId}/pages/${page}`),
   // Images need the bearer token, so they are fetched as blobs instead of plain <img src>.
   blob: (url: string) => request<Blob>(url, {}, "blob"),
+  exams: (courseId: string) => request<Exam[]>(`/courses/${courseId}/exams`),
+  analyze: (examId: string) => request<AnalysisSummary>(`/exams/${examId}/analyze`, { method: "POST" }),
+  examResults: (examId: string) => request<StudentResultRow[]>(`/exams/${examId}/results`),
+  studentReport: (examId: string, studentId: string) =>
+    request<StudentReport>(`/exams/${examId}/students/${studentId}/report`),
+  myReport: (examId: string) => request<StudentReport>(`/students/me/reports/${examId}`),
 };
