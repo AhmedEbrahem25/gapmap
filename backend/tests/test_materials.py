@@ -39,8 +39,12 @@ def test_tc03_valid_pdf_is_saved_and_processed(client, login, fresh, demo):
 @pytest.mark.parametrize(
     ("name", "data", "message"),
     [
-        ("notes.docx", b"PK\x03\x04", "Only PDF files"),
+        ("notes.txt", b"hello", "Only PDF and Word"),
+        ("old.doc", b"\xd0\xcf\x11\xe0", "Old Word .doc"),
+        ("slides.pptx", b"PK\x03\x04", "PowerPoint is not supported"),
         ("fake.pdf", b"hello, not a pdf", "not a valid PDF"),
+        ("fake.docx", b"hello", "not a valid Word"),
+        ("broken.docx", b"PK\x03\x04 not really a zip", "could not be read"),
     ],
 )
 def test_tc04_unsupported_file_gets_clear_error(client, login, demo, name, data, message):

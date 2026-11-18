@@ -21,6 +21,7 @@ class PageOut(BaseModel):
     material_id: uuid.UUID
     course_id: uuid.UUID
     filename: str
+    file_type: str  # pdf | docx (docx pages come from GapMap's converted copy)
     page_number: int
     page_count: int
     title: str | None

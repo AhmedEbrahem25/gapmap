@@ -32,11 +32,18 @@ export function SlideViewerPage() {
         </p>
       </div>
 
+      {p.file_type === "docx" && (
+        <p className="mt-2 text-xs text-slate-500">
+          Word files have no fixed pages, so page numbers follow GapMap's copy, split at the document's page breaks
+          or headings.
+        </p>
+      )}
+
       {p.image_url ? (
         <AuthedImage
           src={p.image_url}
           alt={`${p.filename}, page ${p.page_number}`}
-          className="mt-4 aspect-video w-full rounded-lg border border-slate-200 bg-white object-contain shadow-sm"
+          className="mx-auto mt-4 block h-auto max-h-[85vh] w-auto max-w-full rounded-lg border border-slate-200 bg-white shadow-sm"
         />
       ) : (
         <pre className="mt-4 whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-6 text-sm">{p.content}</pre>

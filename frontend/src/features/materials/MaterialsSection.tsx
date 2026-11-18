@@ -37,11 +37,11 @@ export function MaterialsSection({ courseId, canUpload }: { courseId: string; ca
         <h2 className="text-lg font-semibold">Lecture materials</h2>
         {canUpload && (
           <label className="cursor-pointer rounded-md bg-brand-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-800">
-            {upload.isPending ? "Processing…" : "Upload PDF"}
+            {upload.isPending ? "Processing…" : "Upload PDF or Word"}
             <input
               ref={input}
               type="file"
-              accept="application/pdf,.pdf"
+              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               className="sr-only"
               disabled={upload.isPending}
               onChange={(e) => e.target.files?.[0] && upload.mutate(e.target.files[0])}

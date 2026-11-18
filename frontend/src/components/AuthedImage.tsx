@@ -9,7 +9,12 @@ export function AuthedImage({ src, alt, className }: { src: string; alt: string;
   const url = useMemo(() => (blob.data ? URL.createObjectURL(blob.data) : null), [blob.data]);
   useEffect(() => () => void (url && URL.revokeObjectURL(url)), [url]);
 
-  if (blob.isError) return <div className={`${className} flex items-center justify-center bg-slate-100 text-sm text-slate-500`}>Image unavailable</div>;
-  if (!url) return <div className={`${className} animate-pulse bg-slate-100`} />;
+  if (blob.isError)
+    return (
+      <div className={`${className} flex aspect-video items-center justify-center bg-slate-100 text-sm text-slate-500`}>
+        Image unavailable
+      </div>
+    );
+  if (!url) return <div className={`${className} aspect-video animate-pulse bg-slate-100`} />;
   return <img src={url} alt={alt} className={className} />;
 }
