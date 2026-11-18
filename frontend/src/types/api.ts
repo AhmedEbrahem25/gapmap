@@ -37,3 +37,27 @@ export interface CourseDetail extends Course {
   exam_count: number;
   concepts: Concept[];
 }
+
+export type MaterialStatus = "uploaded" | "processing" | "ready" | "failed";
+
+export interface Material {
+  id: string;
+  course_id: string;
+  filename: string;
+  file_type: string;
+  status: MaterialStatus;
+  page_count: number | null;
+  error: string | null;
+  created_at: string;
+}
+
+export interface Page {
+  material_id: string;
+  course_id: string;
+  filename: string;
+  page_number: number;
+  page_count: number;
+  title: string | null;
+  content: string;
+  image_url: string | null;
+}

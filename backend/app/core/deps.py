@@ -74,3 +74,11 @@ def get_accessible_course(db: Session, user: User, course_id: uuid.UUID) -> Cour
     if not can_access_course(db, user, course):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "You do not have access to this course.")
     return course
+
+
+def require_course_instructor(db: Session, user: User, course_id: uuid.UUID) -> Course:
+    """Write access to a course: its own instructor, or an admin."""
+    course = get_accessible_course(db, user, course_id)
+    if user.role == Role.ADMIN or (user.role == Role.INSTRUCTOR and course.instructor_id == user.id):
+        return course
+    raise HTTPException(status.HTTP_403_FORBIDDEN, "Only the course instructor can do this.")

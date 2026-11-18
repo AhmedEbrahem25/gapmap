@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     storage_dir: Path = _REPO_ROOT / "storage"
     # Sample CSVs and templates (data/ in the repo).
     data_dir: Path = _REPO_ROOT / "data"
+    max_upload_mb: int = 25
 
     # Used only by the seed script for demo accounts.
     demo_password: str = "demo1234"
