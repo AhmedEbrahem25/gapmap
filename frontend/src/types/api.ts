@@ -227,3 +227,45 @@ export interface RetestResults {
   }[];
   note: string;
 }
+
+export interface OptionCount {
+  key: string;
+  text: string;
+  count: number;
+  is_correct: boolean;
+  error_type: string | null;
+}
+
+export interface QuestionStat {
+  question_code: string;
+  prompt: string;
+  concept_names: string[];
+  responses: number;
+  incorrect: number;
+  error_rate: number;
+  options: OptionCount[];
+  top_wrong: OptionCount | null;
+}
+
+export interface ConceptStat {
+  concept_id: string;
+  name: string;
+  question_count: number;
+  responses: number;
+  incorrect: number;
+  error_rate: number;
+  students_measured: number;
+  students_weak: number;
+}
+
+export interface ClassAnalytics {
+  course_id: string;
+  exam: { id: string; title: string; status: ExamStatus } | null;
+  exams: { id: string; title: string; status: ExamStatus }[];
+  student_count: number;
+  weak_threshold_percent: number;
+  reteach_threshold_percent: number;
+  concepts: ConceptStat[];
+  questions: QuestionStat[];
+  reteach: { concept_id: string; name: string; error_rate: number; evidence: string[] }[];
+}

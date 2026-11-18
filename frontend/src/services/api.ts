@@ -1,5 +1,6 @@
 import type {
   AnalysisSummary,
+  ClassAnalytics,
   Course,
   CourseDetail,
   Exam,
@@ -107,4 +108,6 @@ export const api = {
   submitRetest: (retestId: string, answers: Record<string, string>) =>
     request<RetestResults>(`/retests/${retestId}/submit`, { method: "POST", body: JSON.stringify({ answers }) }),
   retestResults: (retestId: string) => request<RetestResults>(`/retests/${retestId}/results`),
+  analytics: (courseId: string, examId?: string) =>
+    request<ClassAnalytics>(`/courses/${courseId}/analytics${examId ? `?exam_id=${examId}` : ""}`),
 };

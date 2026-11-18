@@ -414,6 +414,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/courses/{course_id}/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Course Analytics
+         * @description Aggregated only, so coordinators may see it too; students may not (FR-45).
+         */
+        get: operations["course_analytics_api_courses__course_id__analytics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -468,6 +488,29 @@ export interface components {
             /** File */
             file: string;
         };
+        /** ClassAnalytics */
+        ClassAnalytics: {
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            exam: components["schemas"]["ExamRef"] | null;
+            /** Exams */
+            exams: components["schemas"]["ExamRef"][];
+            /** Student Count */
+            student_count: number;
+            /** Weak Threshold Percent */
+            weak_threshold_percent: number;
+            /** Reteach Threshold Percent */
+            reteach_threshold_percent: number;
+            /** Concepts */
+            concepts: components["schemas"]["ConceptStat"][];
+            /** Questions */
+            questions: components["schemas"]["QuestionStat"][];
+            /** Reteach */
+            reteach: components["schemas"]["ReteachSuggestion"][];
+        };
         /** ConceptGain */
         ConceptGain: {
             /**
@@ -521,6 +564,28 @@ export interface components {
             status: string;
             /** Slides */
             slides: components["schemas"]["SlideRef"][];
+        };
+        /** ConceptStat */
+        ConceptStat: {
+            /**
+             * Concept Id
+             * Format: uuid
+             */
+            concept_id: string;
+            /** Name */
+            name: string;
+            /** Question Count */
+            question_count: number;
+            /** Responses */
+            responses: number;
+            /** Incorrect */
+            incorrect: number;
+            /** Error Rate */
+            error_rate: number;
+            /** Students Measured */
+            students_measured: number;
+            /** Students Weak */
+            students_weak: number;
         };
         /** CourseDetailOut */
         CourseDetailOut: {
@@ -583,6 +648,18 @@ export interface components {
             /** Question Count */
             question_count: number;
         };
+        /** ExamRef */
+        ExamRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /** Status */
+            status: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -622,6 +699,19 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** OptionCount */
+        OptionCount: {
+            /** Key */
+            key: string;
+            /** Text */
+            text: string;
+            /** Count */
+            count: number;
+            /** Is Correct */
+            is_correct: boolean;
+            /** Error Type */
+            error_type: string | null;
         };
         /** PageOut */
         PageOut: {
@@ -706,6 +796,24 @@ export interface components {
             /** Evidence */
             evidence: string | null;
         };
+        /** QuestionStat */
+        QuestionStat: {
+            /** Question Code */
+            question_code: string;
+            /** Prompt */
+            prompt: string;
+            /** Concept Names */
+            concept_names: string[];
+            /** Responses */
+            responses: number;
+            /** Incorrect */
+            incorrect: number;
+            /** Error Rate */
+            error_rate: number;
+            /** Options */
+            options: components["schemas"]["OptionCount"][];
+            top_wrong: components["schemas"]["OptionCount"] | null;
+        };
         /** RecoveryPlanOut */
         RecoveryPlanOut: {
             /**
@@ -733,6 +841,20 @@ export interface components {
             retest_question_count: number;
             /** Retests */
             retests: components["schemas"]["RetestSummary"][];
+        };
+        /** ReteachSuggestion */
+        ReteachSuggestion: {
+            /**
+             * Concept Id
+             * Format: uuid
+             */
+            concept_id: string;
+            /** Name */
+            name: string;
+            /** Error Rate */
+            error_rate: number;
+            /** Evidence */
+            evidence: string[];
         };
         /** RetestCreate */
         RetestCreate: {
@@ -1673,6 +1795,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RetestResults"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    course_analytics_api_courses__course_id__analytics_get: {
+        parameters: {
+            query?: {
+                exam_id?: string | null;
+            };
+            header?: never;
+            path: {
+                course_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassAnalytics"];
                 };
             };
             /** @description Validation Error */

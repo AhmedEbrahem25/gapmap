@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     # Plan Section 12. Provisional; tune with the instructor on pilot data.
     weak_threshold_percent: float = 60.0
     min_questions_per_concept: int = 2
+    # A concept is suggested for re-teaching at or above this class error rate (FR-47).
+    reteach_error_rate_percent: float = 40.0
 
     # Used only by the seed script for demo accounts.
     demo_password: str = "demo1234"
