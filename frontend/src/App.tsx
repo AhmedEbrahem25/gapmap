@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CoursePage } from "./pages/CoursePage";
+import { ExamBuilderPage } from "./pages/ExamBuilderPage";
+import { ImportPage } from "./pages/ImportPage";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { PracticePage } from "./pages/PracticePage";
@@ -20,6 +22,8 @@ export function App() {
         <Route path="courses/:courseId" element={<CoursePage />} />
         <Route path="courses/:courseId/analytics" element={<AnalyticsPage />} />
         <Route path="materials/:materialId/pages/:page" element={<SlideViewerPage />} />
+        <Route path="exams/:examId/edit" element={<ExamBuilderPage />} />
+        <Route path="exams/:examId/import" element={<ImportPage />} />
         <Route path="exams/:examId/report" element={<MyReportPage />} />
         <Route path="exams/:examId/results" element={<ExamResultsPage />} />
         <Route path="exams/:examId/students/:studentId" element={<StudentReportPage />} />

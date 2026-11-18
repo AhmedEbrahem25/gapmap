@@ -269,3 +269,84 @@ export interface ClassAnalytics {
   questions: QuestionStat[];
   reteach: { concept_id: string; name: string; error_rate: number; evidence: string[] }[];
 }
+
+export type ErrorType =
+  | "conceptual"
+  | "formula_application"
+  | "calculation"
+  | "missing_prerequisite"
+  | "incomplete_answer"
+  | "unknown";
+
+export interface QuestionOption {
+  key: string;
+  text: string;
+  error_type: ErrorType | null;
+}
+
+export interface ExamQuestion {
+  id: string;
+  question_code: string;
+  position: number;
+  prompt: string;
+  options: QuestionOption[];
+  answer_key: string | null;
+  max_score: number;
+  concept_id: string | null;
+}
+
+export interface ExamDetail {
+  id: string;
+  course_id: string;
+  title: string;
+  exam_date: string | null;
+  status: ExamStatus;
+  can_reopen: boolean;
+  questions: ExamQuestion[];
+}
+
+export interface QuestionInput {
+  question_code: string;
+  prompt: string;
+  options: QuestionOption[];
+  answer_key: string;
+  max_score: number;
+  concept_id: string;
+}
+
+export interface ImportRow {
+  id: string;
+  row_number: number;
+  student_ref: string | null;
+  question_code: string | null;
+  answer: string | null;
+  score: number | null;
+  errors: string[];
+  warnings: string[];
+  status: "valid" | "invalid" | "corrected";
+}
+
+export interface ImportSummary {
+  id: string;
+  exam_id: string;
+  original_filename: string | null;
+  status: "pending_review" | "approved" | "rejected";
+  created_at: string;
+  approved_at: string | null;
+  total_rows: number;
+  invalid_rows: number;
+  warning_rows: number;
+  students: number;
+}
+
+export interface ImportDetail extends ImportSummary {
+  rows: ImportRow[];
+}
+
+export interface ImportRowPatch {
+  student_ref?: string;
+  question_code?: string;
+  answer?: string;
+  score?: number;
+  clear_score?: boolean;
+}

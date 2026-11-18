@@ -1,32 +1,15 @@
 import uuid
 
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from app.core.deps import CurrentUser, DbSession, get_accessible_course, require_course_instructor
-from app.models import CourseEnrollment, Exam, Question, Submission, User
+from app.models import CourseEnrollment, Exam, Submission, User
 from app.models.enums import ExamStatus, ImportStatus, Role
-from app.schemas.report import AnalysisSummary, ExamOut, StudentReport, StudentResultRow
+from app.schemas.report import AnalysisSummary, StudentReport, StudentResultRow
 from app.services.analysis import AnalysisBlocked, build_student_report, class_results, run_analysis
 
 router = APIRouter(tags=["analysis"])
-
-
-@router.get("/courses/{course_id}/exams", response_model=list[ExamOut])
-def list_exams(course_id: uuid.UUID, user: CurrentUser, db: DbSession) -> list[ExamOut]:
-    course = get_accessible_course(db, user, course_id)
-    exams = db.scalars(select(Exam).where(Exam.course_id == course.id).order_by(Exam.exam_date, Exam.title))
-    return [
-        ExamOut(
-            id=e.id,
-            course_id=e.course_id,
-            title=e.title,
-            exam_date=e.exam_date,
-            status=e.status,
-            question_count=db.scalar(select(func.count()).where(Question.exam_id == e.id)) or 0,
-        )
-        for e in exams
-    ]
 
 
 @router.post("/exams/{exam_id}/analyze", response_model=AnalysisSummary)

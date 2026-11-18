@@ -4,7 +4,12 @@ import type {
   Course,
   CourseDetail,
   Exam,
+  ExamDetail,
+  ImportDetail,
+  ImportRowPatch,
+  ImportSummary,
   Material,
+  QuestionInput,
   Page,
   PracticeCheck,
   BankQuestion,
@@ -108,6 +113,29 @@ export const api = {
   submitRetest: (retestId: string, answers: Record<string, string>) =>
     request<RetestResults>(`/retests/${retestId}/submit`, { method: "POST", body: JSON.stringify({ answers }) }),
   retestResults: (retestId: string) => request<RetestResults>(`/retests/${retestId}/results`),
+  createExam: (courseId: string, title: string) =>
+    request<ExamDetail>(`/courses/${courseId}/exams`, { method: "POST", body: JSON.stringify({ title }) }),
+  exam: (examId: string) => request<ExamDetail>(`/exams/${examId}`),
+  addQuestion: (examId: string, q: QuestionInput) =>
+    request<ExamDetail>(`/exams/${examId}/questions`, { method: "POST", body: JSON.stringify(q) }),
+  updateQuestion: (questionId: string, q: QuestionInput) =>
+    request<ExamDetail>(`/questions/${questionId}`, { method: "PUT", body: JSON.stringify(q) }),
+  deleteQuestion: (questionId: string) => request<ExamDetail>(`/questions/${questionId}`, { method: "DELETE" }),
+  approveKey: (examId: string) => request<ExamDetail>(`/exams/${examId}/approve-key`, { method: "POST" }),
+  reopenExam: (examId: string) => request<ExamDetail>(`/exams/${examId}/reopen`, { method: "POST" }),
+  imports: (examId: string) => request<ImportSummary[]>(`/exams/${examId}/imports`),
+  uploadResults: (examId: string, file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    return request<ImportDetail>(`/exams/${examId}/imports`, { method: "POST", body });
+  },
+  importDetail: (importId: string) => request<ImportDetail>(`/imports/${importId}`),
+  correctRow: (importId: string, rowId: string, patch: ImportRowPatch) =>
+    request<ImportDetail>(`/imports/${importId}/rows/${rowId}`, { method: "PATCH", body: JSON.stringify(patch) }),
+  deleteRow: (importId: string, rowId: string) =>
+    request<ImportDetail>(`/imports/${importId}/rows/${rowId}`, { method: "DELETE" }),
+  approveImport: (importId: string) => request<ImportDetail>(`/imports/${importId}/approve`, { method: "POST" }),
+  rejectImport: (importId: string) => request<ImportDetail>(`/imports/${importId}/reject`, { method: "POST" }),
   analytics: (courseId: string, examId?: string) =>
     request<ClassAnalytics>(`/courses/${courseId}/analytics${examId ? `?exam_id=${examId}` : ""}`),
 };

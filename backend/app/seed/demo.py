@@ -164,7 +164,7 @@ def _import_approved_results(db, exam, instructor, students, questions, csv_path
         db.add(ImportRow(
             batch_id=batch.id, row_number=line, student_ref=row["student_ref"],
             question_code=row["question_id"], answer=row["answer"], score=score,
-            errors=[], status=ImportRowStatus.VALID,
+            raw_score=row.get("score") or None, errors=[], warnings=[], status=ImportRowStatus.VALID,
         ))
         ref = row["student_ref"]
         if ref not in submissions:

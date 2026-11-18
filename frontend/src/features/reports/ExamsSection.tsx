@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { api } from "../../services/api";
 import type { Exam, ExamStatus } from "../../types/api";
@@ -17,7 +17,10 @@ export function ExamsSection({ courseId, isInstructor }: { courseId: string; isI
 
   return (
     <section className="mt-10">
-      <h2 className="text-lg font-semibold">{isInstructor ? "Exams" : "My exam results"}</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">{isInstructor ? "Exams" : "My exam results"}</h2>
+        {isInstructor && <NewExam courseId={courseId} />}
+      </div>
       <ul className="mt-3 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
         {exams.isPending && <li className="p-4 text-sm text-slate-500">Loading…</li>}
         {exams.data?.length === 0 && <li className="p-4 text-sm text-slate-500">No exams yet.</li>}
@@ -40,7 +43,11 @@ function InstructorExamRow({ exam }: { exam: Exam }) {
         ok: true,
         text:
           `Analysed ${s.students} students (${s.answers} answers).` +
-          (s.score_mismatches ? ` ${s.score_mismatches} official scores differ from the answer key.` : ""),
+          (s.score_mismatches === 1
+            ? " 1 official score differs from the answer key."
+            : s.score_mismatches
+              ? ` ${s.score_mismatches} official scores differ from the answer key.`
+              : ""),
       });
       queryClient.invalidateQueries({ queryKey: ["exams", exam.course_id] });
       queryClient.invalidateQueries({ queryKey: ["results", exam.id] });
@@ -57,19 +64,29 @@ function InstructorExamRow({ exam }: { exam: Exam }) {
             {exam.question_count} questions · {STATUS_LABEL[exam.status]}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link to={`/exams/${exam.id}/edit`} className="text-sm text-brand-700 hover:underline">
+            {exam.status === "draft" ? "Edit questions" : "Questions"}
+          </Link>
+          {exam.status !== "draft" && (
+            <Link to={`/exams/${exam.id}/import`} className="text-sm text-brand-700 hover:underline">
+              Import results
+            </Link>
+          )}
           {exam.status === "analyzed" && (
             <Link to={`/exams/${exam.id}/results`} className="text-sm font-medium text-brand-700 hover:underline">
               View results
             </Link>
           )}
-          <button
-            onClick={() => analyze.mutate()}
-            disabled={analyze.isPending}
-            className="rounded-md bg-brand-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-800 disabled:opacity-60"
-          >
-            {analyze.isPending ? "Analysing…" : exam.status === "analyzed" ? "Re-run analysis" : "Run analysis"}
-          </button>
+          {exam.status !== "draft" && (
+            <button
+              onClick={() => analyze.mutate()}
+              disabled={analyze.isPending}
+              className="rounded-md bg-brand-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-800 disabled:opacity-60"
+            >
+              {analyze.isPending ? "Analysing…" : exam.status === "analyzed" ? "Re-run analysis" : "Run analysis"}
+            </button>
+          )}
         </div>
       </div>
       {message && (
@@ -81,6 +98,48 @@ function InstructorExamRow({ exam }: { exam: Exam }) {
         </p>
       )}
     </li>
+  );
+}
+
+function NewExam({ courseId }: { courseId: string }) {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const create = useMutation({
+    mutationFn: () => api.createExam(courseId, title),
+    onSuccess: (exam) => navigate(`/exams/${exam.id}/edit`),
+  });
+
+  if (!open)
+    return (
+      <button onClick={() => setOpen(true)} className="text-sm font-medium text-brand-700 hover:underline">
+        + New exam
+      </button>
+    );
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        create.mutate();
+      }}
+      className="flex items-center gap-2"
+    >
+      <input
+        autoFocus
+        required
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Exam title"
+        className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+      />
+      <button type="submit" disabled={create.isPending} className="rounded-md bg-brand-700 px-3 py-1 text-sm text-white">
+        Create
+      </button>
+      <button type="button" onClick={() => setOpen(false)} className="text-sm text-slate-500">
+        Cancel
+      </button>
+      {create.isError && <span className="text-sm text-red-700">{create.error.message}</span>}
+    </form>
   );
 }
 
