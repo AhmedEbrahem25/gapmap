@@ -614,6 +614,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/concepts/{concept_id}/explanation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Concept Explanation
+         * @description Always 200: an unavailable explanation is a normal state the page handles (NFR-05).
+         */
+        get: operations["concept_explanation_api_concepts__concept_id__explanation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/courses/{course_id}/audit-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Course Audit Log
+         * @description NFR-10 / TC-26: approvals and important edits, newest first. Instructor and admin only.
+         */
+        get: operations["course_audit_log_api_courses__course_id__audit_log_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -635,6 +675,29 @@ export interface components {
             recovery_plans: number;
             /** Weak Threshold Percent */
             weak_threshold_percent: number;
+        };
+        /** AuditEntryOut */
+        AuditEntryOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp: string;
+            /** Actor Name */
+            actor_name: string | null;
+            /** Action */
+            action: string;
+            /** Target Type */
+            target_type: string | null;
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            } | null;
         };
         /** BankOption */
         BankOption: {
@@ -880,6 +943,27 @@ export interface components {
             title: string;
             /** Status */
             status: string;
+        };
+        /** ExplanationOut */
+        ExplanationOut: {
+            /** Status */
+            status: string;
+            /** Explanation */
+            explanation?: string | null;
+            /**
+             * Key Points
+             * @default []
+             */
+            key_points: string[];
+            /**
+             * Sources
+             * @default []
+             */
+            sources: components["schemas"]["SlideRef"][];
+            /** Model */
+            model?: string | null;
+            /** Message */
+            message?: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -2662,6 +2746,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImportDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    concept_explanation_api_concepts__concept_id__explanation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                concept_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplanationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    course_audit_log_api_courses__course_id__audit_log_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                course_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEntryOut"][];
                 };
             };
             /** @description Validation Error */

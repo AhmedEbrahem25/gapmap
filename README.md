@@ -66,6 +66,18 @@ Use `--no-results` to skip the results import and demo the upload live. Two samp
 
 Every demo account uses the password from `DEMO_PASSWORD` in `.env`.
 
+## AI explanations (optional)
+
+Recovery plans show a short explanation of each weak concept, written by Claude (`claude-opus-5-5`)
+from that concept's approved slides only. Set `ANTHROPIC_API_KEY` in `.env` to turn it on. Without
+it, plans show the slides and practice as usual and the explanation card is simply hidden.
+
+- Only the concept and slide text are sent, never student data (BR-12).
+- Pages the model cites that were not sent are dropped (FR-35).
+- One explanation per concept is cached and regenerated when its approved slides change.
+- If a safety classifier declines, the request is retried on Anthropic's recommended fallback model
+  (`fallbacks: "default"`).
+
 ## Tests
 
 ```bash
@@ -107,4 +119,4 @@ After adding endpoints, regenerate the frontend API types while the backend is r
 | S3 | Analysis → per-concept performance → student report with real slides | done |
 | S4 | Recovery plan → practice → retest → learning gain | done |
 | S5 | Instructor class analytics with re-teaching suggestions | done |
-| S6 | P1: grounded LLM explanation, audit log screen | |
+| S6 | P1: grounded LLM explanation per concept, audit log screen | done; explanations need `ANTHROPIC_API_KEY` |

@@ -1,6 +1,8 @@
 import type {
   AnalysisSummary,
+  AuditEntry,
   ClassAnalytics,
+  ConceptExplanation,
   Course,
   CourseDetail,
   Exam,
@@ -136,6 +138,8 @@ export const api = {
     request<ImportDetail>(`/imports/${importId}/rows/${rowId}`, { method: "DELETE" }),
   approveImport: (importId: string) => request<ImportDetail>(`/imports/${importId}/approve`, { method: "POST" }),
   rejectImport: (importId: string) => request<ImportDetail>(`/imports/${importId}/reject`, { method: "POST" }),
+  explanation: (conceptId: string) => request<ConceptExplanation>(`/concepts/${conceptId}/explanation`),
+  auditLog: (courseId: string) => request<AuditEntry[]>(`/courses/${courseId}/audit-log`),
   analytics: (courseId: string, examId?: string) =>
     request<ClassAnalytics>(`/courses/${courseId}/analytics${examId ? `?exam_id=${examId}` : ""}`),
 };

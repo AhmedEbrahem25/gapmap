@@ -74,10 +74,29 @@ class RetestResponse(IdMixin, Base):
     retest: Mapped[Retest] = relationship(back_populates="responses")
 
 
+class ConceptExplanation(Base):
+    """Cached LLM explanation of a concept, grounded in its approved slides (FR-38, P1).
+
+    Not student-specific, so one per concept. `source_key` changes when the approved slides
+    change, which makes the cached text stale.
+    """
+
+    __tablename__ = "concept_explanations"
+
+    concept_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("concepts.id", ondelete="CASCADE"), primary_key=True
+    )
+    source_key: Mapped[str] = mapped_column(Text)
+    content: Mapped[dict] = mapped_column(JSON)  # {"explanation", "key_points", "cited_pages"}
+    model: Mapped[str] = mapped_column(String(60))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class AuditLog(IdMixin, Base):
     __tablename__ = "audit_logs"
 
     actor_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), index=True)
+    course_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)  # for the course audit view
     action: Mapped[str] = mapped_column(String(80))  # e.g. "import.approved"
     target_type: Mapped[str | None] = mapped_column(String(40))
     target_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)

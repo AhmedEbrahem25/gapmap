@@ -180,7 +180,7 @@ def _import_approved_results(db, exam, instructor, students, questions, csv_path
         ))
 
     db.add(AuditLog(
-        actor_id=instructor.id, action="import.approved", target_type="import_batch",
+        actor_id=instructor.id, course_id=exam.course_id, action="import.approved", target_type="import_batches",
         target_id=batch.id, details={"rows": len(rows)}, note="Created by the demo seed script",
     ))
     return len(rows)

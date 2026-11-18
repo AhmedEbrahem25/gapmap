@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { useAuth } from "../features/auth/AuthContext";
+import { ConceptExplanation } from "../features/recovery/ConceptExplanation";
 import { api } from "../services/api";
 import type { PlanConcept, RecoveryPlan, RecoveryTask } from "../types/api";
 
@@ -75,6 +76,8 @@ function ConceptStep({
         </h2>
         <span className="text-sm text-red-700">Exam score {c.percent_before}%</span>
       </div>
+
+      <ConceptExplanation conceptId={c.concept_id} />
 
       <h3 className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">Review these slides</h3>
       {slides.length === 0 ? (
