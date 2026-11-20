@@ -7,9 +7,9 @@ what was measured, how, and what was not.
 
 | Measure | Result |
 |---|---|
-| Automated tests | 121 of 121 pass (20 Nov 2026) |
+| Automated tests | 131 of 131 pass (20 Nov 2026) |
 | Plan test cases | 26 of 27 pass; TC-17 (OCR) not applicable |
-| Smoke test of the demo journey on Docker + PostgreSQL | 21 of 21 steps pass, in CI on every pull request |
+| Smoke test of the demo journey | 23 of 23 steps pass locally (20 Nov); CI runs it on Docker + PostgreSQL for every pull request |
 | Class aggregation | Recounted independently from the raw CSV in `test_aggregation_matches_the_sample_csv`; matches |
 
 ## 2. Performance (NFR-09)

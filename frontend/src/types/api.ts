@@ -31,6 +31,23 @@ export interface Concept {
   description: string | null;
 }
 
+export interface ConceptInput {
+  name: string;
+  description: string | null;
+}
+
+/** A concept with its approved slides, for the instructor's concept page (FR-09, FR-10). */
+export interface ConceptDetail extends Concept {
+  question_count: number;
+  slides: SlideRef[];
+}
+
+export interface SlideSuggestion {
+  slide: SlideRef;
+  score: number; // 0 = no word in common
+  matched_terms: string[];
+}
+
 export interface CourseDetail extends Course {
   student_count: number;
   material_count: number;

@@ -1,9 +1,9 @@
 # Test results
 
 Plan Section 14 test cases, how each is checked, and the result. Run the suite with
-`cd backend && pytest` (121 tests). CI runs it, plus the frontend build, on every pull request.
+`cd backend && pytest` (131 tests). CI runs it, plus the frontend build, on every pull request.
 
-Last full run: **2026-11-20, 121 passed**.
+Last full run: **2026-11-20, 131 passed**.
 
 ## Test cases
 
@@ -56,7 +56,7 @@ The unit tests use SQLite, so the full journey is also run on the real stack.
 |---|---|
 | `docker compose up --build`: images build, Postgres healthy, backend and frontend start | Pass (2026-11-18) |
 | `python -m app.seed` on Postgres | Pass (2026-11-18) |
-| `scripts/smoke_test.py`: 21 steps from importing results with errors to the audit log and a Word upload | Pass (2026-11-18), and in CI on every pull request |
+| `scripts/smoke_test.py`: 23 steps from importing results with errors to concepts and slides, the audit log and a Word upload | Pass (21 steps on 2026-11-18; 23 steps locally on 2026-11-20), and in CI on every pull request |
 | Frontend container in the browser: login, student report with slides | Pass (2026-11-18) |
 
 ## End-to-end checks in the browser

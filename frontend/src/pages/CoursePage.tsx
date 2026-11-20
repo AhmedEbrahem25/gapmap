@@ -60,7 +60,14 @@ export function CoursePage() {
         <Stat label="Exams" value={c.exam_count} />
       </dl>
 
-      <h2 className="mt-10 text-lg font-semibold">Concepts</h2>
+      <div className="mt-10 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">Concepts</h2>
+        {isInstructor && (
+          <Link to={`/courses/${c.id}/concepts`} className="text-sm font-medium text-brand-700 hover:underline">
+            Manage concepts and slides
+          </Link>
+        )}
+      </div>
       <ul className="mt-3 grid gap-3 sm:grid-cols-3">
         {c.concepts.map((concept) => (
           <li key={concept.id} className="rounded-lg border border-slate-200 bg-white p-4">
