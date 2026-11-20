@@ -32,8 +32,9 @@ flowchart LR
     UC11[UC-11 View audit log]
     UC12[UC-12 Open slide]
     UC13[UC-13 Manage concepts and slides]
+    UC14[UC-14 Maintain question bank]
   end
-  I --- UC1 & UC2 & UC3 & UC4 & UC5 & UC6 & UC10 & UC11 & UC12 & UC13
+  I --- UC1 & UC2 & UC3 & UC4 & UC5 & UC6 & UC10 & UC11 & UC12 & UC13 & UC14
   S --- UC1 & UC6 & UC7 & UC8 & UC9 & UC12
   C --- UC1
   UC7 -. explanation .- L
@@ -53,6 +54,19 @@ enrolments (see [Scope-and-Limitations](../01-Introduction/Scope-and-Limitations
 | Alternative 5a | The instructor clicks **Remove** on an approved slide: students are no longer sent to it |
 | Exception | Deleting a concept that exam questions, the question bank or recovery plans use is refused with the reason; renaming is allowed |
 | Postcondition | Reports use the new slides immediately; existing recovery plans change when the analysis is re-run. Every change is in the audit log |
+
+## UC-14 Maintain the question bank
+
+| | |
+|---|---|
+| Actor | Instructor |
+| Trigger | A concept needs more or better practice or retest questions, or an AI draft is waiting |
+| Main flow | 1. Concepts page → the concept's **Question bank** link. 2. Reviews *Waiting for review*, *Practice* and *Retest*, each question with its key and source slide. 3. **New question**: practice or retest, the question, options, the correct one, and the slide that explains it. 4. Saves: the question is approved and served at once |
+| Alternative 2a | An AI draft is waiting: the instructor edits it if needed and clicks **Approve** |
+| Alternative 3a | The question matches an exam question or another item of the concept: refused, so the retest doesn't measure memorisation (BR-10) |
+| Alternative 4a | **Withdraw** stops serving a question without deleting it |
+| Exception | A question a retest has used can't be edited or deleted, because that would change the retest's results; it can be withdrawn |
+| Postcondition | Practice serves approved practice questions; new retests draw 3 approved retest questions per weak concept. Every change is in the audit log |
 
 ## UC-04 Import and verify results
 

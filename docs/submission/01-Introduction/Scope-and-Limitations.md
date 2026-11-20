@@ -8,6 +8,8 @@
   keeping the original file name and page number.
 - A concepts page where the instructor defines concepts and approves the slides for each one, helped
   by keyword suggestions that show which words matched.
+- A question bank per concept: the instructor adds, edits, approves, withdraws and deletes practice and
+  retest questions.
 - An exam builder for **multiple-choice** questions: options, the answer key, one concept per
   question, and an optional error type on each wrong option.
 - Results import from **CSV or Excel (.xlsx)** in the long format (`student_ref, question_id, answer,
@@ -36,7 +38,7 @@ the 10-day build, and listed so nothing is overstated.
 | Limitation | Effect | Plan reference |
 |---|---|---|
 | Courses and enrolments are created by the seed script. There is no screen or API to create a course or enrol students. | A new course needs a seed change or a roster import (not built). Concepts and their slides **can** be managed in the app. | FR-05, US-01 |
-| Question-bank items (practice and retest) are seeded. There is no screen to add or approve them, and AI-generated questions are not built. | One pending AI draft exists only to prove it is never served (TC-25). | FR-39, BR-11 |
+| AI-generated practice questions are not built. The review flow for them is: an AI draft waits for the instructor's approval on the question-bank page. | The seed holds one AI draft to show the flow and prove it isn't served before approval (TC-25). | FR-39, BR-11 |
 | No embeddings or semantic search. Slide suggestions use keyword matching; students get only approved slides. | Suggestions miss synonyms and paraphrases, so the instructor may need *Show all pages*. | FR-08, plan 10.4 |
 | Word (.docx) is supported instead of PowerPoint (.pptx). | PowerPoint decks must be exported to PDF first. | FR-06 |
 | One primary concept per question. | Weighted multi-concept questions are not supported. | Plan Section 12 |

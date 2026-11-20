@@ -102,6 +102,10 @@ function ConceptCard({ courseId, concept }: { courseId: string; concept: Concept
             {concept.question_count} exam question{concept.question_count === 1 ? "" : "s"}
             {concept.question_count < 2 && " · needs at least 2 to be judged"}
           </p>
+          <Link to={`/concepts/${concept.id}/bank`} className="mt-1 inline-block text-sm text-brand-700 hover:underline">
+            Question bank: {concept.practice_count} practice · {concept.retest_count} retest
+            {concept.pending_count > 0 && ` · ${concept.pending_count} waiting for review`}
+          </Link>
         </div>
         <div className="flex gap-2 text-sm">
           <button onClick={() => setEditing(true)} className="rounded-md px-2 py-1 text-slate-600 hover:bg-slate-100">

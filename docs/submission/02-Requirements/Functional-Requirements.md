@@ -73,7 +73,7 @@ are mapped to tests in [../../test-results.md](../../test-results.md).
 | FR-36 | Personal plan ordered by priority | Done | Weak concepts, weakest first. TC-13 |
 | FR-37 | Show the concept and recommended slides | Done | Recovery plan screen |
 | FR-38 | Explanation based on course materials | Done (P1) | Claude, grounded in approved slides; needs `ANTHROPIC_API_KEY`. TC-18 |
-| FR-39 | New practice questions on the concept | Done | Approved question bank; LLM-generated questions not built |
+| FR-39 | New practice questions on the concept | Done | Approved question bank, maintained on the question-bank page (add, edit, approve, withdraw, delete). LLM-generated questions not built. `test_question_bank.py` |
 | FR-40 | The student marks an activity complete | Done | `POST /api/recovery-tasks/{id}/complete`. TC-14 |
 | FR-41 | Create a short retest | Done | 3 retest-only items per weak concept. TC-15 |
 

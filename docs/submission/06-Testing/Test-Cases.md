@@ -4,7 +4,7 @@ The 27 test cases from plan Section 14, with their expected result and status. T
 each one is listed in [../../test-results.md](../../test-results.md), which is kept up to date with
 each run, so it is not repeated here.
 
-Last run: **20 November 2026, 131 tests passed** (`cd backend && pytest`).
+Last run: **20 November 2026, 138 tests passed** (`cd backend && pytest`).
 
 | ID | Scenario | Expected | Status |
 |---|---|---|---|
@@ -40,7 +40,7 @@ Last run: **20 November 2026, 131 tests passed** (`cd backend && pytest`).
 
 ## Beyond the plan's list
 
-Besides the TCs, the 131 tests cover:
+Besides the TCs, the 138 tests cover:
 
 - Role-based access on courses for every role (7 tests), plus access checks on reports, plans,
   retests, imports, answer keys and the audit log.
@@ -55,6 +55,10 @@ Besides the TCs, the 131 tests cover:
 - Concepts and slides: create, rename, duplicate names, deleting a concept in use, keyword suggestions,
   approving and removing slides (and the student report changing with them), a slide from another
   course, and access for every role (10 tests).
+- Question bank: the overview with counts, adding a served item, refusing invalid items (key not an
+  option, repeated letters, an exam question, a repeat within the concept, a slide from another course),
+  approving and withdrawing an AI draft, editing and deleting, freezing an item a retest used, and
+  access for every role (7 tests).
 - Word upload: page breaks, headings, long sections, and a file with no text.
 
 Word upload with Arabic text was checked by hand in the browser (see test-results.md).

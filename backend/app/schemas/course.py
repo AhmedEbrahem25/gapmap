@@ -40,6 +40,9 @@ class ConceptDetail(ConceptOut):
 
     question_count: int
     slides: list[SlideRef]  # approved slides only: what students see
+    practice_count: int  # approved practice items
+    retest_count: int  # approved retest items
+    pending_count: int  # bank items waiting for review (BR-11)
 
 
 class SlideSuggestion(BaseModel):

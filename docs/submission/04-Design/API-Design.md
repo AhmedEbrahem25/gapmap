@@ -91,6 +91,17 @@ in or able to see the course · C = coordinator.
 | PUT | `/concepts/{id}/slides/{slide_chunk_id}` | I | Approve a slide for the concept |
 | DELETE | `/concepts/{id}/slides/{slide_chunk_id}` | I | Remove an approved slide |
 
+### Question bank
+
+| Method | Path | Who | Purpose |
+|---|---|---|---|
+| GET | `/concepts/{id}/bank-questions` | I | All practice and retest items with keys, review state, source slide and retest use |
+| POST | `/concepts/{id}/bank-questions` | I | Add an item (approved as saved); refused if it repeats an exam question or another item |
+| PUT | `/bank-questions/{id}` | I | Edit an item (409 if a retest used it) |
+| POST | `/bank-questions/{id}/approve` | I | Approve a pending item such as an AI draft |
+| POST | `/bank-questions/{id}/withdraw` | I | Stop serving an item |
+| DELETE | `/bank-questions/{id}` | I | Delete an unused item |
+
 ### Exams and imports
 
 | Method | Path | Who | Purpose |
@@ -144,5 +155,5 @@ in or able to see the course · C = coordinator.
 | `POST /courses` | Not built: courses are seeded |
 | `GET/POST /courses/{id}/concepts`, `POST /concepts/{id}/slides` | Built as the concepts endpoints above; a slide is approved with `PUT /concepts/{id}/slides/{slide_chunk_id}` |
 | `PUT /questions/{id}/answer-key` | The key is part of the question (`POST`/`PUT /questions`) and locked with `POST /exams/{id}/approve-key` |
-| `GET/POST /concepts/{id}/bank-questions` | Not built: the bank is seeded |
+| `GET/POST /concepts/{id}/bank-questions` | Built as above, plus edit, approve, withdraw and delete |
 | — | Added: slide suggestions, concept edit and delete, exam detail, question edit/delete, reopen, import history, row delete, exam results, instructor view of a student report, page image, practice check, retest detail, explanation |

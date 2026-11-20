@@ -47,6 +47,7 @@ flowchart TB
     auth
     courses
     concepts
+    question_bank
     materials
     exams
     analysis
@@ -66,6 +67,7 @@ flowchart TB
     ing[pdf_ingest + docx_convert]
     exm[exams + exam_data]
     con[concepts]
+    qb[question_bank]
     au[audit]
   end
   core[app/core: config, db, security, deps / RBAC]
@@ -79,6 +81,7 @@ flowchart TB
   explanations --> ex
   materials --> ing
   concepts --> con
+  question_bank --> qb
   con --> sl
   services --> models
   api --> core
@@ -92,7 +95,8 @@ flowchart TB
 | exams, imports, verification | `api/exams.py`, `services/exams.py`, `services/imports.py`, `services/import_validation.py` |
 | analysis | `api/analysis.py`, `services/analysis.py`, `services/scoring.py` |
 | retrieval | `services/slides.py` serves approved mappings; `services/concepts.py` suggests slides by keyword; no vector search |
-| recovery, question_bank | `api/recovery.py`, `services/recovery.py` |
+| recovery | `api/recovery.py`, `services/recovery.py` |
+| question_bank | `api/question_bank.py`, `services/question_bank.py`: review and maintenance; students are served through `recovery` |
 | analytics | `api/analytics.py`, `services/class_analytics.py` |
 | audit | `services/audit.py`; screen served by `api/explanations.py` |
 | AI explanations (P1) | `api/explanations.py`, `services/explanations.py` |

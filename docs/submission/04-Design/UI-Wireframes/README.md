@@ -65,6 +65,11 @@ with the words that matched. *Show all pages* lists the rest.
 
 ![Slide suggestions](16-concept-suggestions.png)
 
+**Question bank** (`/concepts/:id/bank`). A concept's practice and retest questions with keys and
+source slides. The seed's AI draft waits for review; a warning shows if there are too few retest questions.
+
+![Question bank](17-question-bank.png)
+
 **Audit log** (`/courses/:id/audit`). Approvals and edits, newest first.
 
 ![Audit log](14-audit-log.png)

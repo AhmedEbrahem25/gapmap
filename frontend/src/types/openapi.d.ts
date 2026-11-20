@@ -175,6 +175,85 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/concepts/{concept_id}/bank-questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Items
+         * @description Every practice and retest item of the concept, with answer keys. Course instructor only.
+         */
+        get: operations["list_items_api_concepts__concept_id__bank_questions_get"];
+        put?: never;
+        /**
+         * Add Item
+         * @description An item the instructor writes is approved as it is saved.
+         */
+        post: operations["add_item_api_concepts__concept_id__bank_questions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-questions/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Item */
+        put: operations["update_item_api_bank_questions__item_id__put"];
+        post?: never;
+        /** Delete Item */
+        delete: operations["delete_item_api_bank_questions__item_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-questions/{item_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve Item
+         * @description Approve a pending item, such as an AI draft, so students can be served it (BR-11).
+         */
+        post: operations["approve_item_api_bank_questions__item_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-questions/{item_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw Item */
+        post: operations["withdraw_item_api_bank_questions__item_id__withdraw_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/courses/{course_id}/materials": {
         parameters: {
             query?: never;
@@ -779,12 +858,87 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** BankItemIn */
+        BankItemIn: {
+            /**
+             * Usage
+             * @enum {string}
+             */
+            usage: "practice" | "retest";
+            /** Prompt */
+            prompt: string;
+            /** Options */
+            options: components["schemas"]["BankOptionIn"][];
+            /** Answer Key */
+            answer_key: string;
+            /** Source Chunk Id */
+            source_chunk_id?: string | null;
+        };
+        /**
+         * BankItemOut
+         * @description A question-bank item as the instructor sees it: with the answer key and review state.
+         */
+        BankItemOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Usage */
+            usage: string;
+            /** Prompt */
+            prompt: string;
+            /** Options */
+            options: components["schemas"]["BankOption"][];
+            /** Answer Key */
+            answer_key: string;
+            /** Origin */
+            origin: string;
+            /** Review Status */
+            review_status: string;
+            source: components["schemas"]["SlideRef"] | null;
+            /** Used In Retests */
+            used_in_retests: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** BankOption */
         BankOption: {
             /** Key */
             key: string;
             /** Text */
             text: string;
+        };
+        /** BankOptionIn */
+        BankOptionIn: {
+            /** Key */
+            key: string;
+            /** Text */
+            text: string;
+        };
+        /** BankOverview */
+        BankOverview: {
+            /**
+             * Concept Id
+             * Format: uuid
+             */
+            concept_id: string;
+            /** Concept Name */
+            concept_name: string;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Retest Questions Per Concept */
+            retest_questions_per_concept: number;
+            /** Slides */
+            slides: components["schemas"]["SlideRef"][];
+            /** Items */
+            items: components["schemas"]["BankItemOut"][];
         };
         /**
          * BankQuestionOut
@@ -857,6 +1011,12 @@ export interface components {
             question_count: number;
             /** Slides */
             slides: components["schemas"]["SlideRef"][];
+            /** Practice Count */
+            practice_count: number;
+            /** Retest Count */
+            retest_count: number;
+            /** Pending Count */
+            pending_count: number;
         };
         /** ConceptGain */
         ConceptGain: {
@@ -2005,6 +2165,200 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConceptDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_items_api_concepts__concept_id__bank_questions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                concept_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankOverview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_item_api_concepts__concept_id__bank_questions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                concept_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BankItemIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankOverview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_item_api_bank_questions__item_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BankItemIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankOverview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_item_api_bank_questions__item_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankOverview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_item_api_bank_questions__item_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankOverview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    withdraw_item_api_bank_questions__item_id__withdraw_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankOverview"];
                 };
             };
             /** @description Validation Error */

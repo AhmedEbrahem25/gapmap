@@ -1,9 +1,9 @@
 # Test results
 
 Plan Section 14 test cases, how each is checked, and the result. Run the suite with
-`cd backend && pytest` (131 tests). CI runs it, plus the frontend build, on every pull request.
+`cd backend && pytest` (138 tests). CI runs it, plus the frontend build, on every pull request.
 
-Last full run: **2026-11-20, 131 passed**.
+Last full run: **2026-11-20, 138 passed**.
 
 ## Test cases
 
@@ -44,7 +44,7 @@ Last full run: **2026-11-20, 131 passed**.
 | BR-01 official grade never changed automatically | `test_tc10_...` (official scores unchanged), `test_tc22_...` |
 | BR-02 approved key before evaluation | `test_build_an_exam_then_import_results` |
 | BR-03 every question has a concept | `test_every_question_has_a_concept_and_a_valid_key`, `approve_key` checks |
-| BR-10 retest items differ from exam and practice | `test_bank_has_separate_approved_practice_and_retest_per_concept`, `test_tc15_...`, `test_retest_items_cannot_be_checked_as_practice` |
+| BR-10 retest items differ from exam and practice | `test_bank_has_separate_approved_practice_and_retest_per_concept`, `test_tc15_...`, `test_retest_items_cannot_be_checked_as_practice`, `test_invalid_items_are_refused_with_a_reason` |
 | BR-12 no student data sent to the LLM | `test_prompt_contains_no_student_data` |
 | FR-35 never invent a source | `test_tc12_...`, `test_explanation_is_grounded_and_never_cites_unsent_pages` |
 
@@ -56,7 +56,7 @@ The unit tests use SQLite, so the full journey is also run on the real stack.
 |---|---|
 | `docker compose up --build`: images build, Postgres healthy, backend and frontend start | Pass (2026-11-18) |
 | `python -m app.seed` on Postgres | Pass (2026-11-18) |
-| `scripts/smoke_test.py`: 23 steps from importing results with errors to concepts and slides, the audit log and a Word upload | Pass (21 steps on 2026-11-18; 23 steps locally on 2026-11-20), and in CI on every pull request |
+| `scripts/smoke_test.py`: 25 steps from importing results with errors to concepts and slides, the question bank, the audit log and a Word upload | Pass (21 steps on 2026-11-18; 25 steps locally on 2026-11-20), and in CI on every pull request |
 | Frontend container in the browser: login, student report with slides | Pass (2026-11-18) |
 
 ## End-to-end checks in the browser

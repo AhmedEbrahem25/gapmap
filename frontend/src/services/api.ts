@@ -1,6 +1,8 @@
 import type {
   AnalysisSummary,
   AuditEntry,
+  BankItemInput,
+  BankOverview,
   ClassAnalytics,
   ConceptDetail,
   ConceptExplanation,
@@ -92,6 +94,14 @@ export const api = {
   me: () => request<User>("/me"),
   courses: () => request<Course[]>("/courses"),
   course: (id: string) => request<CourseDetail>(`/courses/${id}`),
+  bank: (conceptId: string) => request<BankOverview>(`/concepts/${conceptId}/bank-questions`),
+  addBankItem: (conceptId: string, body: BankItemInput) =>
+    request<BankOverview>(`/concepts/${conceptId}/bank-questions`, { method: "POST", body: JSON.stringify(body) }),
+  updateBankItem: (itemId: string, body: BankItemInput) =>
+    request<BankOverview>(`/bank-questions/${itemId}`, { method: "PUT", body: JSON.stringify(body) }),
+  approveBankItem: (itemId: string) => request<BankOverview>(`/bank-questions/${itemId}/approve`, { method: "POST" }),
+  withdrawBankItem: (itemId: string) => request<BankOverview>(`/bank-questions/${itemId}/withdraw`, { method: "POST" }),
+  deleteBankItem: (itemId: string) => request<BankOverview>(`/bank-questions/${itemId}`, { method: "DELETE" }),
   concepts: (courseId: string) => request<ConceptDetail[]>(`/courses/${courseId}/concepts`),
   createConcept: (courseId: string, body: ConceptInput) =>
     request<ConceptDetail>(`/courses/${courseId}/concepts`, { method: "POST", body: JSON.stringify(body) }),

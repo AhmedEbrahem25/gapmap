@@ -23,7 +23,7 @@ from app.models import (
     SlideChunk,
     User,
 )
-from app.models.enums import MappingStatus
+from app.models.enums import BankUsage, MappingStatus, ReviewStatus
 from app.schemas.course import ConceptDetail, ConceptIn, SlideSuggestion
 from app.services.audit import audit
 from app.services.slides import concept_slides, slide_ref
@@ -82,6 +82,14 @@ def concept_details(db: Session, course: Course) -> list[ConceptDetail]:
             .group_by(QuestionConcept.concept_id)
         ).all()
     )
+    bank: dict[tuple, int] = {
+        (cid, usage, review): n
+        for cid, usage, review, n in db.execute(
+            select(BankQuestion.concept_id, BankQuestion.usage, BankQuestion.review_status, func.count())
+            .where(BankQuestion.concept_id.in_([c.id for c in concepts]))
+            .group_by(BankQuestion.concept_id, BankQuestion.usage, BankQuestion.review_status)
+        )
+    }
     return [
         ConceptDetail(
             id=c.id,
@@ -89,6 +97,9 @@ def concept_details(db: Session, course: Course) -> list[ConceptDetail]:
             description=c.description,
             question_count=counts.get(c.id, 0),
             slides=slides[c.id],
+            practice_count=bank.get((c.id, BankUsage.PRACTICE, ReviewStatus.APPROVED), 0),
+            retest_count=bank.get((c.id, BankUsage.RETEST, ReviewStatus.APPROVED), 0),
+            pending_count=sum(bank.get((c.id, usage, ReviewStatus.PENDING), 0) for usage in BankUsage),
         )
         for c in concepts
     ]

@@ -41,7 +41,7 @@ Related documents elsewhere in `docs/`:
 |---|---|
 | Functional requirements | 42 of 47 done (one of them P1), 2 partial, 1 not built (course creation), 2 out of scope (OCR) |
 | Plan test cases | 26 of 27 pass; OCR not applicable |
-| Automated tests | 131 pass; the demo journey also runs on Docker + PostgreSQL in CI |
+| Automated tests | 138 pass; the demo journey also runs on Docker + PostgreSQL in CI |
 | Accuracy against the instructor's judgement | Not measured yet |
 
 ## Still to do before submission

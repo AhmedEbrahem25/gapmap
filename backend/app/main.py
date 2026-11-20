@@ -3,7 +3,18 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import analysis, analytics, auth, concepts, courses, exams, explanations, materials, recovery
+from app.api import (
+    analysis,
+    analytics,
+    auth,
+    concepts,
+    courses,
+    exams,
+    explanations,
+    materials,
+    question_bank,
+    recovery,
+)
 from app.core.config import settings
 from app.core.db import create_all
 
@@ -34,6 +45,7 @@ def health() -> dict[str, str]:
 app.include_router(auth.router, prefix="/api")
 app.include_router(courses.router, prefix="/api")
 app.include_router(concepts.router, prefix="/api")
+app.include_router(question_bank.router, prefix="/api")
 app.include_router(materials.router, prefix="/api")
 app.include_router(analysis.router, prefix="/api")
 app.include_router(recovery.router, prefix="/api")

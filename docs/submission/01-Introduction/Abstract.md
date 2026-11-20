@@ -21,7 +21,7 @@ a short explanation of each weak concept from that concept's approved slides onl
 student data, and cannot cite a page it was not given.
 
 The system was built as a modular monolith (React, FastAPI, PostgreSQL) for the AI Educathon 2026 at
-Alamein International University. It is covered by 131 automated tests: 26 of the plan's 27 test
+Alamein International University. It is covered by 138 automated tests: 26 of the plan's 27 test
 cases pass, and the remaining one (OCR) is out of scope. A smoke test of the whole demo journey runs
 on Docker Compose for every pull request. It has been demonstrated on one pilot course (Software
 Engineering) with 20 synthetic students. Accuracy against the instructor's own judgement has not been
