@@ -39,9 +39,9 @@ Related documents elsewhere in `docs/`:
 
 | | |
 |---|---|
-| Functional requirements | 40 of 47 done (one of them P1), 2 partial, 3 not built (course and concept set-up screens), 2 out of scope (OCR) |
+| Functional requirements | 43 of 47 done (one of them P1), 2 partial, 2 out of scope (OCR); every P0 requirement is done |
 | Plan test cases | 26 of 27 pass; OCR not applicable |
-| Automated tests | 121 pass; the demo journey also runs on Docker + PostgreSQL in CI |
+| Automated tests | 144 pass; the demo journey also runs on Docker + PostgreSQL in CI |
 | Accuracy against the instructor's judgement | Not measured yet |
 
 ## Still to do before submission
@@ -51,7 +51,7 @@ Related documents elsewhere in `docs/`:
 - [ ] Instructor review of concepts, answer key and question bank (issue #1). Then measure accuracy
       as described in [Evaluation results](06-Testing/Evaluation-Results.md).
 - [ ] Have a teammate who did not write it follow the [Setup guide](05-Implementation/Setup-Guide.md)
-      on a clean machine.
+      on a clean machine. (A fresh clone on the development machine already worked on 20 Nov.)
 
 ## Mapping to the suggested report chapters (plan Section 20)
 

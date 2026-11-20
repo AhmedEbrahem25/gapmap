@@ -4,6 +4,9 @@ import { Link, useParams } from "react-router-dom";
 import { api } from "../services/api";
 
 const ACTION_LABEL: Record<string, string> = {
+  "course.created": "Created the course",
+  "course.students_enrolled": "Enrolled students",
+  "course.student_removed": "Removed a student",
   "material.uploaded": "Uploaded a lecture file",
   "exam.created": "Created an exam",
   "question.added": "Added a question",
@@ -17,6 +20,16 @@ const ACTION_LABEL: Record<string, string> = {
   "import.approved": "Approved results",
   "import.rejected": "Rejected results",
   "exam.analyzed": "Ran the analysis",
+  "concept.created": "Added a concept",
+  "concept.updated": "Edited a concept",
+  "concept.deleted": "Deleted a concept",
+  "concept.slide_approved": "Approved a slide for a concept",
+  "concept.slide_removed": "Removed a slide from a concept",
+  "bank.added": "Added a practice or retest question",
+  "bank.updated": "Edited a practice or retest question",
+  "bank.approved": "Approved a practice or retest question",
+  "bank.withdrawn": "Withdrew a practice or retest question",
+  "bank.deleted": "Deleted a practice or retest question",
 };
 
 export function AuditLogPage() {

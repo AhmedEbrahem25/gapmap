@@ -1,6 +1,7 @@
 # Demo script (4-5 minutes)
 
-Follows the storyboard in plan Section 18. Every step below was run end to end on the demo data.
+Follows the storyboard in plan Section 18. Every step below was run end to end on the demo data,
+last on 20 Nov 2026 on a clean clone running on Docker with PostgreSQL (`scripts/rehearse_demo.py`).
 
 ## Before you present
 
@@ -9,7 +10,16 @@ docker compose up -d
 docker compose exec backend python -m app.seed --no-results
 ```
 
-`--no-results` resets everything and leaves the results to be imported live. Then:
+`--no-results` resets everything and leaves the results to be imported live.
+
+Optional, one minute: check every step below still works, then reset again.
+
+```bash
+python scripts/rehearse_demo.py
+docker compose exec backend python -m app.seed --no-results
+```
+
+Then:
 
 - **Window 1 (instructor):** http://localhost:5173, log in as `instructor@gapmap.test`.
 - **Window 2 (student, private window):** http://localhost:5173, log in as `stu001@gapmap.test`.
@@ -32,6 +42,19 @@ docker compose exec backend python -m app.seed --no-results
 | 7 | "Then a short retest with new questions." | Back to plan → **Take the retest** → answer → **Submit**. Show before/after per concept in percentage points and the note that it is an early sign, not proof. (2) |
 | 8 | "The instructor sees what to re-teach." | Course → **Class analytics**: Scrum Roles is flagged with evidence (73% of 60 answers wrong, 17 of 20 students, most common wrong answer and its likely cause). (1) |
 | 9 | "GapMap turns the exam from the end of assessment into the start of better learning." | |
+
+## If the judges ask how the content is set up
+
+All instructor screens, not part of the 5 minutes:
+
+- **Concepts and slides:** course page → **Manage concepts and slides**. Show **Find slides** on
+  Scrum Roles: the suggestions list the words they matched, and nothing reaches students until
+  **Approve**.
+- **Question bank:** on that page, the Scrum Roles **Question bank** link. The AI draft waits under
+  *Waiting for review*; practice and retest questions are kept apart so practice can't give the
+  retest away.
+- **A new course:** home page → **New course**, then the **Students** card → paste `STU001, STU002`
+  → **Enrol**. Reseed afterwards if you try this before presenting.
 
 ## If something goes wrong
 

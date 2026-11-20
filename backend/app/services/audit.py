@@ -2,7 +2,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.models import AuditLog, Exam, User
+from app.models import AuditLog, Concept, Exam, User
 
 
 def audit(db: Session, actor: User | None, action: str, target: Any = None, details: dict | None = None) -> None:
@@ -20,11 +20,18 @@ def audit(db: Session, actor: User | None, action: str, target: Any = None, deta
 
 
 def _course_id(db: Session, target: Any):
-    """Courses own everything audited: materials and exams directly, the rest through an exam."""
+    """Courses own everything audited: materials, exams and concepts directly, the rest through an exam
+    or a concept (question-bank items)."""
+    if getattr(target, "__tablename__", None) == "courses":
+        return target.id
     if getattr(target, "course_id", None):
         return target.course_id
     exam_id = getattr(target, "exam_id", None)
     if exam_id:
         exam = db.get(Exam, exam_id)
         return exam.course_id if exam else None
+    concept_id = getattr(target, "concept_id", None)
+    if concept_id:
+        concept = db.get(Concept, concept_id)
+        return concept.course_id if concept else None
     return None

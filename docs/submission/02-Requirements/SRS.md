@@ -39,12 +39,13 @@ The plan's glossary (Section 23) defines the rest.
 
 | Role | Can do |
 |---|---|
-| Instructor | Upload lectures, build exams and answer keys, import and approve results, run analysis, view every student's report, class analytics and the audit log, for their own courses |
+| Instructor | Create courses and enrol students, upload lectures, manage concepts and the question bank, build exams and answer keys, import and approve results, run analysis, view every student's report, class analytics and the audit log, for their own courses |
 | Student | View their own report, recovery plan, slides, practice and retest, for enrolled courses |
 | Coordinator | View every course and its class analytics (aggregated); denied every student-level report and plan (TC-27) |
 | Admin | Instructor rights on every course |
 
-Accounts and roles come from the seed script (plan Section 3, MVP assumption).
+Accounts and roles come from the seed script (plan Section 3, MVP assumption); instructors enrol
+existing student accounts in their courses by reference.
 
 ### 2.2 Operating environment
 

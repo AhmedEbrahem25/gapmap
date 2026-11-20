@@ -41,7 +41,8 @@ python scripts/smoke_test.py http://127.0.0.1:8000
 
 3. If using AI explanations: set `ANTHROPIC_API_KEY` in `.env`, restart the backend, seed, run the
    analysis, and open STU001's plan once so the explanations are cached.
-4. Reseed for the presentation, then rehearse with [../../demo-script.md](../../demo-script.md).
+4. Run `python scripts/rehearse_demo.py` (all 8 demo steps through the UI), reseed for the
+   presentation, then rehearse in person with [../../demo-script.md](../../demo-script.md).
 5. Keep the recorded backup video on the laptop's desktop.
 
 **One hour before:** start Docker Desktop, run `docker compose up -d`, reseed, open the two browser

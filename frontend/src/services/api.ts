@@ -1,10 +1,16 @@
 import type {
   AnalysisSummary,
   AuditEntry,
+  BankItemInput,
+  BankOverview,
   ClassAnalytics,
+  ConceptDetail,
   ConceptExplanation,
+  ConceptInput,
   Course,
   CourseDetail,
+  CourseInput,
+  EnrollResult,
   Exam,
   ExamDetail,
   ImportDetail,
@@ -18,6 +24,8 @@ import type {
   RecoveryPlan,
   Retest,
   RetestResults,
+  SlideSuggestion,
+  Student,
   StudentReport,
   StudentResultRow,
   TokenResponse,
@@ -89,6 +97,35 @@ export const api = {
   me: () => request<User>("/me"),
   courses: () => request<Course[]>("/courses"),
   course: (id: string) => request<CourseDetail>(`/courses/${id}`),
+  createCourse: (body: CourseInput) =>
+    request<CourseDetail>("/courses", { method: "POST", body: JSON.stringify(body) }),
+  students: (courseId: string) => request<Student[]>(`/courses/${courseId}/students`),
+  enroll: (courseId: string, studentRefs: string[]) =>
+    request<EnrollResult>(`/courses/${courseId}/enrollments`, {
+      method: "POST",
+      body: JSON.stringify({ student_refs: studentRefs }),
+    }),
+  unenroll: (courseId: string, studentId: string) =>
+    request<void>(`/courses/${courseId}/enrollments/${studentId}`, { method: "DELETE" }),
+  bank: (conceptId: string) => request<BankOverview>(`/concepts/${conceptId}/bank-questions`),
+  addBankItem: (conceptId: string, body: BankItemInput) =>
+    request<BankOverview>(`/concepts/${conceptId}/bank-questions`, { method: "POST", body: JSON.stringify(body) }),
+  updateBankItem: (itemId: string, body: BankItemInput) =>
+    request<BankOverview>(`/bank-questions/${itemId}`, { method: "PUT", body: JSON.stringify(body) }),
+  approveBankItem: (itemId: string) => request<BankOverview>(`/bank-questions/${itemId}/approve`, { method: "POST" }),
+  withdrawBankItem: (itemId: string) => request<BankOverview>(`/bank-questions/${itemId}/withdraw`, { method: "POST" }),
+  deleteBankItem: (itemId: string) => request<BankOverview>(`/bank-questions/${itemId}`, { method: "DELETE" }),
+  concepts: (courseId: string) => request<ConceptDetail[]>(`/courses/${courseId}/concepts`),
+  createConcept: (courseId: string, body: ConceptInput) =>
+    request<ConceptDetail>(`/courses/${courseId}/concepts`, { method: "POST", body: JSON.stringify(body) }),
+  updateConcept: (conceptId: string, body: ConceptInput) =>
+    request<ConceptDetail>(`/concepts/${conceptId}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteConcept: (conceptId: string) => request<void>(`/concepts/${conceptId}`, { method: "DELETE" }),
+  slideSuggestions: (conceptId: string) => request<SlideSuggestion[]>(`/concepts/${conceptId}/slide-suggestions`),
+  approveSlide: (conceptId: string, slideChunkId: string) =>
+    request<ConceptDetail>(`/concepts/${conceptId}/slides/${slideChunkId}`, { method: "PUT" }),
+  removeSlide: (conceptId: string, slideChunkId: string) =>
+    request<ConceptDetail>(`/concepts/${conceptId}/slides/${slideChunkId}`, { method: "DELETE" }),
   materials: (courseId: string) => request<Material[]>(`/courses/${courseId}/materials`),
   uploadMaterial: (courseId: string, file: File) => {
     const body = new FormData();
