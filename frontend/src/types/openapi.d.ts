@@ -71,7 +71,11 @@ export interface paths {
          */
         get: operations["list_courses_api_courses_get"];
         put?: never;
-        post?: never;
+        /**
+         * Create Course
+         * @description FR-05: an instructor (or admin) creates a course they teach.
+         */
+        post: operations["create_course_api_courses_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -90,6 +94,60 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/courses/{course_id}/students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Students */
+        get: operations["list_students_api_courses__course_id__students_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/courses/{course_id}/enrollments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enroll Students
+         * @description Enrol existing student accounts by reference; unknown references are reported, not created.
+         */
+        post: operations["enroll_students_api_courses__course_id__enrollments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/courses/{course_id}/enrollments/{student_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Student */
+        delete: operations["remove_student_api_courses__course_id__enrollments__student_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1125,6 +1183,15 @@ export interface components {
             /** Concepts */
             concepts: components["schemas"]["ConceptOut"][];
         };
+        /** CourseIn */
+        CourseIn: {
+            /** Title */
+            title: string;
+            /** Code */
+            code?: string | null;
+            /** Term */
+            term?: string | null;
+        };
         /** CourseOut */
         CourseOut: {
             /**
@@ -1140,6 +1207,22 @@ export interface components {
             term?: string | null;
             /** Instructor Name */
             instructor_name: string;
+        };
+        /** EnrollIn */
+        EnrollIn: {
+            /** Student Refs */
+            student_refs: string[];
+        };
+        /** EnrollResult */
+        EnrollResult: {
+            /** Enrolled */
+            enrolled: string[];
+            /** Already Enrolled */
+            already_enrolled: string[];
+            /** Unknown */
+            unknown: string[];
+            /** Students */
+            students: components["schemas"]["StudentOut"][];
         };
         /**
          * ErrorType
@@ -1709,6 +1792,20 @@ export interface components {
             /** Matched Terms */
             matched_terms: string[];
         };
+        /** StudentOut */
+        StudentOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Student Ref */
+            student_ref: string | null;
+            /** Name */
+            name: string;
+            /** Email */
+            email: string;
+        };
         /** StudentReport */
         StudentReport: {
             /**
@@ -1922,6 +2019,39 @@ export interface operations {
             };
         };
     };
+    create_course_api_courses_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CourseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_course_api_courses__course_id__get: {
         parameters: {
             query?: never;
@@ -1941,6 +2071,102 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["CourseDetailOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_students_api_courses__course_id__students_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enroll_students_api_courses__course_id__enrollments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnrollIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnrollResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_student_api_courses__course_id__enrollments__student_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: string;
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

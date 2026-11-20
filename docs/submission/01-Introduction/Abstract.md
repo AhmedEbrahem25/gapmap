@@ -5,8 +5,8 @@ which concept was misunderstood, why, or which part of the lectures to review. T
 their part, cannot analyse every student's mistakes by hand to find out what the class needs
 re-taught.
 
-GapMap turns an exam result into a learning recovery plan. The instructor uploads the lecture
-slides, defines the course's concepts and approves the slides that explain each one, builds the
+GapMap turns an exam result into a learning recovery plan. The instructor creates a course, enrols
+the students, uploads the lecture slides, defines the course's concepts and approves the slides that explain each one, builds the
 exam with an answer key and tags each question with the concept it assesses, then imports the
 students' answers from a CSV or Excel file. Every row is validated, and nothing is used
 until the instructor approves it. GapMap then scores each student per concept, suggests a likely
@@ -21,7 +21,7 @@ a short explanation of each weak concept from that concept's approved slides onl
 student data, and cannot cite a page it was not given.
 
 The system was built as a modular monolith (React, FastAPI, PostgreSQL) for the AI Educathon 2026 at
-Alamein International University. It is covered by 138 automated tests: 26 of the plan's 27 test
+Alamein International University. It is covered by 144 automated tests: 26 of the plan's 27 test
 cases pass, and the remaining one (OCR) is out of scope. A smoke test of the whole demo journey runs
 on Docker Compose for every pull request. It has been demonstrated on one pilot course (Software
 Engineering) with 20 synthetic students. Accuracy against the instructor's own judgement has not been

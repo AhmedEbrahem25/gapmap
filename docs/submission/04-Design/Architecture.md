@@ -90,7 +90,7 @@ flowchart TB
 | Module (plan 9.3) | Built as |
 |---|---|
 | auth | `api/auth.py`, `core/security.py` (bcrypt, JWT), `core/deps.py` (current user, roles, course access) |
-| courses, materials | `api/courses.py`, `api/materials.py`, `services/pdf_ingest.py`, `services/docx_convert.py` |
+| courses, materials | `api/courses.py`, `services/courses.py` (creation, enrolment), `api/materials.py`, `services/pdf_ingest.py`, `services/docx_convert.py` |
 | concepts | `api/concepts.py`, `services/concepts.py`: concepts, slide approval, keyword suggestions |
 | exams, imports, verification | `api/exams.py`, `services/exams.py`, `services/imports.py`, `services/import_validation.py` |
 | analysis | `api/analysis.py`, `services/analysis.py`, `services/scoring.py` |

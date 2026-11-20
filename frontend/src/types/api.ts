@@ -31,6 +31,26 @@ export interface Concept {
   description: string | null;
 }
 
+export interface CourseInput {
+  title: string;
+  code: string | null;
+  term: string | null;
+}
+
+export interface Student {
+  id: string;
+  student_ref: string | null;
+  name: string;
+  email: string;
+}
+
+export interface EnrollResult {
+  enrolled: string[];
+  already_enrolled: string[];
+  unknown: string[]; // no student account has this reference
+  students: Student[];
+}
+
 export interface ConceptInput {
   name: string;
   description: string | null;

@@ -72,7 +72,11 @@ in or able to see the course · C = coordinator.
 | Method | Path | Who | Purpose |
 |---|---|---|---|
 | GET | `/courses` | Logged in | My courses: taught, enrolled, or all for coordinator and admin |
+| POST | `/courses` | Instructor, admin | Create a course taught by the caller |
 | GET | `/courses/{id}` | E | Course detail with concepts and counts |
+| GET | `/courses/{id}/students` | I | Enrolled students |
+| POST | `/courses/{id}/enrollments` | I | Enrol accounts by `student_refs`; returns enrolled, already enrolled and unknown references |
+| DELETE | `/courses/{id}/enrollments/{student_id}` | I | Remove a student with no results or plan in the course |
 | GET | `/courses/{id}/materials` | E | Lecture files and their status |
 | POST | `/courses/{id}/materials` | I | Upload a `.pdf` or `.docx` (25 MB); pages are processed in the request |
 | GET | `/materials/{id}/status` | E | Processing status and page count |
@@ -152,7 +156,7 @@ in or able to see the course · C = coordinator.
 
 | Plan endpoint | As built |
 |---|---|
-| `POST /courses` | Not built: courses are seeded |
+| `POST /courses` | Built, plus the student list and enrolment endpoints |
 | `GET/POST /courses/{id}/concepts`, `POST /concepts/{id}/slides` | Built as the concepts endpoints above; a slide is approved with `PUT /concepts/{id}/slides/{slide_chunk_id}` |
 | `PUT /questions/{id}/answer-key` | The key is part of the question (`POST`/`PUT /questions`) and locked with `POST /exams/{id}/approve-key` |
 | `GET/POST /concepts/{id}/bank-questions` | Built as above, plus edit, approve, withdraw and delete |

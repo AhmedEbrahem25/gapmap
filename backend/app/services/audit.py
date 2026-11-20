@@ -22,6 +22,8 @@ def audit(db: Session, actor: User | None, action: str, target: Any = None, deta
 def _course_id(db: Session, target: Any):
     """Courses own everything audited: materials, exams and concepts directly, the rest through an exam
     or a concept (question-bank items)."""
+    if getattr(target, "__tablename__", None) == "courses":
+        return target.id
     if getattr(target, "course_id", None):
         return target.course_id
     exam_id = getattr(target, "exam_id", None)

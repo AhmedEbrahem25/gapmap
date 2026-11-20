@@ -19,7 +19,7 @@ are mapped to tests in [../../test-results.md](../../test-results.md).
 
 | ID | Requirement | Status | How / evidence |
 |---|---|---|---|
-| FR-05 | The instructor creates a course | Not built | The course comes from the seed script; there is no create endpoint or screen |
+| FR-05 | The instructor creates a course | Done | **New course** on the home page; students are enrolled by reference on the Students page. `POST /api/courses`, `test_courses_admin.py` |
 | FR-06 | Upload PDF (PPTX P1) | Done (PDF and Word) | PDF and .docx; PPTX not built. TC-03, TC-04, `test_materials_word.py` |
 | FR-07 | Extract text with file name and page number | Done | `pdf_ingest.py`: one `slide_chunks` row per page, with text, title and image |
 | FR-08 | Split content into searchable chunks | Partial | One chunk per page, searched by keyword to suggest slides; no embeddings (ADR 0001 §3) |
@@ -92,11 +92,10 @@ are mapped to tests in [../../test-results.md](../../test-results.md).
 
 | Status | Count |
 |---|---|
-| Done | 41 |
+| Done | 42 |
 | Partial | 2 (FR-08, FR-34) |
-| Not built | 1 (FR-05) |
 | Out of scope | 2 (FR-18, FR-20) |
 | Done, P1 | 1 (FR-38) |
 
-All P0 requirements are done except course creation, which the seed script covers for the pilot (see
-[Scope-and-Limitations.md](../01-Introduction/Scope-and-Limitations.md)).
+All P0 requirements are done. What remains is partial (FR-08 embeddings, FR-34 reasons for students)
+or out of scope (OCR); see [Scope-and-Limitations.md](../01-Introduction/Scope-and-Limitations.md).

@@ -146,3 +146,4 @@ After adding endpoints, regenerate the frontend API types while the backend is r
 | S8 | Final documentation package (plan Section 20) | done |
 | S9 | Concepts and slide approval in the app, with keyword suggestions (FR-09, FR-10) | done |
 | S10 | Question bank review: add, edit, approve, withdraw practice and retest questions (FR-39, BR-10, BR-11) | done |
+| S11 | Course creation and enrolment by student reference (FR-05) | done |

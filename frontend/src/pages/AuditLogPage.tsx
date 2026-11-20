@@ -4,6 +4,9 @@ import { Link, useParams } from "react-router-dom";
 import { api } from "../services/api";
 
 const ACTION_LABEL: Record<string, string> = {
+  "course.created": "Created the course",
+  "course.students_enrolled": "Enrolled students",
+  "course.student_removed": "Removed a student",
   "material.uploaded": "Uploaded a lecture file",
   "exam.created": "Created an exam",
   "question.added": "Added a question",

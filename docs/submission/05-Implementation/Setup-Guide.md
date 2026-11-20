@@ -69,7 +69,7 @@ npm run dev
 cd backend && pytest
 ```
 
-Expect `138 passed`.
+Expect `144 passed`.
 
 ```bash
 python scripts/smoke_test.py

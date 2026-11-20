@@ -49,3 +49,29 @@ class SlideSuggestion(BaseModel):
     slide: SlideRef
     score: float  # 0 = no word in common; still listed so any page can be picked
     matched_terms: list[str]  # why it was suggested (FR-34)
+
+
+class CourseIn(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    code: str | None = Field(default=None, max_length=40)
+    term: str | None = Field(default=None, max_length=40)
+
+
+class StudentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    student_ref: str | None
+    name: str
+    email: str
+
+
+class EnrollIn(BaseModel):
+    student_refs: list[str] = Field(min_length=1, max_length=1000)
+
+
+class EnrollResult(BaseModel):
+    enrolled: list[str]  # newly enrolled references
+    already_enrolled: list[str]
+    unknown: list[str]  # no student account has this reference (accounts are provisioned separately)
+    students: list[StudentOut]  # everyone enrolled now

@@ -147,6 +147,16 @@ def main() -> None:
     item = next(i for i in res.json()["items"] if i["prompt"] == new_prompt)
     step("delete the unused question", client.delete(f"/bank-questions/{item['id']}", headers=teacher).status_code == 200)
 
+    # A new course (FR-05): create it and enrol a student, who then sees it
+    res = client.post("/courses", headers=teacher, json={"title": "Smoke Test Course", "code": "ST100"})
+    new_course = res.json()
+    enrolled = client.post(f"/courses/{new_course['id']}/enrollments", headers=teacher,
+                           json={"student_refs": ["stu001", "NOPE999"]}).json()
+    seen = {c["id"] for c in client.get("/courses", headers=student).json()}
+    step("create a course and enrol a student by reference",
+         res.status_code == 201 and enrolled["enrolled"] == ["STU001"] and enrolled["unknown"] == ["NOPE999"]
+         and new_course["id"] in seen)
+
     # Access rules
     other = client.get(f"/exams/{exam['id']}/students/{report['student_id']}/report",
                        headers=login("stu002@gapmap.test"))

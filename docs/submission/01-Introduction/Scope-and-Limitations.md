@@ -2,6 +2,7 @@
 
 ## In scope (built)
 
+- Course creation and enrolment of student accounts by reference.
 - One pilot course, *Software Engineering (SE301)*, with three concepts: Agile, Scrum Roles,
   Requirements.
 - Lecture upload as **PDF or Word (.docx)**. Each page is stored with its text and a rendered image,
@@ -37,7 +38,7 @@ the 10-day build, and listed so nothing is overstated.
 
 | Limitation | Effect | Plan reference |
 |---|---|---|
-| Courses and enrolments are created by the seed script. There is no screen or API to create a course or enrol students. | A new course needs a seed change or a roster import (not built). Concepts and their slides **can** be managed in the app. | FR-05, US-01 |
+| Student accounts are created by the seed script. Instructors create courses and enrol existing accounts by reference, but nobody can create accounts or reset passwords in the app. | A real pilot needs account provisioning (a roster import or university single sign-on). | US-12, plan Section 3 |
 | AI-generated practice questions are not built. The review flow for them is: an AI draft waits for the instructor's approval on the question-bank page. | The seed holds one AI draft to show the flow and prove it isn't served before approval (TC-25). | FR-39, BR-11 |
 | No embeddings or semantic search. Slide suggestions use keyword matching; students get only approved slides. | Suggestions miss synonyms and paraphrases, so the instructor may need *Show all pages*. | FR-08, plan 10.4 |
 | Word (.docx) is supported instead of PowerPoint (.pptx). | PowerPoint decks must be exported to PDF first. | FR-06 |

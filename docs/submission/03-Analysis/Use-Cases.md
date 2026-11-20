@@ -33,15 +33,27 @@ flowchart LR
     UC12[UC-12 Open slide]
     UC13[UC-13 Manage concepts and slides]
     UC14[UC-14 Maintain question bank]
+    UC15[UC-15 Create course, enrol students]
   end
-  I --- UC1 & UC2 & UC3 & UC4 & UC5 & UC6 & UC10 & UC11 & UC12 & UC13 & UC14
+  I --- UC1 & UC2 & UC3 & UC4 & UC5 & UC6 & UC10 & UC11 & UC12 & UC13 & UC14 & UC15
   S --- UC1 & UC6 & UC7 & UC8 & UC9 & UC12
   C --- UC1
   UC7 -. explanation .- L
 ```
 
-Course creation is not a use case of the built app; the seed script creates the course and its
-enrolments (see [Scope-and-Limitations](../01-Introduction/Scope-and-Limitations.md)).
+Student accounts are not created in the app; the seed script provisions them (see
+[Scope-and-Limitations](../01-Introduction/Scope-and-Limitations.md)).
+
+## UC-15 Create a course and enrol students
+
+| | |
+|---|---|
+| Actor | Instructor (or admin) |
+| Main flow | 1. Home page → **New course**: title, and optionally a code and term. 2. GapMap creates the course with the instructor as its owner and opens it. 3. The **Students** card → **Students** page. 4. The instructor pastes student references (one per line, or separated by commas) and clicks **Enrol**. 5. GapMap enrols each matching account and lists who was enrolled, who already was, and which references have no account |
+| Alternative 4a | A reference has no account: it is reported and left in the box to correct; nothing is created |
+| Alternative 5a | **Remove** takes a student out of the course |
+| Exception | A student who already has results or a plan in the course can't be removed |
+| Postcondition | Enrolled students see the course; results for them can be imported. Every change is in the audit log |
 
 ## UC-13 Manage concepts and slides
 

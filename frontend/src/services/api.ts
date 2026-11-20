@@ -9,6 +9,8 @@ import type {
   ConceptInput,
   Course,
   CourseDetail,
+  CourseInput,
+  EnrollResult,
   Exam,
   ExamDetail,
   ImportDetail,
@@ -23,6 +25,7 @@ import type {
   Retest,
   RetestResults,
   SlideSuggestion,
+  Student,
   StudentReport,
   StudentResultRow,
   TokenResponse,
@@ -94,6 +97,16 @@ export const api = {
   me: () => request<User>("/me"),
   courses: () => request<Course[]>("/courses"),
   course: (id: string) => request<CourseDetail>(`/courses/${id}`),
+  createCourse: (body: CourseInput) =>
+    request<CourseDetail>("/courses", { method: "POST", body: JSON.stringify(body) }),
+  students: (courseId: string) => request<Student[]>(`/courses/${courseId}/students`),
+  enroll: (courseId: string, studentRefs: string[]) =>
+    request<EnrollResult>(`/courses/${courseId}/enrollments`, {
+      method: "POST",
+      body: JSON.stringify({ student_refs: studentRefs }),
+    }),
+  unenroll: (courseId: string, studentId: string) =>
+    request<void>(`/courses/${courseId}/enrollments/${studentId}`, { method: "DELETE" }),
   bank: (conceptId: string) => request<BankOverview>(`/concepts/${conceptId}/bank-questions`),
   addBankItem: (conceptId: string, body: BankItemInput) =>
     request<BankOverview>(`/concepts/${conceptId}/bank-questions`, { method: "POST", body: JSON.stringify(body) }),

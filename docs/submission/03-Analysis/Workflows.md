@@ -7,7 +7,8 @@ doesn't do are marked.
 
 ```mermaid
 flowchart LR
-  A[Log in] --> B[Course page]
+  A[Log in] --> Z[New course,<br/>enrol students]
+  Z --> B[Course page]
   B --> C[Upload PDF or Word]
   C --> N[Concepts: define,<br/>find and approve slides]
   N --> E
@@ -24,7 +25,7 @@ flowchart LR
   K --> M[Class analytics]
 ```
 
-The plan's *Create Course* step is done by the seed instead of the app.
+Every step runs in the app. Student accounts themselves come from the seed.
 
 ## Student
 

@@ -22,6 +22,15 @@ UX rules from plan Section 13 and where they show:
 
 ## Instructor
 
+**New course** (home page). Title, code and term; the new course opens straight away.
+
+![New course](18-new-course.png)
+
+**Students** (`/courses/:id/students`). Paste references to enrol accounts; unknown references are
+reported and left in the box.
+
+![Students](19-students.png)
+
 **Course page** (`/courses/:id`). Counts, concepts, exams with their actions, lecture files.
 
 ![Course page, instructor](02-course-instructor.png)
@@ -102,4 +111,4 @@ percentage points, and the caution that it is an early sign, not proof.
 
 ## Not built
 
-Course creation; the course comes from the seed.
+Account creation and password reset: student accounts come from the seed.

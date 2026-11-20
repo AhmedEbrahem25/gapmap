@@ -5,13 +5,21 @@ How to use GapMap, by role. Screenshots of every screen are in
 
 ## Instructor
 
-### 1. Upload a lecture
+### 1. Create a course and enrol students
+
+Home page → **New course** → a title, and optionally a code and term → **Create course**. On the
+course page, click the **Students** card, paste the students' references (for example `STU001`,
+one per line or separated by commas) and click **Enrol**. References with no account are listed so
+you can check them; student accounts are created by an administrator. A student who already has
+results in the course can't be removed.
+
+### 2. Upload a lecture
 
 Course page → **Upload PDF or Word**. Use a `.pdf` or `.docx` up to 25 MB; export PowerPoint decks
 to PDF first. Each page is stored with its text and an image. The file shows **ready** when done.
 Click **View slides** to check the pages.
 
-### 2. Define concepts and approve their slides
+### 3. Define concepts and approve their slides
 
 Course page → **Manage concepts and slides**.
 
@@ -25,7 +33,7 @@ Students who are weak in a concept are sent to its approved slides; a concept wi
 suitable source was found". Reports change at once; re-run the analysis to update recovery plans
 that already exist. A concept used by exam questions can be renamed but not deleted.
 
-### 3. Review the question bank
+### 4. Review the question bank
 
 On the concepts page, each concept has a **Question bank** link showing how many practice and retest
 questions it has.
@@ -41,7 +49,7 @@ questions it has.
 - **Withdraw** stops serving a question. A question a retest has already used can't be edited or
   deleted, because that would change that retest's results; withdraw it and add a new one.
 
-### 4. Build the exam and answer key
+### 5. Build the exam and answer key
 
 Course page → **New exam** → give it a title and date. For each question:
 
@@ -55,7 +63,7 @@ Course page → **New exam** → give it a title and date. For each question:
 Click **Approve answer key** when done. Questions are locked; **Reopen for editing** unlocks them while no results
 are approved. Each concept needs at least 2 questions to be judged.
 
-### 5. Import results
+### 6. Import results
 
 Exam → **Import results** → **Upload CSV or Excel**. Use the long format, one row per student and
 question:
@@ -77,11 +85,11 @@ GapMap checks every row and shows the counts. Then:
   don't block approval.
 - **Approve results** when nothing is left to fix, or **Reject** to discard the import.
 
-### 6. Run the analysis
+### 7. Run the analysis
 
 Course page → **Run analysis** (or **Re-run analysis** after new results) → **View results**.
 
-### 7. Read the results
+### 8. Read the results
 
 - **Student results**: every student's score and the concepts they need to review. Open a row for
   the full report: per-concept scores with question counts, the slides for each weak concept, and

@@ -15,7 +15,7 @@
 | Integration | API + database + file upload | pytest with FastAPI's test client and in-memory SQLite, seeded per test | `test_materials*.py`, `test_exams_imports.py`, `test_analysis.py`, `test_recovery.py`, `test_class_analytics.py`, `test_explanations.py` |
 | Permissions | Student isolation, course access, coordinator limits | pytest, one test per role and endpoint group | `test_courses_rbac.py`, TC-02, TC-20, TC-27 |
 | Data | The demo dataset obeys the plan's rules | pytest on the seed | `test_seed_data.py` |
-| System | The whole demo journey on the real stack | `scripts/smoke_test.py`, 25 steps, against Docker Compose with PostgreSQL | CI job `e2e` |
+| System | The whole demo journey on the real stack | `scripts/smoke_test.py`, 26 steps, against Docker Compose with PostgreSQL | CI job `e2e` |
 | Manual end to end | The journeys through the UI | A person follows [../../demo-script.md](../../demo-script.md) | Results in [../../test-results.md](../../test-results.md) |
 | Usability | An instructor and students try it | Not done yet | — |
 | AI evaluation | Slide retrieval precision, diagnosis agreement | Not done yet: needs the instructor's reference judgements (issue #1) | — |
