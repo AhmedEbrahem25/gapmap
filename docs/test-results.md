@@ -3,7 +3,7 @@
 Plan Section 14 test cases, how each is checked, and the result. Run the suite with
 `cd backend && pytest` (121 tests). CI runs it, plus the frontend build, on every pull request.
 
-Last full run: **2026-11-18, 121 passed**.
+Last full run: **2026-11-20, 121 passed**.
 
 ## Test cases
 
