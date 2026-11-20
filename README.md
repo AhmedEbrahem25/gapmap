@@ -103,6 +103,11 @@ CI runs it on Docker Compose with Postgres for every pull request.
 
 Step-by-step script with accounts, clicks and a fallback plan: [docs/demo-script.md](docs/demo-script.md).
 
+## Final documentation
+
+The submission package from plan Section 20 (requirements with their status, design, guides,
+test and evaluation results, UI screenshots): [docs/submission/](docs/submission/README.md).
+
 ## Layout
 
 ```text
@@ -118,7 +123,7 @@ frontend/src/
   pages/ components/ features/ services/ types/
 data/sample/     results CSVs (Long Format, plan 9.6), clean and with errors
 data/templates/  empty CSV template for instructors
-docs/            plan, decisions
+docs/            plan, decisions, demo script, test results, submission package
 ```
 
 After adding endpoints, regenerate the frontend API types while the backend is running:
