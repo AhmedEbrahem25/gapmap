@@ -9,6 +9,8 @@ doesn't do are marked.
 flowchart LR
   A[Log in] --> B[Course page]
   B --> C[Upload PDF or Word]
+  C --> N[Concepts: define,<br/>find and approve slides]
+  N --> E
   C --> D[Pages extracted<br/>text + image]
   B --> E[New exam:<br/>questions, options,<br/>key, concept, tags]
   E --> F[Approve answer key]
@@ -22,8 +24,7 @@ flowchart LR
   K --> M[Class analytics]
 ```
 
-Plan steps done by the seed instead of the app: *Create Course*, *Review Concepts*, and approving
-concept→slide mappings.
+The plan's *Create Course* step is done by the seed instead of the app.
 
 ## Student
 
@@ -45,7 +46,8 @@ Upload → check the type (.pdf or .docx) and size (25 MB) → Word is converted
 text and title are extracted and the page is rendered to an image (PyMuPDF) → one `slide_chunks` row
 per page → status `ready`, or `failed` with the reason.
 
-Not built: chunking below page level, embeddings, a search index.
+Concept→slide suggestions use keyword matching on each page's title and text (name words count more
+than description words, title matches double). Not built: chunking below page level, embeddings.
 
 ## Results import and verification
 

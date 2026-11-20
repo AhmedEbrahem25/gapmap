@@ -79,6 +79,18 @@ in or able to see the course · C = coordinator.
 | GET | `/materials/{id}/pages/{page}` | E | Page text and title for the slide viewer |
 | GET | `/materials/{id}/pages/{page}/image` | E | Rendered page image (PNG) |
 
+### Concepts and slides
+
+| Method | Path | Who | Purpose |
+|---|---|---|---|
+| GET | `/courses/{id}/concepts` | I | Concepts with approved slides and question counts |
+| POST | `/courses/{id}/concepts` | I | Create a concept (name unique in the course, case-insensitive) |
+| PUT | `/concepts/{id}` | I | Rename or re-describe a concept |
+| DELETE | `/concepts/{id}` | I | Delete an unused concept (409 if questions, the bank or plans use it) |
+| GET | `/concepts/{id}/slide-suggestions` | I | Every course page not yet approved for it, best keyword match first, with `score` and `matched_terms` |
+| PUT | `/concepts/{id}/slides/{slide_chunk_id}` | I | Approve a slide for the concept |
+| DELETE | `/concepts/{id}/slides/{slide_chunk_id}` | I | Remove an approved slide |
+
 ### Exams and imports
 
 | Method | Path | Who | Purpose |
@@ -130,7 +142,7 @@ in or able to see the course · C = coordinator.
 | Plan endpoint | As built |
 |---|---|
 | `POST /courses` | Not built: courses are seeded |
-| `GET/POST /courses/{id}/concepts`, `POST /concepts/{id}/slides` | Not built: concepts and mappings are seeded; concepts are returned inside `GET /courses/{id}` |
+| `GET/POST /courses/{id}/concepts`, `POST /concepts/{id}/slides` | Built as the concepts endpoints above; a slide is approved with `PUT /concepts/{id}/slides/{slide_chunk_id}` |
 | `PUT /questions/{id}/answer-key` | The key is part of the question (`POST`/`PUT /questions`) and locked with `POST /exams/{id}/approve-key` |
 | `GET/POST /concepts/{id}/bank-questions` | Not built: the bank is seeded |
-| — | Added: exam detail, question edit/delete, reopen, import history, row delete, exam results, instructor view of a student report, page image, practice check, retest detail, explanation |
+| — | Added: slide suggestions, concept edit and delete, exam detail, question edit/delete, reopen, import history, row delete, exam results, instructor view of a student report, page image, practice check, retest detail, explanation |

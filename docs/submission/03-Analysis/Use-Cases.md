@@ -31,15 +31,28 @@ flowchart LR
     UC10[UC-10 View class analytics]
     UC11[UC-11 View audit log]
     UC12[UC-12 Open slide]
+    UC13[UC-13 Manage concepts and slides]
   end
-  I --- UC1 & UC2 & UC3 & UC4 & UC5 & UC6 & UC10 & UC11 & UC12
+  I --- UC1 & UC2 & UC3 & UC4 & UC5 & UC6 & UC10 & UC11 & UC12 & UC13
   S --- UC1 & UC6 & UC7 & UC8 & UC9 & UC12
   C --- UC1
   UC7 -. explanation .- L
 ```
 
-Course creation, concept definition and slide-mapping approval are not use cases of the built app;
-the seed script performs them (see [Scope-and-Limitations](../01-Introduction/Scope-and-Limitations.md)).
+Course creation is not a use case of the built app; the seed script creates the course and its
+enrolments (see [Scope-and-Limitations](../01-Introduction/Scope-and-Limitations.md)).
+
+## UC-13 Manage concepts and slides
+
+| | |
+|---|---|
+| Actor | Instructor |
+| Precondition | The course has at least one lecture uploaded |
+| Main flow | 1. Course page → **Manage concepts and slides**. 2. **New concept**: name and description. 3. **Find slides**: GapMap lists the course's pages that match the concept's words, best first, each with the words it matched. 4. The instructor opens a page to check it and clicks **Approve**. 5. The slide joins the concept's approved slides and appears in reports at once |
+| Alternative 3a | No page matches: **Show all pages** lists every page so any can be approved |
+| Alternative 5a | The instructor clicks **Remove** on an approved slide: students are no longer sent to it |
+| Exception | Deleting a concept that exam questions, the question bank or recovery plans use is refused with the reason; renaming is allowed |
+| Postcondition | Reports use the new slides immediately; existing recovery plans change when the analysis is re-run. Every change is in the audit log |
 
 ## UC-04 Import and verify results
 

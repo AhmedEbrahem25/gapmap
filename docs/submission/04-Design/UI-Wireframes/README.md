@@ -55,6 +55,16 @@ answers by concept against the 40% line, and by question with the most common wr
 
 ![Class analytics](13-class-analytics.png)
 
+**Concepts and slides** (`/courses/:id/concepts`). Each concept with its question count and approved
+slides, which can be removed.
+
+![Concepts and slides](15-concepts.png)
+
+**Finding slides.** *Find slides* lists the lecture pages that match the concept's words, best first,
+with the words that matched. *Show all pages* lists the rest.
+
+![Slide suggestions](16-concept-suggestions.png)
+
 **Audit log** (`/courses/:id/audit`). Approvals and edits, newest first.
 
 ![Audit log](14-audit-log.png)
@@ -87,5 +97,4 @@ percentage points, and the caution that it is an early sign, not proof.
 
 ## Not built
 
-The plan's *Concept Mapping* screen and course creation. Concepts and slide mappings come from the
-seed.
+Course creation; the course comes from the seed.

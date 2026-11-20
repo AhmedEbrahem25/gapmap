@@ -22,9 +22,9 @@ are mapped to tests in [../../test-results.md](../../test-results.md).
 | FR-05 | The instructor creates a course | Not built | The course comes from the seed script; there is no create endpoint or screen |
 | FR-06 | Upload PDF (PPTX P1) | Done (PDF and Word) | PDF and .docx; PPTX not built. TC-03, TC-04, `test_materials_word.py` |
 | FR-07 | Extract text with file name and page number | Done | `pdf_ingest.py`: one `slide_chunks` row per page, with text, title and image |
-| FR-08 | Split content into searchable chunks | Partial | One chunk per page; no embeddings or search index (ADR 0001 §3) |
-| FR-09 | The instructor reviews content→concept mapping | Not built | `concept_slide_chunks.mapping_status` exists; mappings are seeded as approved, with no review screen |
-| FR-10 | Define concepts and link them to content | Not built | Concepts are seeded; there is no screen or endpoint to create them |
+| FR-08 | Split content into searchable chunks | Partial | One chunk per page, searched by keyword to suggest slides; no embeddings (ADR 0001 §3) |
+| FR-09 | The instructor reviews content→concept mapping | Done | Concepts page: keyword suggestions with the matched words, **Approve** and **Remove**; only approved slides reach students. `test_concepts.py` |
+| FR-10 | Define concepts and link them to content | Done | Create, rename and describe concepts; a concept in use can't be deleted. `POST /api/courses/{id}/concepts`, `test_concepts.py` |
 
 ## Exam and import
 
@@ -68,7 +68,7 @@ are mapped to tests in [../../test-results.md](../../test-results.md).
 | FR-31 | Search only approved course materials | Done | Slides come only from approved concept→slide mappings |
 | FR-32 | Return file name and page | Done | Every slide reference carries both. TC-11 |
 | FR-33 | Show an excerpt or image of the source | Done | Excerpt in reports and plans; page image in the slide viewer |
-| FR-34 | Explain why the source was recommended | Partial | Slides are listed under the concept they explain; there is no per-slide reason text |
+| FR-34 | Explain why the source was recommended | Partial | The instructor sees the matched words for each suggested slide; students see slides under the concept they explain, with no per-slide reason |
 | FR-35 | Never invent a source | Done | No approved slide = no source shown (TC-12); AI citations outside the slides sent are dropped |
 | FR-36 | Personal plan ordered by priority | Done | Weak concepts, weakest first. TC-13 |
 | FR-37 | Show the concept and recommended slides | Done | Recovery plan screen |
@@ -92,12 +92,11 @@ are mapped to tests in [../../test-results.md](../../test-results.md).
 
 | Status | Count |
 |---|---|
-| Done | 39 |
+| Done | 41 |
 | Partial | 2 (FR-08, FR-34) |
-| Not built | 3 (FR-05, FR-09, FR-10) |
+| Not built | 1 (FR-05) |
 | Out of scope | 2 (FR-18, FR-20) |
 | Done, P1 | 1 (FR-38) |
 
-All P0 requirements on the student and analysis path are done. The three not built are course and
-concept set-up screens. The seed script covers them for the pilot (see
+All P0 requirements are done except course creation, which the seed script covers for the pilot (see
 [Scope-and-Limitations.md](../01-Introduction/Scope-and-Limitations.md)).
