@@ -119,6 +119,34 @@ def main() -> None:
     step("audit log records the approval and analysis",
          {"import.approved", "exam.analyzed", "import.row_corrected"} <= {e["action"] for e in audit})
 
+    # Concepts and slides (FR-09, FR-10): add a concept, approve its best suggestion, then clean up
+    res = client.post(f"/courses/{course['id']}/concepts", headers=teacher,
+                      json={"name": "Product Backlog", "description": "Who owns and orders the backlog"})
+    concept = res.json()
+    suggestions = client.get(f"/concepts/{concept['id']}/slide-suggestions", headers=teacher).json()
+    best = suggestions[0]["slide"]
+    approved = client.put(f"/concepts/{concept['id']}/slides/{best['slide_chunk_id']}", headers=teacher).json()
+    step("create a concept and approve a suggested slide",
+         res.status_code == 201 and suggestions[0]["score"] > 0 and len(approved["slides"]) == 1,
+         f"page {best['page_number']}, matched {', '.join(suggestions[0]['matched_terms'])}")
+    client.delete(f"/concepts/{concept['id']}/slides/{best['slide_chunk_id']}", headers=teacher)
+    gone = client.delete(f"/concepts/{concept['id']}", headers=teacher)
+    step("remove the slide and delete the unused concept", gone.status_code == 204)
+
+    # Question bank (FR-39, BR-11): an instructor's question is served at once; the AI draft is not
+    scrum = next(c for c in client.get(f"/courses/{course['id']}/concepts", headers=teacher).json()
+                 if c["name"] == "Scrum Roles")
+    new_prompt = "Who makes sure the Scrum events take place?"
+    res = client.post(f"/concepts/{scrum['id']}/bank-questions", headers=teacher, json={
+        "usage": "practice", "prompt": new_prompt, "answer_key": "B",
+        "options": [{"key": "A", "text": "The Product Owner"}, {"key": "B", "text": "The Scrum Master"}],
+    })
+    served = [q["prompt"] for q in client.get(f"/concepts/{scrum['id']}/practice", headers=student).json()]
+    step("add a practice question; only approved ones are served (BR-11)",
+         res.status_code == 201 and new_prompt in served and not any("[AI draft]" in p for p in served))
+    item = next(i for i in res.json()["items"] if i["prompt"] == new_prompt)
+    step("delete the unused question", client.delete(f"/bank-questions/{item['id']}", headers=teacher).status_code == 200)
+
     # Access rules
     other = client.get(f"/exams/{exam['id']}/students/{report['student_id']}/report",
                        headers=login("stu002@gapmap.test"))

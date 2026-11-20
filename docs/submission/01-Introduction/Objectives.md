@@ -21,4 +21,4 @@
 The plan (Section 24) defines success as *one reliable journey*, from uploading content and results,
 through review, analysis and slide retrieval, to the student's plan, the retest and the instructor's
 analytics. This journey runs end to end in the browser and in the automated smoke test
-(`scripts/smoke_test.py`, 21 steps, run in CI on every pull request).
+(`scripts/smoke_test.py`, 25 steps, run in CI on every pull request).

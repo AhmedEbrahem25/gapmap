@@ -46,6 +46,8 @@ flowchart TB
   subgraph api[app/api: HTTP routes]
     auth
     courses
+    concepts
+    question_bank
     materials
     exams
     analysis
@@ -64,6 +66,8 @@ flowchart TB
     ex[explanations]
     ing[pdf_ingest + docx_convert]
     exm[exams + exam_data]
+    con[concepts]
+    qb[question_bank]
     au[audit]
   end
   core[app/core: config, db, security, deps / RBAC]
@@ -76,6 +80,9 @@ flowchart TB
   analytics --> ca
   explanations --> ex
   materials --> ing
+  concepts --> con
+  question_bank --> qb
+  con --> sl
   services --> models
   api --> core
 ```
@@ -84,11 +91,12 @@ flowchart TB
 |---|---|
 | auth | `api/auth.py`, `core/security.py` (bcrypt, JWT), `core/deps.py` (current user, roles, course access) |
 | courses, materials | `api/courses.py`, `api/materials.py`, `services/pdf_ingest.py`, `services/docx_convert.py` |
-| concepts | Models only; concepts and mappings are seeded |
+| concepts | `api/concepts.py`, `services/concepts.py`: concepts, slide approval, keyword suggestions |
 | exams, imports, verification | `api/exams.py`, `services/exams.py`, `services/imports.py`, `services/import_validation.py` |
 | analysis | `api/analysis.py`, `services/analysis.py`, `services/scoring.py` |
-| retrieval | `services/slides.py`: approved mappings only, no vector search |
-| recovery, question_bank | `api/recovery.py`, `services/recovery.py` |
+| retrieval | `services/slides.py` serves approved mappings; `services/concepts.py` suggests slides by keyword; no vector search |
+| recovery | `api/recovery.py`, `services/recovery.py` |
+| question_bank | `api/question_bank.py`, `services/question_bank.py`: review and maintenance; students are served through `recovery` |
 | analytics | `api/analytics.py`, `services/class_analytics.py` |
 | audit | `services/audit.py`; screen served by `api/explanations.py` |
 | AI explanations (P1) | `api/explanations.py`, `services/explanations.py` |
@@ -107,7 +115,7 @@ one contract. Pages live in `src/pages/`; reusable pieces in `src/components/` a
 | Modular monolith, not microservices | Fastest to build and run for a 4-person, 10-day project (plan 9.1) | Modules share one process and database |
 | Import rows are staged in `import_rows`; `answers` are created only on approval | Analysis can never see unapproved data, without extra checks (FR-23) | One more table than the plan's ERD |
 | Likely cause comes from error types the instructor tags on wrong options | Works without an LLM; explainable; the instructor stays in control (FR-27, BR-07) | Needs the instructor to tag options |
-| Slides come from approved concept→slide mappings, not live search | Deterministic, fast, never invents a source (FR-35) | Suggesting slides for new concepts is manual until embeddings are added |
+| Slides come from approved concept→slide mappings, not live search | Deterministic, fast, never invents a source (FR-35) | Keyword suggestions miss synonyms; embeddings would help (P1) |
 | One explanation per concept, cached, not per student | No student data can enter the prompt (BR-12); near-zero cost after the first request | Explanations are not personalised to a student's wrong answer |
 | `create_all` plus a reset seed, no migrations | The schema changed daily; there is no production data | Add Alembic before any real deployment |
 | SQLite for tests and local runs, PostgreSQL in Docker | Tests run in seconds with no services; models stay portable | CI also runs the smoke test on PostgreSQL to catch differences |

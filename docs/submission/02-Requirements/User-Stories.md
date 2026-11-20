@@ -7,7 +7,7 @@ Screens are shown in [../04-Design/UI-Wireframes/](../04-Design/UI-Wireframes/RE
 |---|---|---|---|---|---|
 | US-01 | Instructor | to create a course | I can set up the subject | Seed only | The pilot course is created by `python -m app.seed` |
 | US-02 | Instructor | to upload a lecture PDF | the content becomes searchable | Done | Course page → **Upload PDF or Word** |
-| US-03 | Instructor | to define concepts | I can link questions to topics | Seed only | Concepts are shown on the course page; they are created by the seed |
+| US-03 | Instructor | to define concepts | I can link questions to topics | Done | Course page → **Manage concepts and slides** → **New concept**, then **Find slides** → **Approve** |
 | US-04 | Instructor | to create an exam and an answer key | the system knows the correct answers | Done | Course page → **New exam** → add questions with options, key and concept → **Approve answer key** |
 | US-05 | Instructor | to upload a CSV | I can enter the students' results | Done | Exam → **Import results** → upload `.csv` or `.xlsx` |
 | US-06 | Instructor | to review the data | I can correct import errors | Done | Review table: filter **To fix** / **Warnings**, edit or delete rows, then **Approve results** or **Reject** |

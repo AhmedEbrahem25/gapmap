@@ -44,8 +44,10 @@ npm run dev
 
 - Course *Software Engineering (SE301)* with a 12-slide lecture PDF (text and page images extracted)
 - 3 concepts: Agile, Scrum Roles, Requirements, each with instructor-approved slide mappings
+  (editable on the course's **Manage concepts and slides** page)
 - *Midterm Quiz 1*: 9 MCQs, 3 per concept, with the answer key and tagged wrong options
-- Question bank: 3 practice + 3 retest items per concept (approved), plus 1 pending AI draft
+- Question bank: 3 practice + 3 retest items per concept (approved), plus 1 pending AI draft, all
+  reviewable on each concept's **Question bank** page
 - 20 synthetic students `STU001`–`STU020`, with results imported and approved
   (`data/sample/exam1_results.csv`). STU001 misses Q1, Q2, Q4 and Q5; most of the class misses Scrum Roles.
 
@@ -141,3 +143,6 @@ After adding endpoints, regenerate the frontend API types while the backend is r
 | S5 | Instructor class analytics with re-teaching suggestions | done |
 | S6 | P1: grounded LLM explanation per concept, audit log screen | done; explanations need `ANTHROPIC_API_KEY` |
 | S7 | QA, demo script, smoke test, Docker Compose verified in CI | done |
+| S8 | Final documentation package (plan Section 20) | done |
+| S9 | Concepts and slide approval in the app, with keyword suggestions (FR-09, FR-10) | done |
+| S10 | Question bank review: add, edit, approve, withdraw practice and retest questions (FR-39, BR-10, BR-11) | done |

@@ -11,7 +11,37 @@ Course page → **Upload PDF or Word**. Use a `.pdf` or `.docx` up to 25 MB; exp
 to PDF first. Each page is stored with its text and an image. The file shows **ready** when done.
 Click **View slides** to check the pages.
 
-### 2. Build the exam and answer key
+### 2. Define concepts and approve their slides
+
+Course page → **Manage concepts and slides**.
+
+- **New concept**: a name (for example *Scrum Roles*) and a short description. The description's
+  words help find matching slides.
+- **Find slides** lists the lecture pages that match, best first, with the words that matched.
+  Open a page to check it, then click **Approve**. If nothing fits, **Show all pages** lists every page.
+- **Remove** takes a slide away from the concept.
+
+Students who are weak in a concept are sent to its approved slides; a concept with none shows "No
+suitable source was found". Reports change at once; re-run the analysis to update recovery plans
+that already exist. A concept used by exam questions can be renamed but not deleted.
+
+### 3. Review the question bank
+
+On the concepts page, each concept has a **Question bank** link showing how many practice and retest
+questions it has.
+
+- **Practice** questions are served on the practice screen with instant feedback and a link to the
+  slide that explains the answer.
+- **Retest** questions are kept for the retest: each retest uses 3 per weak concept. A warning shows
+  if a concept has fewer.
+- **New question**: choose practice or retest, write the question and options, mark the correct one,
+  and pick the slide that explains it. It is approved and served when you save it. It must differ from
+  the exam's questions and from the concept's other questions.
+- **Waiting for review** lists drafts, such as AI-generated ones. Edit if needed, then **Approve**.
+- **Withdraw** stops serving a question. A question a retest has already used can't be edited or
+  deleted, because that would change that retest's results; withdraw it and add a new one.
+
+### 4. Build the exam and answer key
 
 Course page → **New exam** → give it a title and date. For each question:
 
@@ -25,7 +55,7 @@ Course page → **New exam** → give it a title and date. For each question:
 Click **Approve answer key** when done. Questions are locked; **Reopen for editing** unlocks them while no results
 are approved. Each concept needs at least 2 questions to be judged.
 
-### 3. Import results
+### 5. Import results
 
 Exam → **Import results** → **Upload CSV or Excel**. Use the long format, one row per student and
 question:
@@ -47,11 +77,11 @@ GapMap checks every row and shows the counts. Then:
   don't block approval.
 - **Approve results** when nothing is left to fix, or **Reject** to discard the import.
 
-### 4. Run the analysis
+### 6. Run the analysis
 
 Course page → **Run analysis** (or **Re-run analysis** after new results) → **View results**.
 
-### 5. Read the results
+### 7. Read the results
 
 - **Student results**: every student's score and the concepts they need to review. Open a row for
   the full report: per-concept scores with question counts, the slides for each weak concept, and

@@ -17,6 +17,16 @@ const ACTION_LABEL: Record<string, string> = {
   "import.approved": "Approved results",
   "import.rejected": "Rejected results",
   "exam.analyzed": "Ran the analysis",
+  "concept.created": "Added a concept",
+  "concept.updated": "Edited a concept",
+  "concept.deleted": "Deleted a concept",
+  "concept.slide_approved": "Approved a slide for a concept",
+  "concept.slide_removed": "Removed a slide from a concept",
+  "bank.added": "Added a practice or retest question",
+  "bank.updated": "Edited a practice or retest question",
+  "bank.approved": "Approved a practice or retest question",
+  "bank.withdrawn": "Withdrew a practice or retest question",
+  "bank.deleted": "Deleted a practice or retest question",
 };
 
 export function AuditLogPage() {
