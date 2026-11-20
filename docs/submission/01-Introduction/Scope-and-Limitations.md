@@ -2,10 +2,15 @@
 
 ## In scope (built)
 
+- Course creation and enrolment of student accounts by reference.
 - One pilot course, *Software Engineering (SE301)*, with three concepts: Agile, Scrum Roles,
   Requirements.
 - Lecture upload as **PDF or Word (.docx)**. Each page is stored with its text and a rendered image,
   keeping the original file name and page number.
+- A concepts page where the instructor defines concepts and approves the slides for each one, helped
+  by keyword suggestions that show which words matched.
+- A question bank per concept: the instructor adds, edits, approves, withdraws and deletes practice and
+  retest questions.
 - An exam builder for **multiple-choice** questions: options, the answer key, one concept per
   question, and an optional error type on each wrong option.
 - Results import from **CSV or Excel (.xlsx)** in the long format (`student_ref, question_id, answer,
@@ -33,9 +38,9 @@ the 10-day build, and listed so nothing is overstated.
 
 | Limitation | Effect | Plan reference |
 |---|---|---|
-| Courses, concepts and concept→slide mappings are created by the seed script. There is no screen or API to create a course, define concepts, or approve slide suggestions. | A new course needs a seed change. The instructor-facing approval of slide mappings (FR-09, FR-10) is modelled (`mapping_status`) but not exposed in the UI. | FR-05, FR-09, FR-10, US-01, US-03 |
-| Question-bank items (practice and retest) are seeded. There is no screen to add or approve them, and AI-generated questions are not built. | One pending AI draft exists only to prove it is never served (TC-25). | FR-39, BR-11 |
-| No embeddings or semantic search. Slides come only from approved mappings. | Correct for the demo, but suggesting slides for a new concept is manual. | FR-08, plan 10.4 |
+| Student accounts are created by the seed script. Instructors create courses and enrol existing accounts by reference, but nobody can create accounts or reset passwords in the app. | A real pilot needs account provisioning (a roster import or university single sign-on). | US-12, plan Section 3 |
+| AI-generated practice questions are not built. The review flow for them is: an AI draft waits for the instructor's approval on the question-bank page. | The seed holds one AI draft to show the flow and prove it isn't served before approval (TC-25). | FR-39, BR-11 |
+| No embeddings or semantic search. Slide suggestions use keyword matching; students get only approved slides. | Suggestions miss synonyms and paraphrases, so the instructor may need *Show all pages*. | FR-08, plan 10.4 |
 | Word (.docx) is supported instead of PowerPoint (.pptx). | PowerPoint decks must be exported to PDF first. | FR-06 |
 | One primary concept per question. | Weighted multi-concept questions are not supported. | Plan Section 12 |
 | Schema is created with `create_all`, with no migrations, and the seed wipes the database. | Fine for a demo; a real deployment needs Alembic. | ADR 0001 §3 |

@@ -13,6 +13,6 @@ NFR-01 to NFR-12 from plan Section 4.2, with how the built system meets each.
 | NFR-07 | Usability | Partial | One primary action per screen, data status shown (pending review / approved), plain-language errors that say what to fix. Not yet tested with real users (plan Section 14) |
 | NFR-08 | Maintainability: modular monolith | Done | One FastAPI app with a route module per area (`api/`) and domain logic in `services/`. Pure functions (scoring, import validation) are tested without a database |
 | NFR-09 | Performance: measure on the demo dataset | Done | Measured: tens of milliseconds for import, approval, analysis and reports; 0.34 s for a 12-page PDF. See [Evaluation-Results](../06-Testing/Evaluation-Results.md) |
-| NFR-10 | Auditability | Done | Approvals, key approval, row edits and deletions, analysis runs and uploads go to `audit_logs`, shown on the audit log screen. TC-26 |
+| NFR-10 | Auditability | Done | Approvals, key approval, row edits and deletions, analysis runs, uploads, and concept and slide changes go to `audit_logs`, shown on the audit log screen. TC-26 |
 | NFR-11 | Repeatable runs with Docker Compose | Done | `docker compose up --build` plus the seed; CI runs the smoke test on this stack for every pull request |
 | NFR-12 | Responsible AI | Done | Official scores are never changed (BR-01, TC-22); causes are hypotheses with evidence (BR-07); no student data goes to the LLM (BR-12) |

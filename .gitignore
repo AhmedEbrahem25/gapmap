@@ -12,3 +12,4 @@ dist/
 # Local config and runtime files
 .env
 storage/
+*.tsbuildinfo

@@ -55,12 +55,25 @@ export function CoursePage() {
       </p>
 
       <dl className="mt-6 grid grid-cols-3 gap-4 sm:max-w-lg">
-        <Stat label="Students" value={c.student_count} />
+        <Stat label="Students" value={c.student_count} to={isInstructor ? `/courses/${c.id}/students` : undefined} />
         <Stat label="Materials" value={c.material_count} />
         <Stat label="Exams" value={c.exam_count} />
       </dl>
 
-      <h2 className="mt-10 text-lg font-semibold">Concepts</h2>
+      <div className="mt-10 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">Concepts</h2>
+        {isInstructor && (
+          <Link to={`/courses/${c.id}/concepts`} className="text-sm font-medium text-brand-700 hover:underline">
+            Manage concepts and slides
+          </Link>
+        )}
+      </div>
+      {c.concepts.length === 0 && (
+        <p className="mt-3 text-sm text-slate-600">
+          No concepts yet.
+          {isInstructor && " Upload a lecture, then add a concept for each topic your exam questions assess."}
+        </p>
+      )}
       <ul className="mt-3 grid gap-3 sm:grid-cols-3">
         {c.concepts.map((concept) => (
           <li key={concept.id} className="rounded-lg border border-slate-200 bg-white p-4">
@@ -77,11 +90,19 @@ export function CoursePage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
+function Stat({ label, value, to }: { label: string; value: number; to?: string }) {
+  const body = (
+    <>
       <dt className="text-xs uppercase tracking-wide text-slate-500">{label}</dt>
       <dd className="mt-1 text-2xl font-semibold">{value}</dd>
-    </div>
+      {to && <dd className="mt-1 text-xs text-brand-700">Manage</dd>}
+    </>
+  );
+  return to ? (
+    <Link to={to} className="block rounded-lg border border-slate-200 bg-white p-4 hover:border-brand-600">
+      {body}
+    </Link>
+  ) : (
+    <div className="rounded-lg border border-slate-200 bg-white p-4">{body}</div>
   );
 }

@@ -31,6 +31,79 @@ export interface Concept {
   description: string | null;
 }
 
+export interface CourseInput {
+  title: string;
+  code: string | null;
+  term: string | null;
+}
+
+export interface Student {
+  id: string;
+  student_ref: string | null;
+  name: string;
+  email: string;
+}
+
+export interface EnrollResult {
+  enrolled: string[];
+  already_enrolled: string[];
+  unknown: string[]; // no student account has this reference
+  students: Student[];
+}
+
+export interface ConceptInput {
+  name: string;
+  description: string | null;
+}
+
+/** A concept with its approved slides, for the instructor's concept page (FR-09, FR-10). */
+export interface ConceptDetail extends Concept {
+  question_count: number;
+  slides: SlideRef[];
+  practice_count: number; // approved
+  retest_count: number; // approved
+  pending_count: number; // waiting for review
+}
+
+export type BankUsage = "practice" | "retest";
+
+export interface BankItemInput {
+  usage: BankUsage;
+  prompt: string;
+  options: { key: string; text: string }[];
+  answer_key: string;
+  source_chunk_id: string | null;
+}
+
+/** A question-bank item as the instructor sees it, with its key and review state (FR-39, BR-11). */
+export interface BankItem {
+  id: string;
+  usage: BankUsage;
+  prompt: string;
+  options: { key: string; text: string }[];
+  answer_key: string;
+  origin: "instructor" | "ai";
+  review_status: "pending" | "approved";
+  source: SlideRef | null;
+  used_in_retests: number;
+  created_at: string;
+}
+
+export interface BankOverview {
+  concept_id: string;
+  concept_name: string;
+  course_id: string;
+  retest_questions_per_concept: number;
+  slides: SlideRef[];
+  items: BankItem[];
+}
+
+export interface SlideSuggestion {
+  slide: SlideRef;
+  score: number; // 0 = no word in common
+  matched_terms: string[];
+}
+
 export interface CourseDetail extends Course {
   student_count: number;
   material_count: number;

@@ -5,9 +5,9 @@ Screens are shown in [../04-Design/UI-Wireframes/](../04-Design/UI-Wireframes/RE
 
 | ID | As a | I want | So that | Status | In the app |
 |---|---|---|---|---|---|
-| US-01 | Instructor | to create a course | I can set up the subject | Seed only | The pilot course is created by `python -m app.seed` |
+| US-01 | Instructor | to create a course | I can set up the subject | Done | Home page → **New course**; then the **Students** card → enrol by reference |
 | US-02 | Instructor | to upload a lecture PDF | the content becomes searchable | Done | Course page → **Upload PDF or Word** |
-| US-03 | Instructor | to define concepts | I can link questions to topics | Seed only | Concepts are shown on the course page; they are created by the seed |
+| US-03 | Instructor | to define concepts | I can link questions to topics | Done | Course page → **Manage concepts and slides** → **New concept**, then **Find slides** → **Approve** |
 | US-04 | Instructor | to create an exam and an answer key | the system knows the correct answers | Done | Course page → **New exam** → add questions with options, key and concept → **Approve answer key** |
 | US-05 | Instructor | to upload a CSV | I can enter the students' results | Done | Exam → **Import results** → upload `.csv` or `.xlsx` |
 | US-06 | Instructor | to review the data | I can correct import errors | Done | Review table: filter **To fix** / **Warnings**, edit or delete rows, then **Approve results** or **Reject** |
@@ -22,7 +22,7 @@ Screens are shown in [../04-Design/UI-Wireframes/](../04-Design/UI-Wireframes/RE
 
 | Criterion | Met | Evidence |
 |---|---|---|
-| The instructor creates a course and uploads a PDF | Upload yes; course creation is seed only | TC-03 |
+| The instructor creates a course and uploads a PDF | Yes | `test_an_instructor_creates_a_course_they_teach`, TC-03 |
 | The system stores the text and the page number | Yes | TC-03, `slide_chunks` |
 | The instructor creates an exam and an answer key | Yes | `test_build_an_exam_then_import_results` |
 | A valid CSV is imported; an invalid one is rejected with a clear message | Yes | TC-05, TC-06 |

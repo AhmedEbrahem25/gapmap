@@ -72,12 +72,39 @@ in or able to see the course · C = coordinator.
 | Method | Path | Who | Purpose |
 |---|---|---|---|
 | GET | `/courses` | Logged in | My courses: taught, enrolled, or all for coordinator and admin |
+| POST | `/courses` | Instructor, admin | Create a course taught by the caller |
 | GET | `/courses/{id}` | E | Course detail with concepts and counts |
+| GET | `/courses/{id}/students` | I | Enrolled students |
+| POST | `/courses/{id}/enrollments` | I | Enrol accounts by `student_refs`; returns enrolled, already enrolled and unknown references |
+| DELETE | `/courses/{id}/enrollments/{student_id}` | I | Remove a student with no results or plan in the course |
 | GET | `/courses/{id}/materials` | E | Lecture files and their status |
 | POST | `/courses/{id}/materials` | I | Upload a `.pdf` or `.docx` (25 MB); pages are processed in the request |
 | GET | `/materials/{id}/status` | E | Processing status and page count |
 | GET | `/materials/{id}/pages/{page}` | E | Page text and title for the slide viewer |
 | GET | `/materials/{id}/pages/{page}/image` | E | Rendered page image (PNG) |
+
+### Concepts and slides
+
+| Method | Path | Who | Purpose |
+|---|---|---|---|
+| GET | `/courses/{id}/concepts` | I | Concepts with approved slides and question counts |
+| POST | `/courses/{id}/concepts` | I | Create a concept (name unique in the course, case-insensitive) |
+| PUT | `/concepts/{id}` | I | Rename or re-describe a concept |
+| DELETE | `/concepts/{id}` | I | Delete an unused concept (409 if questions, the bank or plans use it) |
+| GET | `/concepts/{id}/slide-suggestions` | I | Every course page not yet approved for it, best keyword match first, with `score` and `matched_terms` |
+| PUT | `/concepts/{id}/slides/{slide_chunk_id}` | I | Approve a slide for the concept |
+| DELETE | `/concepts/{id}/slides/{slide_chunk_id}` | I | Remove an approved slide |
+
+### Question bank
+
+| Method | Path | Who | Purpose |
+|---|---|---|---|
+| GET | `/concepts/{id}/bank-questions` | I | All practice and retest items with keys, review state, source slide and retest use |
+| POST | `/concepts/{id}/bank-questions` | I | Add an item (approved as saved); refused if it repeats an exam question or another item |
+| PUT | `/bank-questions/{id}` | I | Edit an item (409 if a retest used it) |
+| POST | `/bank-questions/{id}/approve` | I | Approve a pending item such as an AI draft |
+| POST | `/bank-questions/{id}/withdraw` | I | Stop serving an item |
+| DELETE | `/bank-questions/{id}` | I | Delete an unused item |
 
 ### Exams and imports
 
@@ -129,8 +156,8 @@ in or able to see the course · C = coordinator.
 
 | Plan endpoint | As built |
 |---|---|
-| `POST /courses` | Not built: courses are seeded |
-| `GET/POST /courses/{id}/concepts`, `POST /concepts/{id}/slides` | Not built: concepts and mappings are seeded; concepts are returned inside `GET /courses/{id}` |
+| `POST /courses` | Built, plus the student list and enrolment endpoints |
+| `GET/POST /courses/{id}/concepts`, `POST /concepts/{id}/slides` | Built as the concepts endpoints above; a slide is approved with `PUT /concepts/{id}/slides/{slide_chunk_id}` |
 | `PUT /questions/{id}/answer-key` | The key is part of the question (`POST`/`PUT /questions`) and locked with `POST /exams/{id}/approve-key` |
-| `GET/POST /concepts/{id}/bank-questions` | Not built: the bank is seeded |
-| — | Added: exam detail, question edit/delete, reopen, import history, row delete, exam results, instructor view of a student report, page image, practice check, retest detail, explanation |
+| `GET/POST /concepts/{id}/bank-questions` | Built as above, plus edit, approve, withdraw and delete |
+| — | Added: slide suggestions, concept edit and delete, exam detail, question edit/delete, reopen, import history, row delete, exam results, instructor view of a student report, page image, practice check, retest detail, explanation |
