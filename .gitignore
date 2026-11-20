@@ -12,4 +12,5 @@ dist/
 # Local config and runtime files
 .env
 storage/
+rehearsal/
 *.tsbuildinfo

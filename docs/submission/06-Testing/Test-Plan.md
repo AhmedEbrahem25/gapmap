@@ -16,7 +16,7 @@
 | Permissions | Student isolation, course access, coordinator limits | pytest, one test per role and endpoint group | `test_courses_rbac.py`, TC-02, TC-20, TC-27 |
 | Data | The demo dataset obeys the plan's rules | pytest on the seed | `test_seed_data.py` |
 | System | The whole demo journey on the real stack | `scripts/smoke_test.py`, 26 steps, against Docker Compose with PostgreSQL | CI job `e2e` |
-| Manual end to end | The journeys through the UI | A person follows [../../demo-script.md](../../demo-script.md) | Results in [../../test-results.md](../../test-results.md) |
+| UI end to end | The demo script through the real UI | `scripts/rehearse_demo.py` clicks every step in headless Edge or Chrome; a person also follows [../../demo-script.md](../../demo-script.md) | Results in [../../test-results.md](../../test-results.md) |
 | Usability | An instructor and students try it | Not done yet | — |
 | AI evaluation | Slide retrieval precision, diagnosis agreement | Not done yet: needs the instructor's reference judgements (issue #1) | — |
 
@@ -43,8 +43,9 @@ frontend behaviour is covered by the smoke test of the API it uses and by the ma
 - **Before merging a pull request:** all three CI jobs pass.
 - **Feature freeze (end of 26 Nov):** every P0 test case passes; the demo script has been run end to
   end in the browser on the Docker stack.
-- **Release candidate (27 Nov):** a clean reseed, the smoke test and one full rehearsal pass on the
-  demo machine.
+- **Release candidate (27 Nov):** a clean reseed, the smoke test, `scripts/rehearse_demo.py` and one
+  full human rehearsal pass on the demo machine. A first release-candidate run passed on 20 Nov from a
+  fresh clone (see [test-results.md](../../test-results.md)).
 
 ## Definition of done (plan Section 21)
 

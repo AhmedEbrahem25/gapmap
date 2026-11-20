@@ -70,6 +70,23 @@ The unit tests use SQLite, so the full journey is also run on the real stack.
 | Word upload with Arabic text, viewed as a student | Pass (2026-11-18) |
 | Explanation card with no API key (hidden, plan still complete) | Pass (2026-11-18) |
 
+## Release-candidate QA (2026-11-20)
+
+Run on branch `s11-courses`, which contains every slice, from a fresh `git clone`, following the
+README's Docker quick start word for word.
+
+| What | Result |
+|---|---|
+| Fresh clone, `cp .env.example .env`, set `JWT_SECRET`, `docker compose up --build`, seed | Pass: Postgres healthy, backend and frontend up, seed on Postgres |
+| `scripts/smoke_test.py` on that stack (Postgres) | Pass, 26 of 26 steps |
+| `scripts/rehearse_demo.py`: the demo script clicked through the UI, with the real file upload and row fixes | Pass, 8 of 8 steps, at 1280 and 1024 px wide |
+| `pytest` | Pass, 144 tests |
+| CI (backend, frontend, e2e on Docker + Postgres) on every open pull request | Pass |
+
+Found and fixed: the README's quick start ran `docker compose up` in the foreground, so its next
+command needed a second terminal (now `-d`); the smoke test needs `127.0.0.1` on Windows (now in the
+README).
+
 ## Not yet checked
 
 - A real call to the Claude API (no key on the development machine).

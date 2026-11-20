@@ -12,7 +12,7 @@ Decisions that refine it: [docs/decisions/](docs/decisions/).
 
 ```bash
 cp .env.example .env          # then set JWT_SECRET
-docker compose up --build
+docker compose up --build -d
 docker compose exec backend python -m app.seed
 ```
 
@@ -99,7 +99,20 @@ Checks the whole demo journey against a running API in about 20 seconds (run it 
 python scripts/smoke_test.py
 ```
 
-CI runs it on Docker Compose with Postgres for every pull request.
+CI runs it on Docker Compose with Postgres for every pull request. On Windows, pass
+`http://127.0.0.1:8000`: `localhost` resolves to IPv6 first there and every request waits about 2 s.
+
+## Demo rehearsal
+
+Clicks through the demo script in a headless Edge or Chrome, with the real file upload and row
+fixes, and checks each screen (8 steps, about a minute). Run it after
+`python -m app.seed --no-results`, then reseed:
+
+```bash
+python scripts/rehearse_demo.py
+```
+
+Add `--width 1024` to check the layout on an older projector. Screenshots go to `rehearsal/`.
 
 ## Demo
 
@@ -147,3 +160,4 @@ After adding endpoints, regenerate the frontend API types while the backend is r
 | S9 | Concepts and slide approval in the app, with keyword suggestions (FR-09, FR-10) | done |
 | S10 | Question bank review: add, edit, approve, withdraw practice and retest questions (FR-39, BR-10, BR-11) | done |
 | S11 | Course creation and enrolment by student reference (FR-05) | done |
+| S12 | Release candidate: clean-clone run on Docker, UI rehearsal script, docs fixes | done |

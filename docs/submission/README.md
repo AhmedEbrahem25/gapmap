@@ -51,7 +51,7 @@ Related documents elsewhere in `docs/`:
 - [ ] Instructor review of concepts, answer key and question bank (issue #1). Then measure accuracy
       as described in [Evaluation results](06-Testing/Evaluation-Results.md).
 - [ ] Have a teammate who did not write it follow the [Setup guide](05-Implementation/Setup-Guide.md)
-      on a clean machine.
+      on a clean machine. (A fresh clone on the development machine already worked on 20 Nov.)
 
 ## Mapping to the suggested report chapters (plan Section 20)
 
