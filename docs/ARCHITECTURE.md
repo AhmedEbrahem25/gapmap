@@ -12,14 +12,14 @@ Next.js 16 app ──► proxy.ts (optimistic role routing) ──► requireRol
    │                                   │
    │ uploads (/api/lectures, /api/papers, /api/import-csv)       after(): processLecture / processPaper
    ▼                                   ▼
-SQLite (Drizzle)  ◄────────────  lib/jobs.ts  ──►  lib/ai/pipelines.ts ──► Claude API (or offline fallback)
+SQLite (Drizzle)  ◄────────────  lib/jobs.ts  ──►  lib/ai/pipelines.ts ──► Gemini or Claude API (or offline fallback)
 storage/ (scans, lecture files, served by /api/files/[id] with access checks)
 ```
 
 ## Request flow for one paper
 
 1. `POST /api/papers` stores the scan and creates a `papers` row (`uploaded`).
-2. `after()` → `processPaper`: `segmented` → Claude vision transcribes each answer by question with a
+2. `after()` → `processPaper`: `segmented` → the vision model transcribes each answer by question with a
    confidence score and the words it was unsure about → `transcribed`.
 3. For every answer, `analyseAnswer` → `matchAnswer` returns met / partial / missing per criterion,
    the evidence quote, the gap, suggested marks, an error type and (if ambiguous) one follow-up
@@ -63,6 +63,10 @@ Schema: `src/lib/db/schema.ts`. Migrations: `drizzle/` (`npm run db:generate` af
 | Fresh question + grading | `generateRetest`, `gradeRetest` | reasoning |
 | Misconception clustering | `clusterMisconceptions` | reasoning |
 | Early alerts | `computeAlerts` in `lib/alerts.ts` (rules) | — |
+
+Providers: `lib/ai/client.ts` sends the same request to Gemini (`responseSchema` JSON mode, schema
+converted by `gemini-schema.ts`, automatic fallback to a current Flash model if a name is retired,
+back-off on rate limits) or to Claude (forced tool call). Gemini is used when `GEMINI_API_KEY` is set.
 
 Guardrails: one forced tool call per request so output is structured; zod validation with one retry;
 verbatim-quote validation; marks clamped to each criterion's maximum; the AI never releases anything;

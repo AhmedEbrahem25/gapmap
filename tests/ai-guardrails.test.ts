@@ -50,3 +50,22 @@ test("experiment explanation check and fresh question bank", () => {
   assert.match(q.prompt, /Course/);
   assert.equal(q.criteria.reduce((t, c) => t + c.marks, 0), 4);
 });
+
+import { toGeminiSchema } from "../src/lib/ai/gemini-schema";
+
+test("JSON Schema is converted to Gemini's response schema", () => {
+  const out = toGeminiSchema({
+    type: "object",
+    properties: {
+      followupQuestion: { type: ["string", "null"], description: "one question" },
+      results: { type: "array", items: { type: "object", properties: { status: { type: "string", enum: ["met", "partial", "missing"] } }, required: ["status"] } },
+    },
+    required: ["followupQuestion", "results"],
+  });
+  assert.deepEqual(out.propertyOrdering, ["followupQuestion", "results"]);
+  const props = out.properties as Record<string, Record<string, unknown>>;
+  assert.equal(props.followupQuestion!.type, "string");
+  assert.equal(props.followupQuestion!.nullable, true);
+  const items = props.results!.items as Record<string, unknown>;
+  assert.deepEqual((items.properties as Record<string, Record<string, unknown>>).status!.enum, ["met", "partial", "missing"]);
+});

@@ -59,7 +59,7 @@ export default async function UploadPage({ params }: PageProps<"/instructor/exam
             fields={{ examId }}
             accept="application/pdf,image/png,image/jpeg,image/webp"
             title="Upload scanned answer papers"
-            hint={`One PDF or photo per student. Handwritten Arabic and English are supported.${aiEnabled() ? "" : " Demo mode: add an API key to read handwriting; otherwise a TA types the answer in."}`}
+            hint={`One PDF or photo per student. Handwritten Arabic and English are supported.${aiEnabled() ? "" : " Demo mode: add a free GEMINI_API_KEY to read handwriting; otherwise a TA types the answer in."}`}
             icon={<ScanLine size={28} aria-hidden />}
           >
             <div className="mb-3 flex flex-wrap gap-3 text-sm">

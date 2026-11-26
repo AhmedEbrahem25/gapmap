@@ -22,6 +22,6 @@ http://localhost:3000/login in one window and keep a second, phone-sized window 
 
 **Backup plan**
 
-- No internet: leave `ANTHROPIC_API_KEY` empty — demo mode runs every step offline with the seeded data.
+- No internet: leave the AI keys empty — demo mode runs every step offline with the seeded data.
 - Something went wrong mid-demo: **Reset demo data** on the login page (≈1 second).
 - Keep a screen recording of the full flow (`npm run test:e2e -- --headed` is a good way to rehearse it).

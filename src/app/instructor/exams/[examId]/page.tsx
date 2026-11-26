@@ -6,7 +6,7 @@ import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
 import { examWithAccess, conceptsFor } from "@/lib/data";
 import { examQuestions } from "@/lib/jobs";
-import { aiEnabled } from "@/lib/ai/client";
+import { aiEnabled, aiLabel } from "@/lib/ai/client";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -191,7 +191,7 @@ export default async function RubricPage({ params, searchParams }: PageProps<"/i
           </Card>
           <Card className="flex flex-col gap-3 p-5">
             <p className="text-sm text-ink-2">
-              {aiEnabled() ? "Claude is connected: drafting, reading handwriting and matching run live." : "Demo mode: no AI key is set, so drafting and matching use the offline demo logic. Add ANTHROPIC_API_KEY to read real handwriting."}
+              {aiEnabled() ? `${aiLabel()} is connected: drafting, reading handwriting and matching run live.` : "Demo mode: no AI key is set, so drafting and matching use the offline demo logic. Add a free GEMINI_API_KEY to read real handwriting."}
             </p>
             <ButtonLink href={`/instructor/exams/${examId}/upload`}>Next: student papers →</ButtonLink>
           </Card>

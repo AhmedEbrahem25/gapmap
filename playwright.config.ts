@@ -20,7 +20,7 @@ export default defineConfig({
     url: `http://localhost:${PORT}/login`,
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { DATABASE_PATH: "data/e2e.db", DEMO_MODE: "true", ANTHROPIC_API_KEY: "" },
+    env: { DATABASE_PATH: "data/e2e.db", DEMO_MODE: "true", ANTHROPIC_API_KEY: "", GEMINI_API_KEY: "" },
   },
   globalSetup: "./e2e/global-setup.ts",
 });

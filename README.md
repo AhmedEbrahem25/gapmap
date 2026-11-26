@@ -25,7 +25,7 @@ Requirements: **Node.js 20.9+** (22 recommended).
 git clone https://github.com/muhammedhanii/GapMap.git
 cd GapMap
 npm install
-cp .env.example .env.local     # optional: add ANTHROPIC_API_KEY for live AI
+cp .env.example .env.local     # optional: add a free GEMINI_API_KEY for live AI
 npm run dev
 ```
 
@@ -73,7 +73,7 @@ Full script with talking points and a backup plan: [docs/DEMO-SCRIPT.md](docs/DE
 ## Tech stack
 
 Next.js 16 (App Router, Server Actions, Turbopack) · React 19 · TypeScript · Tailwind CSS v4 ·
-Motion · SQLite via Drizzle ORM · JWT sessions (jose) · Claude API (`@anthropic-ai/sdk`) ·
+Motion · SQLite via Drizzle ORM · JWT sessions (jose) · Gemini API (REST) or Claude API (`@anthropic-ai/sdk`) ·
 unpdf / mammoth for lecture files · Playwright + node:test.
 
 Architecture, data model and AI pipelines: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -81,7 +81,9 @@ Design system: [docs/design-system.md](docs/design-system.md).
 
 ## AI: live and offline
 
-With `ANTHROPIC_API_KEY` set, Claude reads handwriting, drafts rubrics, matches criteria, runs the
+GapMap works with **Google Gemini** (free key from [Google AI Studio](https://aistudio.google.com/apikey),
+no credit card) or **Anthropic Claude** (paid). Set `GEMINI_API_KEY` or `ANTHROPIC_API_KEY` in
+`.env.local`. With a key set, the model reads handwriting, drafts rubrics, matches criteria, runs the
 follow-up conversation, writes fresh questions and groups misconceptions. Every call returns
 schema-validated JSON; every evidence quote must appear word-for-word in the transcription or it is
 dropped. Without a key, GapMap runs deterministic **demo mode** logic so every screen still works

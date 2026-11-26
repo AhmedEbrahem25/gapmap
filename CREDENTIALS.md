@@ -42,12 +42,19 @@ Copy `.env.example` to `.env.local` and fill in:
 | Variable | Required | Where to get it |
 | --- | --- | --- |
 | `SESSION_SECRET` | **Yes in production** (≥ 32 characters) | `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `ANTHROPIC_API_KEY` | For live AI (handwriting, matching, follow-ups) | https://console.anthropic.com → API keys |
+| `GEMINI_API_KEY` | **Free** live AI (handwriting, matching, follow-ups) | https://aistudio.google.com/apikey — sign in with a Google account, *Create API key*. No credit card. |
+| `GEMINI_MODEL` / `GEMINI_MODEL_FAST` | Optional | Defaults `gemini-flash-latest` / `gemini-flash-lite-latest`; if a name is retired GapMap picks a current Flash model automatically |
+| `ANTHROPIC_API_KEY` | Paid alternative to Gemini | https://platform.claude.com/settings/keys (needs prepaid credits) |
 | `ANTHROPIC_MODEL` / `ANTHROPIC_MODEL_FAST` | Optional | Defaults: `claude-sonnet-5-5` / `claude-haiku-5-5` |
+| `AI_PROVIDER` | Optional | `gemini` or `anthropic` when both keys are set (Gemini wins by default) |
 | `DATABASE_PATH` | Optional | Defaults to `data/gapmap.db` |
 | `STORAGE_DIR` | Optional | Where uploads are stored; defaults to `storage/` |
 | `DEMO_MODE` | Optional | Set to `false` in a real deployment to hide demo logins and reset |
 | `COOKIE_SECURE` | Optional | Set to `false` only when demoing a production build over plain `http://` on a LAN IP |
+
+> **Privacy note for the free Gemini tier:** Google may use free-tier prompts to improve its products.
+> Use it with the demo data or anonymised papers. For real students' papers, use a paid tier
+> (Gemini paid or Claude) under an agreement with the university.
 
 Keep the team's real values in a password manager (for example a shared 1Password or Bitwarden
 vault), not in this repo, chat, or screenshots. If a key is ever committed, rotate it immediately.
