@@ -2,14 +2,13 @@
  * Resets the local database and loads the GapMap demo data.
  * Run with:  npm run db:seed
  */
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import type { SqlJsStatic } from "sql.js";
 import bcrypt from "bcryptjs";
 import fs from "node:fs";
 import path from "node:path";
 import { nanoid } from "nanoid";
 import * as s from "../src/lib/db/schema";
+import { loadSqlJs, openDatabase } from "../src/lib/db/sqlite";
 import {
   DEMO_PASSWORD,
   conceptDefs,
@@ -22,16 +21,12 @@ import {
 
 const id = (p: string) => `${p}_${nanoid(10)}`;
 
-export function seed(dbFile = process.env.DATABASE_PATH ?? "data/gapmap.db") {
+/** Synchronous once sql.js is loaded, so the app can seed an empty database on first request. */
+export function seed(SQL: SqlJsStatic, dbFile = process.env.DATABASE_PATH ?? "data/gapmap.db") {
   const file = path.resolve(/*turbopackIgnore: true*/ process.cwd(), dbFile);
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  for (const suffix of ["", "-wal", "-shm"]) fs.rmSync(file + suffix, { force: true });
-
-  const sqlite = new Database(file);
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
-  const db = drizzle(sqlite, { schema: s });
-  migrate(db, { migrationsFolder: path.resolve(/*turbopackIgnore: true*/ process.cwd(), "drizzle") });
+  for (const suffix of ["", "-wal", "-shm", ".tmp"]) fs.rmSync(file + suffix, { force: true });
+  const handle = openDatabase(SQL, file, path.resolve(/*turbopackIgnore: true*/ process.cwd(), "drizzle"));
+  const db = handle.db;
 
   const hash = bcrypt.hashSync(DEMO_PASSWORD, 10);
 
@@ -277,11 +272,14 @@ export function seed(dbFile = process.env.DATABASE_PATH ?? "data/gapmap.db") {
     tx.insert(s.auditLog).values({ id: id("aud"), actorId: null, action: "seed", object: "database" }).run();
   });
 
-  sqlite.close();
+  handle.close();
   return { file, password: DEMO_PASSWORD };
 }
 
 if (process.argv[1] && /seed\.ts$/.test(process.argv[1])) {
-  const r = seed();
-  console.log(`✔ Seeded ${r.file}\n  Demo password for every account: ${r.password}\n  See CREDENTIALS.md for the accounts.`);
+  loadSqlJs().then((SQL) => {
+    const r = seed(SQL);
+    console.log(`✔ Seeded ${r.file}\n  Demo password for every account: ${r.password}\n  See CREDENTIALS.md for the accounts.`);
+    console.log('  Stop the dev server before seeding from the terminal, or use "Reset demo data" on the login page.');
+  });
 }

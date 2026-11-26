@@ -12,7 +12,7 @@ Next.js 16 app ──► proxy.ts (optimistic role routing) ──► requireRol
    │                                   │
    │ uploads (/api/lectures, /api/papers, /api/import-csv)       after(): processLecture / processPaper
    ▼                                   ▼
-SQLite (Drizzle)  ◄────────────  lib/jobs.ts  ──►  lib/ai/pipelines.ts ──► Gemini or Claude API (or offline fallback)
+SQLite (sql.js + Drizzle) ◄────────────  lib/jobs.ts  ──►  lib/ai/pipelines.ts ──► Gemini or Claude API (or offline fallback)
 storage/ (scans, lecture files, served by /api/files/[id] with access checks)
 ```
 
@@ -82,6 +82,6 @@ offline fallback in `fallback.ts` with the same output shapes.
 
 ## Scaling notes
 
-SQLite keeps the hackathon build self-contained. For a multi-university deployment, switch Drizzle to
+SQLite runs as WebAssembly (sql.js) in the server process: no native build step on any OS. The in-memory database is written atomically to `data/gapmap.db` shortly after every change (`src/lib/db/sqlite.ts`), so run one server process per database file. For a multi-university deployment, switch Drizzle to
 PostgreSQL (+ pgvector for slide retrieval), move `storage/` to S3-compatible object storage, and move
 `after()` jobs to a queue (e.g. a worker on Redis) for batches of hundreds of papers.

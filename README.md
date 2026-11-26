@@ -19,7 +19,7 @@ Built for the **AI Educathon 2026** by Crafnova.
 
 ## Quick start
 
-Requirements: **Node.js 20.9+** (22 recommended).
+Requirements: **Node.js 20.9+** (22 recommended). Nothing else — no Visual Studio, Python or database server; the database is SQLite compiled to WebAssembly.
 
 ```bash
 git clone https://github.com/muhammedhanii/GapMap.git
@@ -37,7 +37,7 @@ accounts (password `GapMap@2026`).
 | --- | --- |
 | `npm run dev` | Development server |
 | `npm run build && npm start` | Production build (set `SESSION_SECRET`) |
-| `npm run db:seed` | Reset the database to the demo data |
+| `npm run db:seed` | Reset the database to the demo data (stop the dev server first, or use **Reset demo data** on the login page) |
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
 | `npm test` | Unit tests for the AI guardrails and offline logic |
 | `npm run test:e2e` | Playwright: the full hackathon demo flow in a real browser |
@@ -73,7 +73,7 @@ Full script with talking points and a backup plan: [docs/DEMO-SCRIPT.md](docs/DE
 ## Tech stack
 
 Next.js 16 (App Router, Server Actions, Turbopack) · React 19 · TypeScript · Tailwind CSS v4 ·
-Motion · SQLite via Drizzle ORM · JWT sessions (jose) · Gemini API (REST) or Claude API (`@anthropic-ai/sdk`) ·
+Motion · SQLite (sql.js / WebAssembly) via Drizzle ORM · JWT sessions (jose) · Gemini API (REST) or Claude API (`@anthropic-ai/sdk`) ·
 unpdf / mammoth for lecture files · Playwright + node:test.
 
 Architecture, data model and AI pipelines: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

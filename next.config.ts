@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["better-sqlite3"],
+  serverExternalPackages: ["sql.js"],
   experimental: {
     serverActions: { bodySizeLimit: "25mb" },
   },
