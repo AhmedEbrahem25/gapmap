@@ -1,12 +1,12 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db, schema, resetDatabase } from "@/lib/db";
-import { SESSION_COOKIE, sessionCookieOptions, signSession, homeFor } from "@/lib/session";
+import { SESSION_COOKIE, sessionCookieOptions, signSession, homeFor, isSecureRequest } from "@/lib/session";
 
 const LoginSchema = z.object({
   email: z.string().trim().toLowerCase().email("Enter a valid email address"),
@@ -31,7 +31,9 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
 
 async function startSession(userId: string, role: schema.Role) {
   const token = await signSession({ userId, role });
-  (await cookies()).set(SESSION_COOKIE, token, sessionCookieOptions);
+  const h = await headers();
+  const secure = isSecureRequest(h.get("origin"), h.get("x-forwarded-proto"));
+  (await cookies()).set(SESSION_COOKIE, token, sessionCookieOptions(secure));
 }
 
 /** One-click demo sign-in. Disabled unless DEMO_MODE is on. */

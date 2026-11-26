@@ -21,9 +21,9 @@ export function FadeIn({
   return (
     <motion.div
       className={className}
-      initial={reduce ? false : { opacity: 0, y }}
+      initial={reduce ? false : { opacity: 0, y: Math.min(y, 8) }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, delay, ease }}
+      transition={{ duration: 0.28, delay, ease }}
     >
       {children}
     </motion.div>
@@ -38,14 +38,14 @@ export function Reveal({ children, className, delay = 0 }: { children: ReactNode
       initial={reduce ? false : { opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.6, delay, ease }}
+      transition={{ duration: 0.4, delay, ease }}
     >
       {children}
     </motion.div>
   );
 }
 
-export function Stagger({ children, className, gap = 0.06 }: { children: ReactNode; className?: string; gap?: number }) {
+export function Stagger({ children, className, gap = 0.035 }: { children: ReactNode; className?: string; gap?: number }) {
   return (
     <motion.div
       className={className}
@@ -64,8 +64,8 @@ export function StaggerItem({ children, className }: { children: ReactNode; clas
     <motion.div
       className={className}
       variants={{
-        hidden: reduce ? { opacity: 1 } : { opacity: 0, y: 10 },
-        show: { opacity: 1, y: 0, transition: { duration: 0.4, ease } },
+        hidden: reduce ? { opacity: 1 } : { opacity: 0, y: 6 },
+        show: { opacity: 1, y: 0, transition: { duration: 0.26, ease } },
       }}
     >
       {children}
@@ -103,7 +103,7 @@ export function AnimatedBar({
         style={{ background: color }}
         initial={{ width: 0 }}
         animate={{ width: inView ? `${Math.max(0, Math.min(100, value))}%` : 0 }}
-        transition={{ duration: 0.9, delay, ease }}
+        transition={{ duration: 0.6, delay: Math.min(delay, 0.25), ease }}
       />
     </div>
   );
@@ -115,7 +115,7 @@ export function CountUp({ to, suffix = "", className }: { to: number; suffix?: s
   const [value, setValue] = useState(0);
   useEffect(() => {
     if (!inView) return;
-    const controls = animate(0, to, { duration: 1.1, ease, onUpdate: (v) => setValue(Math.round(v)) });
+    const controls = animate(0, to, { duration: 0.7, ease, onUpdate: (v) => setValue(Math.round(v)) });
     return () => controls.stop();
   }, [inView, to]);
   return (

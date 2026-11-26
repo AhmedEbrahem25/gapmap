@@ -36,14 +36,23 @@ export async function verifySession(token: string | undefined): Promise<SessionP
   }
 }
 
-export const sessionCookieOptions = {
-  httpOnly: true,
-  sameSite: "lax" as const,
-  // Set COOKIE_SECURE=false only when demoing over plain http on a LAN address.
-  secure: process.env.NODE_ENV === "production" && process.env.COOKIE_SECURE !== "false",
-  path: "/",
-  maxAge: MAX_AGE_SECONDS,
-};
+/**
+ * Secure cookies only work over https. Decide from the scheme the browser used
+ * (Origin of the sign-in POST, or the proxy's X-Forwarded-Proto), so the same
+ * build works on https (tunnel, hosting) and on http (localhost, phone on Wi-Fi).
+ */
+export function isSecureRequest(origin: string | null, forwardedProto: string | null) {
+  if (process.env.COOKIE_SECURE === "true") return true;
+  if (process.env.COOKIE_SECURE === "false") return false;
+  if (origin?.startsWith("https://")) return true;
+  if (origin?.startsWith("http://")) return false;
+  if (forwardedProto) return forwardedProto.split(",")[0]!.trim() === "https";
+  return process.env.NODE_ENV === "production";
+}
+
+export function sessionCookieOptions(secure: boolean) {
+  return { httpOnly: true, sameSite: "lax" as const, secure, path: "/", maxAge: MAX_AGE_SECONDS };
+}
 
 export function homeFor(role: Role) {
   switch (role) {

@@ -29,13 +29,24 @@ cp .env.example .env.local     # optional: add a free GEMINI_API_KEY for live AI
 npm run dev
 ```
 
-Open http://localhost:3000. The database is created and filled with demo data automatically on the
+Open http://localhost:3000. For demos and testing on a phone use the fast mode instead:
+
+```bash
+npm run demo
+```
+
+It builds once (and again only after you pull updates), starts the production server, and prints
+the link for phones on the same Wi-Fi. `npm run dev` is for editing code — every page is compiled on
+first visit there, so clicks feel slow.
+
+The database is created and filled with demo data automatically on the
 first request. Pick an account on the login page — see **[CREDENTIALS.md](CREDENTIALS.md)** for all
 accounts (password `GapMap@2026`).
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | Development server |
+| `npm run demo` | **Fast mode** for demos: builds when needed, starts, prints phone link |
+| `npm run dev` | Development server (slower; for editing code) |
 | `npm run build && npm start` | Production build (set `SESSION_SECRET`) |
 | `npm run db:seed` | Reset the database to the demo data (stop the dev server first, or use **Reset demo data** on the login page) |
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
