@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+/* GapMap design tokens — "Calm academic clarity" (see /docs/design-system.md) */
+@theme {
+  --font-sans: "IBM Plex Sans", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-hand: "Caveat", cursive;
+
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-500: #3b5bea;
+  --color-primary-600: #2445d8;
+  --color-primary-700: #1f3bc0;
+  --color-primary-800: #1a32a6;
+  --color-marker: #fdba74;
+
+  --color-ink: #111827;
+  --color-ink-2: #4b5563;
+  --color-ink-3: #6b7280;
+  --color-line: #e5e7eb;
+  --color-line-2: #f0f1f3;
+  --color-ground: #f6f7f9;
+
+  --color-met: #0f766e;
+  --color-met-soft: #e6f4f1;
+  --color-partial: #b45309;
+  --color-partial-ink: #92400e;
+  --color-partial-soft: #fef3e2;
+  --color-missing: #b91c1c;
+  --color-missing-soft: #fdecec;
+  --color-ai: #6d28d9;
+  --color-ai-ink: #5b21b6;
+  --color-ai-soft: #f3eeff;
+  --color-ai-line: #ddd6fe;
+  --color-quote: #fffbf3;
+  --color-quote-line: #f5d9a8;
+
+  --radius-card: 12px;
+  --radius-sheet: 16px;
+
+  --shadow-card: 0 1px 2px rgb(17 24 39 / 0.04), 0 1px 1px rgb(17 24 39 / 0.03);
+  --shadow-lift: 0 12px 32px -12px rgb(17 24 39 / 0.18);
+  --shadow-glow: 0 0 0 4px rgb(36 69 216 / 0.12);
+
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-ring: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgb(36 69 216 / 0.35); }
+  100% { box-shadow: 0 0 0 14px rgb(36 69 216 / 0); }
+}
+
+html { -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary-600);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection { background: var(--color-primary-100); }
+
+.skeleton {
+  background: linear-gradient(90deg, #eef0f3 0px, #f7f8fa 120px, #eef0f3 240px);
+  background-size: 800px 100%;
+  animation: var(--animate-shimmer);
+}
+
+.paper-lines {
+  background-color: #fbfaf6;
+  background-image: repeating-linear-gradient(transparent 0 33px, #e3e8f0 33px 34px);
+}
+
+.grid-dots {
+  background-image: radial-gradient(rgb(36 69 216 / 0.12) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
