@@ -42,6 +42,22 @@ accounts (password `GapMap@2026`).
 | `npm test` | Unit tests for the AI guardrails and offline logic |
 | `npm run test:e2e` | Playwright: the full hackathon demo flow in a real browser |
 
+## Put it online
+
+**From your laptop (instant, free):** install `cloudflared`
+(`winget install Cloudflare.cloudflared` on Windows), run the app, then in a second terminal:
+
+```bash
+cloudflared tunnel --url http://localhost:3000
+```
+
+It prints a public `https://….trycloudflare.com` link that works on any phone while the laptop is on.
+
+**Permanent link (free):** on [Render](https://render.com) choose *New → Blueprint*, select this
+repository, and paste your `GEMINI_API_KEY` when asked. `render.yaml` sets everything else. On the
+free plan the service sleeps after 15 idle minutes (first visit then takes about a minute) and the
+demo data is re-created on every restart.
+
 ## The demo in 5 minutes
 
 1. **Instructor** (Dr. Salma Nour) → *Courses*: lectures split into slides and tagged by concept; confirm an AI tag.

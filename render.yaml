@@ -1,0 +1,20 @@
+# One-click deploy on Render (free plan): Dashboard → New → Blueprint → pick this repo.
+# The free plan has no persistent disk: the demo database is re-created from the
+# seed data whenever the service restarts or wakes up after 15 idle minutes.
+services:
+  - type: web
+    name: gapmap
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /login
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DEMO_MODE
+        value: "true"
+      - key: GEMINI_API_KEY
+        sync: false
