@@ -140,6 +140,7 @@ test("chains go to the wrong options students chose, most common first, capped",
   ];
   assert.deepEqual(chainTargets(qs, answers).map((t) => `${t.questionId}:${t.option}:${t.count}`), ["q1:A:5", "q2:D:2"]);
   assert.equal(chainTargets(qs, answers, 1).length, 1);
+  assert.deepEqual(chainTargets([{ id: "q3", correctOption: null }], [{ questionId: "q3", chosenOption: "A" }]), [], "no key, no chain");
 });
 
 test("an offline chain is well formed and stays on the slide", () => {
@@ -159,4 +160,18 @@ test("the right choice does not always sit first", () => {
   assert.ok(mixed.every((s) => s.choices.filter((c) => c.correct).length === 1 && s.choices.length === 3));
   assert.notDeepEqual(mixed.map((s) => s.choices.findIndex((c) => c.correct)), [0, 0]);
   assert.deepEqual(mixChoices([step("one")], "Q1A"), mixChoices([step("one")], "Q1A"), "same every time");
+});
+
+import { parseExamText, parseKey } from "../src/lib/mcq";
+
+test("an exam file's text becomes questions with options, and a typed key becomes letters", () => {
+  const text = "Quiz (02) Page 1 of 2 Student Name: ………… I.1. Callback to a landline phone number is an example of what type of factor? A. Something you know B. Somewhere you are C. Something you have D. Something you are I.2. Which type of malware can self-replicate without user intervention? A. Virus B. Worm C. Trojan Horse D. Spyware 3. Explain why salting defeats rainbow tables.";
+  const qs = parseExamText(text);
+  assert.equal(qs.length, 3);
+  assert.deepEqual(qs[0]!.options, ["Something you know", "Somewhere you are", "Something you have", "Something you are"]);
+  assert.equal(qs[1]!.options[1], "Worm");
+  assert.deepEqual(qs[2]!.options, [], "a written question has no options");
+  assert.deepEqual(parseKey("B B"), ["B", "B"]);
+  assert.deepEqual(parseKey("1C 2b 3_"), ["C", "B", null]);
+  assert.deepEqual(parseKey("C,_,A"), ["C", null, "A"]);
 });

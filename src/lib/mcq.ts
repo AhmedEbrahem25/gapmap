@@ -28,7 +28,8 @@ export function chainTargets(
   const counts = new Map<string, { questionId: string; option: string; count: number }>();
   for (const a of answers) {
     const q = questions.find((x) => x.id === a.questionId);
-    if (!q || !a.chosenOption || a.chosenOption === q.correctOption) continue;
+    // Without a key nobody knows which options are wrong, so no chain yet.
+    if (!q?.correctOption || !a.chosenOption || a.chosenOption === q.correctOption) continue;
     const key = `${q.id}:${a.chosenOption}`;
     const entry = counts.get(key) ?? { questionId: q.id, option: a.chosenOption, count: 0 };
     entry.count++;
@@ -46,7 +47,7 @@ export function mixChoices(steps: ChainStep[], seed: string): ChainStep[] {
   return steps.map((s, i) => {
     const right = s.choices.find((c) => c.correct)!;
     const others = s.choices.filter((c) => c !== right);
-    const at = (base + i * 2 + 1) % s.choices.length;
+    const at = (base + i + 1) % s.choices.length;
     return { ...s, choices: [...others.slice(0, at), right, ...others.slice(at)] };
   });
 }
@@ -93,4 +94,36 @@ export function chainFromSlide(input: {
     ],
     explanation: `${input.slide.title}: ${input.slide.body}`,
   };
+}
+
+/**
+ * Splits an exam file's text into questions: "1. …" or "I.1. …", then options "A. …" to "E. …".
+ * Used when the AI is off; with the AI on, it reads the file instead.
+ */
+export function parseExamText(text: string): { number: number; prompt: string; options: string[] }[] {
+  const flat = text
+    .replace(/Page \d+ of \d+/gi, " ")
+    .replace(/Student Name:[.…\s]*/gi, " ")
+    .replace(/\s+/g, " ");
+  const parts = flat.split(/(?:^|\s)(?:[IVX]+\.)?(\d{1,2})\.\s+(?=[A-Z“"(])/);
+  const out: { number: number; prompt: string; options: string[] }[] = [];
+  for (let i = 1; i < parts.length; i += 2) {
+    const body = parts[i + 1] ?? "";
+    const pieces = body.split(/\s([A-E])\.\s/);
+    const prompt = pieces[0]!.trim();
+    const options: string[] = [];
+    for (let k = 1; k < pieces.length; k += 2) options.push(pieces[k + 1]!.trim());
+    if (prompt.length > 8) out.push({ number: Number(parts[i]), prompt, options: options.length >= 2 ? options : [] });
+  }
+  return out;
+}
+
+/** Reads a typed key such as "C B A C", "1C 2B 3A" or "C,B,_,A" (blank or _ = no key yet). */
+export function parseKey(text: string): (string | null)[] {
+  return String(text ?? "")
+    .toUpperCase()
+    .replace(/\d+\s*[.):-]?\s*(?=[A-E_?])/g, " ")
+    .split(/[\s,;]+/)
+    .filter(Boolean)
+    .map((x) => (/^[A-E]$/.test(x) ? x : null));
 }

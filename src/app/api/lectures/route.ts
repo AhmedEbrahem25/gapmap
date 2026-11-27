@@ -26,7 +26,14 @@ export async function POST(req: Request) {
     const filePath = await saveUpload(file, `lectures/${courseId}`);
     const id = crypto.randomUUID();
     const title = file.name.replace(/\.(pdf|docx)$/i, "").replace(/^lecture\s*\d+\s*[-–:]\s*/i, "").trim() || `Lecture ${next}`;
-    db.insert(s.lectures).values({ id, courseId, number: next++, title, fileName: file.name, filePath, status: "processing", progress: 10 }).run();
+    // Use the number in the file name ("CSE241_04_…", "Lecture_3, …") when it is free; otherwise the next one.
+    const named = Number(file.name.match(/(?:lecture|lec)[\s_-]*0?(\d{1,2})\b|_0?(\d{1,2})_/i)?.slice(1).find(Boolean));
+    const taken = new Set(existing.map((e) => e.n));
+    const number = named && !taken.has(named) ? named : next++;
+    taken.add(number);
+    existing.push({ n: number });
+    next = Math.max(next, number + 1);
+    db.insert(s.lectures).values({ id, courseId, number, title, fileName: file.name, filePath, status: "processing", progress: 10 }).run();
     created.push(id);
   }
   after(async () => {

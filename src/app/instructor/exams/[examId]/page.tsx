@@ -14,6 +14,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FadeIn } from "@/components/ui/motion";
 import { ExamSteps } from "./steps";
+import { UploadDropzone } from "@/components/instructor/upload-dropzone";
 import { aiDraftRubric, updateCriterion, addCriterion, deleteCriterion, addQuestion, addMcqQuestion, setCorrectOption } from "@/lib/actions/instructor";
 import { cn, fmtMarks } from "@/lib/utils";
 
@@ -202,6 +203,31 @@ export default async function RubricPage({ params, searchParams }: PageProps<"/i
         </Card>
 
         <div className="flex w-full flex-col gap-4 lg:max-w-[380px]">
+          <UploadDropzone
+            endpoint="/api/exam-file"
+            fields={{ examId }}
+            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            title="Import the exam file"
+            hint="Your quiz as PDF or Word: questions and options are read from it, each linked to its concept"
+            multiple={false}
+          >
+            <div className="mb-3 grid gap-2 text-sm">
+              <label className="grid gap-1">
+                <span className="text-[13px] font-semibold">Answer key for the MCQs, in order</span>
+                <input name="key" placeholder="C B A C C B … (use _ for no key yet)" className="h-9 rounded-lg border border-[#9ca3af] px-3" />
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="grid gap-1">
+                  <span className="text-[13px] font-semibold">Marks per MCQ</span>
+                  <input name="mcqMarks" type="number" min="0.5" step="0.5" defaultValue={1} className="h-9 rounded-lg border border-[#9ca3af] px-3" />
+                </label>
+                <label className="grid gap-1">
+                  <span className="text-[13px] font-semibold">Per written question</span>
+                  <input name="writtenMarks" type="number" min="0.5" step="0.5" defaultValue={2} className="h-9 rounded-lg border border-[#9ca3af] px-3" />
+                </label>
+              </div>
+            </div>
+          </UploadDropzone>
           <Card className="p-5">
             <h2 className="font-semibold">Add a question</h2>
             <form action={addQuestion} className="mt-4 grid gap-3 text-sm">

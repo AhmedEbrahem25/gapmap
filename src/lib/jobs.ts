@@ -4,9 +4,9 @@ import path from "node:path";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { db, schema as s } from "./db";
 import { aiEnabled } from "./ai/client";
-import { tagSlides, transcribePaper, matchAnswer, draftRubric, type PaperAnswer } from "./ai/pipelines";
+import { tagSlides, transcribePaper, matchAnswer, draftRubric, extractQuestions, type PaperAnswer } from "./ai/pipelines";
 import { keywords } from "./ai/fallback";
-import { parseChoice, scoreChoice } from "./mcq";
+import { parseChoice, parseExamText, parseKey, scoreChoice } from "./mcq";
 
 export const STORAGE_DIR = path.resolve(/*turbopackIgnore: true*/ process.cwd(), process.env.STORAGE_DIR ?? "storage");
 
@@ -312,4 +312,53 @@ export function matchStudentByFile(examId: string, fileName: string | null) {
     return name.every((w) => words.includes(` ${w} `)) || (local.length > 1 && local.every((w) => words.includes(` ${w} `)));
   });
   return hits.length === 1 ? hits[0]!.id : null;
+}
+
+/** The concept whose confirmed slides share the most words with the question. */
+function guessConcept(courseId: string, text: string) {
+  const words = keywords(text);
+  const rows = db
+    .select({ conceptId: s.slideConcepts.conceptId, title: s.slides.title, body: s.slides.body })
+    .from(s.slideConcepts)
+    .innerJoin(s.slides, eq(s.slides.id, s.slideConcepts.slideId))
+    .innerJoin(s.concepts, eq(s.concepts.id, s.slideConcepts.conceptId))
+    .where(eq(s.concepts.courseId, courseId))
+    .all();
+  const score = new Map<string, number>();
+  for (const r of rows) {
+    const t = `${r.title} ${r.body}`.toLowerCase();
+    score.set(r.conceptId, (score.get(r.conceptId) ?? 0) + words.filter((w) => t.includes(w)).length);
+  }
+  return [...score.entries()].sort((a, b) => b[1] - a[1]).find(([, n]) => n > 0)?.[0] ?? null;
+}
+
+/** "Exam file + key": reads the questions from the lecturer's file and stores them with the key. */
+export async function importExamFile(examId: string, filePath: string, fileName: string, keyText: string, marks: { mcq: number; written: number }) {
+  const exam = db.select().from(s.exams).where(eq(s.exams.id, examId)).get();
+  if (!exam) return 0;
+  const text = (await extractPages(filePath, fileName)).join("\n");
+  const concepts = db.select().from(s.concepts).where(eq(s.concepts.courseId, exam.courseId)).all();
+  const read = (await extractQuestions({ text, concepts: concepts.map((c) => c.name) })) ?? parseExamText(text).map((q) => ({ ...q, concept: null }));
+  const key = parseKey(keyText);
+  const start = db.select({ id: s.questions.id }).from(s.questions).where(eq(s.questions.examId, examId)).all().length;
+  read.forEach((q, i) => {
+    const mcq = q.options.length >= 2;
+    const correct = mcq ? key[i] ?? null : null;
+    const conceptId =
+      concepts.find((c) => c.name.toLowerCase() === (q.concept ?? "").toLowerCase())?.id ?? guessConcept(exam.courseId, `${q.prompt} ${q.options.join(" ")}`);
+    db.insert(s.questions)
+      .values({
+        id: crypto.randomUUID(),
+        examId,
+        number: start + i + 1,
+        prompt: q.prompt,
+        maxMarks: mcq ? marks.mcq : marks.written,
+        kind: mcq ? "mcq" : "written",
+        options: mcq ? q.options : null,
+        correctOption: correct && "ABCDE".indexOf(correct) < q.options.length ? correct : null,
+        conceptId,
+      })
+      .run();
+  });
+  return read.length;
 }

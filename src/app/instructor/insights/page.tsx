@@ -4,7 +4,7 @@ import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import { Sparkles, CheckCircle2, TriangleAlert } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
-import { primaryCourse, courseExams, conceptsFor } from "@/lib/data";
+import { staffCourses, courseExams, conceptsFor } from "@/lib/data";
 import { examQuestions } from "@/lib/jobs";
 import { PageHeader, EmptyState } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -27,7 +27,8 @@ const decisionLabel: Record<string, string> = {
 export default async function InsightsPage({ searchParams }: PageProps<"/instructor/insights">) {
   const user = await requireRole("instructor", "ta", "admin");
   const sp = await searchParams;
-  const course = primaryCourse(user);
+  const courses = staffCourses(user);
+  const course = courses.find((c) => c.id === sp.course) ?? courses[0];
   if (!course) return <EmptyState title="No course" body="Insights appear once a course has an analysed exam." />;
   const exams = courseExams(course.id);
   const exam = exams.find((e) => e.id === sp.exam) ?? exams[0];
@@ -96,7 +97,7 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
     .where(eq(s.classDecisions.examId, exam.id))
     .orderBy(desc(s.classDecisions.createdAt))
     .all();
-  const base = `/instructor/insights?exam=${exam.id}${section !== "all" ? `&section=${section}` : ""}`;
+  const base = `/instructor/insights?course=${course.id}&exam=${exam.id}${section !== "all" ? `&section=${section}` : ""}`;
 
   // Computed, not seeded: concepts that 40%+ of the class misses, unless a re-teach is already planned.
   const reteachPlanned = new Set(decisions.filter(({ d }) => d.decision === "reteach").map(({ d }) => d.conceptId));
@@ -135,6 +136,18 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
         title={weakest ? `${weakest.concept.name} need${weakest.concept.name.endsWith("s") ? "" : "s"} another pass before the next unit` : "Class insights"}
         actions={
           <form className="flex flex-wrap items-center gap-2 text-[13px] text-ink-2">
+            {courses.length > 1 ? (
+              <>
+                <label htmlFor="course">Course</label>
+                <select id="course" name="course" defaultValue={course.id} className="h-9 rounded-lg border border-[#9ca3af] bg-white px-2 text-sm text-ink">
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
+                </select>
+              </>
+            ) : null}
             <label htmlFor="exam">Exam</label>
             <select id="exam" name="exam" defaultValue={exam.id} className="h-9 rounded-lg border border-[#9ca3af] bg-white px-2 text-sm text-ink">
               {exams.map((e) => (

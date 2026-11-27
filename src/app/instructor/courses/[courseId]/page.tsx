@@ -13,7 +13,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Stagger, StaggerItem, AnimatedBar } from "@/components/ui/motion";
 import { UploadDropzone } from "@/components/instructor/upload-dropzone";
 import { LiveRefresh } from "@/components/live-refresh";
-import { confirmSlideTags, confirmAllLectureTags, toggleSlideConcept, addConcept } from "@/lib/actions/instructor";
+import { confirmSlideTags, confirmAllLectureTags, toggleSlideConcept, addConcept, enrollStudents, retagLecture } from "@/lib/actions/instructor";
 import { cn, pct } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Course" };
@@ -65,7 +65,10 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/i
             role="tab"
             aria-selected={tab === t.key}
             href={`/instructor/courses/${courseId}?tab=${t.key}`}
-            className={cn("-mb-px border-b-2 pb-3 transition-colors", tab === t.key ? "border-primary-600 text-primary-800" : "border-transparent text-ink-2 hover:text-ink")}
+            className={cn(
+              "-mb-px border-b-2 pb-3 transition-colors",
+              tab === t.key ? "border-primary-600 text-primary-800" : "border-transparent text-ink-2 hover:text-ink",
+            )}
           >
             {t.label}
             {t.key === "concepts" ? ` (${concepts.length})` : ""}
@@ -73,7 +76,9 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/i
         ))}
       </div>
 
-      {tab === "lectures" ? <Lectures courseId={courseId} lectures={lectures} concepts={concepts} selected={typeof sp.lecture === "string" ? sp.lecture : undefined} /> : null}
+      {tab === "lectures" ? (
+        <Lectures courseId={courseId} lectures={lectures} concepts={concepts} selected={typeof sp.lecture === "string" ? sp.lecture : undefined} />
+      ) : null}
       {tab === "concepts" ? <Concepts courseId={courseId} concepts={concepts} /> : null}
       {tab === "students" ? <Students courseId={courseId} concepts={concepts} /> : null}
     </>
@@ -93,15 +98,33 @@ function Lectures({
 }) {
   const suggestedBySlide = new Map<string, number>();
   const allSlides = lectures.length
-    ? db.select().from(s.slides).where(inArray(s.slides.lectureId, lectures.map((l) => l.id))).orderBy(asc(s.slides.page)).all()
+    ? db
+        .select()
+        .from(s.slides)
+        .where(
+          inArray(
+            s.slides.lectureId,
+            lectures.map((l) => l.id),
+          ),
+        )
+        .orderBy(asc(s.slides.page))
+        .all()
     : [];
   const tags = allSlides.length
-    ? db.select().from(s.slideConcepts).where(inArray(s.slideConcepts.slideId, allSlides.map((x) => x.id))).all()
+    ? db
+        .select()
+        .from(s.slideConcepts)
+        .where(
+          inArray(
+            s.slideConcepts.slideId,
+            allSlides.map((x) => x.id),
+          ),
+        )
+        .all()
     : [];
   for (const t of tags) if (t.status === "suggested") suggestedBySlide.set(t.slideId, (suggestedBySlide.get(t.slideId) ?? 0) + 1);
   const pendingByLecture = (id: string) => allSlides.filter((sl) => sl.lectureId === id && suggestedBySlide.has(sl.id)).length;
-  const current =
-    lectures.find((l) => l.id === selected) ?? lectures.find((l) => pendingByLecture(l.id) > 0) ?? lectures[lectures.length - 1];
+  const current = lectures.find((l) => l.id === selected) ?? lectures.find((l) => pendingByLecture(l.id) > 0) ?? lectures[lectures.length - 1];
   const slides = allSlides.filter((sl) => sl.lectureId === current?.id);
   const firstSuggested = slides.find((sl) => suggestedBySlide.has(sl.id));
   const conceptName = new Map(concepts.map((c) => [c.id, c.name]));
@@ -163,17 +186,25 @@ function Lectures({
               </h2>
               <p className="text-[13px] text-ink-2">Each slide is tagged with the concepts it teaches, so feedback can link straight to it.</p>
             </div>
-            {pendingByLecture(current.id) ? (
-              <form action={confirmAllLectureTags} className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <form action={retagLecture}>
                 <input type="hidden" name="lectureId" value={current.id} />
-                <Badge tone="ai">
-                  <Sparkles size={12} aria-hidden /> {pendingByLecture(current.id)} AI tag{pendingByLecture(current.id) > 1 ? "s" : ""} need review
-                </Badge>
-                <SubmitButton size="sm" variant="secondary">
-                  Confirm all
+                <SubmitButton size="sm" variant="ghost" pendingText="Tagging…">
+                  <Sparkles size={14} aria-hidden /> Re-tag with AI
                 </SubmitButton>
               </form>
-            ) : null}
+              {pendingByLecture(current.id) ? (
+                <form action={confirmAllLectureTags} className="flex items-center gap-2">
+                  <input type="hidden" name="lectureId" value={current.id} />
+                  <Badge tone="ai">
+                    <Sparkles size={12} aria-hidden /> {pendingByLecture(current.id)} AI tag{pendingByLecture(current.id) > 1 ? "s" : ""} need review
+                  </Badge>
+                  <SubmitButton size="sm" variant="secondary">
+                    Confirm all
+                  </SubmitButton>
+                </form>
+              ) : null}
+            </div>
           </div>
 
           {firstSuggested ? (
@@ -205,7 +236,9 @@ function Lectures({
           ) : null}
 
           {slides.length === 0 ? (
-            <p className="text-sm text-ink-2">{current.status === "processing" ? "Reading the file and splitting it into slides…" : "No slides found in this file."}</p>
+            <p className="text-sm text-ink-2">
+              {current.status === "processing" ? "Reading the file and splitting it into slides…" : "No slides found in this file."}
+            </p>
           ) : (
             <Stagger className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4" gap={0.03}>
               {slides.map((sl) => {
@@ -245,7 +278,10 @@ function Lectures({
                                 <input type="hidden" name="slideId" value={sl.id} />
                                 <input type="hidden" name="conceptId" value={c.id} />
                                 <button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-ground">
-                                  <span className={cn("h-3.5 w-3.5 rounded border", on ? "border-primary-600 bg-primary-600" : "border-[#9ca3af]")} aria-hidden />
+                                  <span
+                                    className={cn("h-3.5 w-3.5 rounded border", on ? "border-primary-600 bg-primary-600" : "border-[#9ca3af]")}
+                                    aria-hidden
+                                  />
                                   {c.name}
                                 </button>
                               </form>
@@ -272,11 +308,31 @@ function Lectures({
 function Concepts({ courseId, concepts }: { courseId: string; concepts: (typeof s.concepts.$inferSelect)[] }) {
   const slideCounts = new Map<string, number>();
   if (concepts.length) {
-    for (const t of db.select().from(s.slideConcepts).where(inArray(s.slideConcepts.conceptId, concepts.map((c) => c.id))).all()) {
+    for (const t of db
+      .select()
+      .from(s.slideConcepts)
+      .where(
+        inArray(
+          s.slideConcepts.conceptId,
+          concepts.map((c) => c.id),
+        ),
+      )
+      .all()) {
       slideCounts.set(t.conceptId, (slideCounts.get(t.conceptId) ?? 0) + 1);
     }
   }
-  const attempts = concepts.length ? db.select().from(s.attempts).where(inArray(s.attempts.conceptId, concepts.map((c) => c.id))).all() : [];
+  const attempts = concepts.length
+    ? db
+        .select()
+        .from(s.attempts)
+        .where(
+          inArray(
+            s.attempts.conceptId,
+            concepts.map((c) => c.id),
+          ),
+        )
+        .all()
+    : [];
   const name = new Map(concepts.map((c) => [c.id, c.name]));
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -294,7 +350,10 @@ function Concepts({ courseId, concepts }: { courseId: string; concepts: (typeof 
           <tbody>
             {concepts.map((c) => {
               const a = attempts.filter((x) => x.conceptId === c.id);
-              const m = pct(a.reduce((t, x) => t + x.score, 0), a.reduce((t, x) => t + x.maxScore, 0));
+              const m = pct(
+                a.reduce((t, x) => t + x.score, 0),
+                a.reduce((t, x) => t + x.maxScore, 0),
+              );
               const st = statusFromRatio(m, 100);
               return (
                 <tr key={c.id} className="border-b border-line-2 last:border-0">
@@ -367,51 +426,85 @@ function Students({ courseId, concepts }: { courseId: string; concepts: (typeof 
     .where(and(eq(s.enrollments.courseId, courseId), eq(s.enrollments.role, "student")))
     .orderBy(asc(s.enrollments.section), asc(s.users.name))
     .all();
-  const attempts = students.length ? db.select().from(s.attempts).where(inArray(s.attempts.studentId, students.map((x) => x.id))).all() : [];
+  const attempts = students.length
+    ? db
+        .select()
+        .from(s.attempts)
+        .where(
+          inArray(
+            s.attempts.studentId,
+            students.map((x) => x.id),
+          ),
+        )
+        .all()
+    : [];
   const cName = new Map(concepts.map((c) => [c.id, c.name]));
   return (
-    <Card className="overflow-x-auto">
-      <table className="w-full min-w-[720px] text-left text-sm">
-        <thead className="border-b border-line text-xs font-semibold text-ink-2">
-          <tr>
-            <th className="px-5 py-3">Student</th>
-            <th className="px-3 py-3">Section</th>
-            <th className="px-3 py-3">Overall</th>
-            <th className="px-5 py-3">Weakest concept</th>
-          </tr>
-        </thead>
-        <tbody>
-          {students.map((st) => {
-            const a = attempts.filter((x) => x.studentId === st.id);
-            const overall = pct(a.reduce((t, x) => t + x.score, 0), a.reduce((t, x) => t + x.maxScore, 0));
-            const byConcept = new Map<string, { sc: number; mx: number }>();
-            for (const x of a) {
-              const v = byConcept.get(x.conceptId) ?? { sc: 0, mx: 0 };
-              v.sc += x.score;
-              v.mx += x.maxScore;
-              byConcept.set(x.conceptId, v);
-            }
-            const weakest = Array.from(byConcept.entries()).sort((p, q) => p[1].sc / p[1].mx - q[1].sc / q[1].mx)[0];
-            return (
-              <tr key={st.id} className="border-b border-line-2 last:border-0">
-                <td className="px-5 py-3">
-                  <strong className="block font-semibold">{st.name}</strong>
-                  <span className="text-xs text-ink-2">{st.email}</span>
-                </td>
-                <td className="px-3">{st.section}</td>
-                <td className="px-3 font-semibold">{a.length ? `${overall}%` : "—"}</td>
-                <td className="px-5">
-                  {weakest ? (
-                    <StatusChip status={statusFromRatio(weakest[1].sc, weakest[1].mx)} suffix={`${cName.get(weakest[0])} ${pct(weakest[1].sc, weakest[1].mx)}%`} />
-                  ) : (
-                    <span className="text-ink-3">—</span>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </Card>
+    <>
+      <Card className="p-5">
+        <h2 className="font-semibold">Enrol students</h2>
+        <form action={enrollStudents} className="mt-3 grid gap-3 text-sm sm:grid-cols-[1fr_120px_auto] sm:items-end">
+          <input type="hidden" name="courseId" value={courseId} />
+          <label className="grid gap-1">
+            <span className="text-[13px] font-semibold">Student emails (one per line or comma-separated)</span>
+            <textarea name="emails" rows={2} required className="rounded-lg border border-[#9ca3af] px-3 py-2" />
+          </label>
+          <label className="grid gap-1">
+            <span className="text-[13px] font-semibold">Section</span>
+            <input name="section" defaultValue="A" className="h-10 rounded-lg border border-[#9ca3af] px-3" />
+          </label>
+          <SubmitButton>Enrol</SubmitButton>
+        </form>
+      </Card>
+      <Card className="overflow-x-auto">
+        <table className="w-full min-w-[720px] text-left text-sm">
+          <thead className="border-b border-line text-xs font-semibold text-ink-2">
+            <tr>
+              <th className="px-5 py-3">Student</th>
+              <th className="px-3 py-3">Section</th>
+              <th className="px-3 py-3">Overall</th>
+              <th className="px-5 py-3">Weakest concept</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.map((st) => {
+              const a = attempts.filter((x) => x.studentId === st.id);
+              const overall = pct(
+                a.reduce((t, x) => t + x.score, 0),
+                a.reduce((t, x) => t + x.maxScore, 0),
+              );
+              const byConcept = new Map<string, { sc: number; mx: number }>();
+              for (const x of a) {
+                const v = byConcept.get(x.conceptId) ?? { sc: 0, mx: 0 };
+                v.sc += x.score;
+                v.mx += x.maxScore;
+                byConcept.set(x.conceptId, v);
+              }
+              const weakest = Array.from(byConcept.entries()).sort((p, q) => p[1].sc / p[1].mx - q[1].sc / q[1].mx)[0];
+              return (
+                <tr key={st.id} className="border-b border-line-2 last:border-0">
+                  <td className="px-5 py-3">
+                    <strong className="block font-semibold">{st.name}</strong>
+                    <span className="text-xs text-ink-2">{st.email}</span>
+                  </td>
+                  <td className="px-3">{st.section}</td>
+                  <td className="px-3 font-semibold">{a.length ? `${overall}%` : "—"}</td>
+                  <td className="px-5">
+                    {weakest ? (
+                      <StatusChip
+                        status={statusFromRatio(weakest[1].sc, weakest[1].mx)}
+                        suffix={`${cName.get(weakest[0])} ${pct(weakest[1].sc, weakest[1].mx)}%`}
+                      />
+                    ) : (
+                      <span className="text-ink-3">—</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </Card>
+    </>
   );
 }

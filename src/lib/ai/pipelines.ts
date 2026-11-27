@@ -46,14 +46,17 @@ export async function tagSlides(
           .map((s) => `[page ${s.page}] ${s.title}\n${s.body.slice(0, 600)}`)
           .join("\n\n")}\n\nFor each slide, list the names of 0–2 concepts it actually teaches (use the exact names above).`,
       });
-      const byName = new Map(concepts.map((c) => [c.name.toLowerCase(), c.id]));
-      return slides.map((s) => {
-        const t = data.tags.find((x) => x.page === s.page);
-        return {
-          slideId: s.id,
-          conceptIds: (t?.concepts ?? []).map((n) => byName.get(n.toLowerCase())).filter((x): x is string => !!x),
-        };
+      // The AI sometimes adds words to a name ("OSI Model (layers)"): accept a name that contains, or is contained in, a concept name.
+      const resolve = (n: string) => {
+        const l = n.toLowerCase().trim();
+        return concepts.find((c) => c.name.toLowerCase() === l)?.id ?? concepts.find((c) => l.includes(c.name.toLowerCase()) || c.name.toLowerCase().includes(l))?.id;
+      };
+      const tagged = slides.map((s, i) => {
+        const t = data.tags.find((x) => x.page === s.page) ?? data.tags[i];
+        return { slideId: s.id, conceptIds: [...new Set((t?.concepts ?? []).map(resolve).filter((x): x is string => !!x))] };
       });
+      if (tagged.some((t) => t.conceptIds.length)) return tagged;
+      console.warn("[ai] tagSlides returned no usable tags; using keywords");
     } catch (e) {
       console.warn("[ai] tagSlides fell back:", e);
     }
@@ -708,7 +711,8 @@ export async function draftChain(input: {
       });
       const slide = input.slides.find((s) => slideLabel(s.lecture, s.page).replace(/\s+/g, "").toLowerCase() === data.citation.replace(/\s+/g, "").toLowerCase());
       if (!chainIsWellFormed(data.steps)) throw new Error("chain is not well formed");
-      const cited = slide && chainIsGrounded(data, `${slide.title} ${slide.body}`) ? slide.id : null;
+      // Restating the lecturer's own question and options is not outside knowledge, so those words count as sourced too.
+      const cited = slide && chainIsGrounded(data, `${slide.title} ${slide.body} ${input.question} ${input.options.join(" ")}`) ? slide.id : null;
       return { misconception: data.misconception, steps: mixChoices(data.steps, `${input.question}${input.chosen}`), explanation: data.explanation, citedSlideId: cited, model };
     } catch (e) {
       console.warn("[ai] draftChain fell back:", e);
@@ -748,6 +752,46 @@ export async function generateMcqRetest(input: { concept: string; avoid: string;
     return { prompt: data.prompt, options, correct: LETTERS[at]! as string };
   } catch (e) {
     console.warn("[ai] generateMcqRetest fell back:", e);
+    return null;
+  }
+}
+
+/** Reads the questions, options and the concept each one tests from an exam file's text. */
+export async function extractQuestions(input: { text: string; concepts: string[] }) {
+  if (!aiEnabled()) return null;
+  try {
+    const { data } = await structured({
+      name: "read_exam_file",
+      description: "List the questions of an exam paper with their options.",
+      maxTokens: 6000,
+      schema: z.object({
+        questions: z.array(z.object({ number: z.number(), prompt: z.string(), options: z.array(z.string()), concept: z.string().nullable() })),
+      }),
+      jsonSchema: {
+        type: "object",
+        properties: {
+          questions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                number: { type: "number" },
+                prompt: { type: "string", description: "The question text, without its number" },
+                options: { type: "array", items: { type: "string" }, description: "Multiple-choice options in order A, B, C, D without letters; empty for a written question" },
+                concept: { type: ["string", "null"], description: "The one course concept (exact name from the list) the question tests, or null" },
+              },
+              required: ["number", "prompt", "options", "concept"],
+            },
+          },
+        },
+        required: ["questions"],
+      },
+      system: "You read university exam papers. Copy the questions and options exactly; do not answer them.",
+      prompt: `Course concepts: ${input.concepts.join(", ") || "(none)"}\n\nExam paper text:\n${input.text.slice(0, 20000)}`,
+    });
+    return data.questions;
+  } catch (e) {
+    console.warn("[ai] extractQuestions fell back:", e);
     return null;
   }
 }

@@ -9,7 +9,7 @@ import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
 import { assertCourseAccess, audit, examWithAccess } from "@/lib/data";
 import { analyseAnswer, draftCriteriaFor } from "@/lib/jobs";
-import { clusterMisconceptions } from "@/lib/ai/pipelines";
+import { clusterMisconceptions, tagSlides } from "@/lib/ai/pipelines";
 import { computeAlerts } from "@/lib/alerts";
 import { answerFlags } from "@/lib/review";
 import { draftChainsForExam } from "@/lib/chains";
@@ -679,5 +679,65 @@ export async function setCorrectOption(formData: FormData) {
       .run();
   }
   audit(user.id, "set_key", `${questionId}:${correct}`);
+  refresh();
+}
+
+/* ───────── Courses ───────── */
+
+export async function createCourse(formData: FormData) {
+  const user = await requireRole("instructor", "admin");
+  const parsed = z
+    .object({ code: z.string().trim().min(2).max(20), title: z.string().trim().min(2).max(120), term: z.string().trim().min(2).max(40) })
+    .safeParse({ code: formData.get("code"), title: formData.get("title"), term: formData.get("term") });
+  if (!parsed.success) return;
+  const id = crypto.randomUUID();
+  const me = db.select({ universityId: s.users.universityId }).from(s.users).where(eq(s.users.id, user.id)).get();
+  db.insert(s.courses).values({ id, ...parsed.data, instructorId: user.id, universityId: me?.universityId ?? null }).run();
+  db.insert(s.enrollments).values({ id: crypto.randomUUID(), courseId: id, userId: user.id, role: "instructor", section: "A" }).run();
+  audit(user.id, "create_course", id);
+  redirect(`/instructor/courses/${id}`);
+}
+
+/** Enrols existing student accounts by email (one per line or comma-separated). */
+export async function enrollStudents(formData: FormData) {
+  const user = await staff();
+  const courseId = String(formData.get("courseId"));
+  assertCourseAccess(user, courseId);
+  const section = String(formData.get("section") ?? "A").trim().slice(0, 8) || "A";
+  const emails = String(formData.get("emails") ?? "")
+    .split(/[\s,;]+/)
+    .map((e) => e.trim().toLowerCase())
+    .filter((e) => e.includes("@"));
+  let added = 0;
+  for (const email of new Set(emails)) {
+    const st = db.select().from(s.users).where(and(eq(s.users.email, email), eq(s.users.role, "student"))).get();
+    if (!st) continue;
+    const already = db.select().from(s.enrollments).where(and(eq(s.enrollments.courseId, courseId), eq(s.enrollments.userId, st.id))).get();
+    if (already) continue;
+    db.insert(s.enrollments).values({ id: crypto.randomUUID(), courseId, userId: st.id, role: "student", section }).run();
+    added++;
+  }
+  audit(user.id, "enroll", `${courseId}:${added}`);
+  refresh();
+}
+
+/** Re-runs the AI tagging for one lecture; confirmed tags are kept, suggestions are replaced. */
+export async function retagLecture(formData: FormData) {
+  const user = await staff();
+  const lectureId = String(formData.get("lectureId"));
+  const lecture = db.select().from(s.lectures).where(eq(s.lectures.id, lectureId)).get();
+  if (!lecture) return;
+  assertCourseAccess(user, lecture.courseId);
+  const slides = db.select().from(s.slides).where(eq(s.slides.lectureId, lectureId)).all();
+  if (!slides.length) return;
+  db.delete(s.slideConcepts).where(and(inArray(s.slideConcepts.slideId, slides.map((x) => x.id)), eq(s.slideConcepts.status, "suggested"))).run();
+  const concepts = db.select().from(s.concepts).where(eq(s.concepts.courseId, lecture.courseId)).all();
+  const tags = await tagSlides(concepts, slides);
+  for (const tg of tags) {
+    for (const conceptId of tg.conceptIds) {
+      db.insert(s.slideConcepts).values({ slideId: tg.slideId, conceptId, status: "suggested" }).onConflictDoNothing().run();
+    }
+  }
+  audit(user.id, "retag_lecture", lectureId);
   refresh();
 }
