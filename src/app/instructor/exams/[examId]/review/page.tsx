@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { asc, eq, sql } from "drizzle-orm";
-import { ChevronLeft, ChevronRight, Pencil, RefreshCw, Keyboard, FileImage } from "lucide-react";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { ChevronLeft, ChevronRight, Pencil, RefreshCw, Keyboard, FileImage, CheckCheck } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
 import { examWithAccess, slideRef } from "@/lib/data";
@@ -15,7 +15,8 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { FadeIn } from "@/components/ui/motion";
 import { ReviewHotkeys } from "@/components/instructor/review-hotkeys";
 import { ExamSteps } from "../steps";
-import { approveAnswer, releaseApproved, updateResult, updateTranscription, setAnswerMeta, reanalyse } from "@/lib/actions/instructor";
+import { approveAnswer, approveQuestion, assignPaperStudent, releaseApproved, setPaperMark, updateResult, updateTranscription, setAnswerMeta, reanalyse } from "@/lib/actions/instructor";
+import { answerFlags } from "@/lib/review";
 import { cn, fmtMarks } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Review" };
@@ -52,9 +53,11 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
   const pendingCount = (qid: string) => all.filter((r) => r.answer.questionId === qid && ["pending", "analysed"].includes(r.answer.status)).length;
   const followupPending = (qid: string) =>
     all.filter((r) => r.answer.questionId === qid && r.answer.status === "analysed" && r.answer.followupQuestion).length;
+  // Only questions that already have answers (others may still be processing).
+  const answered = questions.filter((x) => all.some((r) => r.answer.questionId === x.id));
   const defaultQ =
-    questions.find((q) => q.number === Number(sp.q)) ??
-    [...questions].sort((a, b) => followupPending(b.id) - followupPending(a.id) || pendingCount(b.id) - pendingCount(a.id))[0]!;
+    answered.find((q) => q.number === Number(sp.q)) ??
+    [...answered].sort((a, b) => followupPending(b.id) - followupPending(a.id) || pendingCount(b.id) - pendingCount(a.id))[0]!;
   const q = defaultQ;
   const rank = { pending: 0, analysed: 0, approved: 1, released: 2 } as const;
   const queue = all.filter((r) => r.answer.questionId === q.id).sort((a, b) => rank[a.answer.status] - rank[b.answer.status] || a.rowid - b.rowid);
@@ -72,13 +75,29 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
     .where(eq(s.criterionResults.answerId, current.answer.id))
     .orderBy(asc(s.criteria.code))
     .all();
+  // Per-question approval: every analysed answer that no rule flags can be approved in one step.
+  const queueResults = db.select().from(s.criterionResults).where(inArray(s.criterionResults.answerId, queue.map((r) => r.answer.id))).all();
+  const toCheck = queue
+    .filter((r) => r.answer.status === "analysed")
+    .map((r) => ({ row: r, flags: answerFlags(r.answer, queueResults.filter((x) => x.answerId === r.answer.id), q.maxMarks) }));
+  const readyCount = toCheck.filter((x) => !x.flags.length).length;
+  const flagged = toCheck.filter((x) => x.flags.length);
   const approvedCount = all.filter((r) => r.answer.status === "approved").length;
   const needsLook = all.filter((r) => r.answer.status === "analysed").length;
   const a = current.answer;
   const isImage = current.paper.mimeType?.startsWith("image/");
   const isPdf = current.paper.mimeType === "application/pdf";
   const reviewed = a.status === "approved" || a.status === "released";
-  const suggested = results.reduce((t, r) => t + r.result.marks, 0);
+  const markRead = a.paperMarks !== null;
+  const students = current.paper.studentId
+    ? []
+    : db
+        .select({ id: s.users.id, name: s.users.name })
+        .from(s.enrollments)
+        .innerJoin(s.users, eq(s.users.id, s.enrollments.userId))
+        .where(and(eq(s.enrollments.courseId, course.id), eq(s.enrollments.role, "student")))
+        .orderBy(asc(s.users.name))
+        .all();
   const approveId = "approve-form";
 
   return (
@@ -143,6 +162,56 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
         </span>
       </nav>
 
+      <Card className="flex flex-wrap items-center gap-x-5 gap-y-3 p-4">
+        <div className="min-w-0 flex-[1_1_320px]">
+          <h2 className="text-sm font-semibold">Approve Q{q.number} by question</h2>
+          <p className="text-[13px] leading-5 text-ink-2">
+            {readyCount} answer{readyCount === 1 ? "" : "s"} pass every check (your mark read clearly, answer readable, diagnosis matches the mark, explanations cited).
+            {flagged.length ? ` ${flagged.length} flagged for a one-by-one look.` : " Nothing flagged."}
+          </p>
+          {flagged.length ? (
+            <ul className="mt-2 flex flex-wrap gap-1.5">
+              {flagged.map(({ row, flags }) => (
+                <li key={row.answer.id}>
+                  <Link href={href(row)!} className="inline-flex h-7 items-center gap-1 rounded-full bg-partial-soft px-2.5 text-xs font-medium text-partial-ink hover:bg-[#fde7c7]">
+                    {row.student ?? "Unmatched"} · {flags.join(", ")}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+        <form action={approveQuestion}>
+          <input type="hidden" name="examId" value={examId} />
+          <input type="hidden" name="questionId" value={q.id} />
+          <SubmitButton variant={readyCount ? "primary" : "secondary"} pendingText="Approving…" className={readyCount ? "" : "opacity-60"}>
+            <CheckCheck size={16} aria-hidden /> Approve {readyCount} for Q{q.number}
+          </SubmitButton>
+        </form>
+      </Card>
+
+      {!current.paper.studentId ? (
+        <Card className="flex flex-wrap items-center gap-3 border-quote-line bg-[#fffcf6] p-4 text-sm">
+          <span className="flex-1">
+            <strong>Whose paper is this?</strong> GapMap never sends names or IDs to the AI, so pick the student here (or name scan files like <code className="font-mono">mariam-adel.pdf</code>).
+          </span>
+          <form action={assignPaperStudent} className="flex items-center gap-2">
+            <input type="hidden" name="paperId" value={current.paper.id} />
+            <label className="sr-only" htmlFor="assign-student">
+              Student
+            </label>
+            <select id="assign-student" name="studentId" required className="h-9 max-w-[220px] rounded-lg border border-[#9ca3af] bg-white px-2">
+              {students.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.name}
+                </option>
+              ))}
+            </select>
+            <SubmitButton size="sm">Assign</SubmitButton>
+          </form>
+        </Card>
+      ) : null}
+
       <FadeIn key={a.id} className="flex flex-wrap items-start gap-5">
         <section aria-label="Student answer" className="flex min-w-0 flex-[1_1_380px] flex-col gap-4">
           <Card className="flex flex-col gap-2.5 p-4">
@@ -164,7 +233,14 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
                 <FileImage size={18} aria-hidden /> Scanned PDF — open to compare with the transcription
               </a>
             ) : a.handwriting ? (
-              <div className="paper-lines font-hand rounded-lg border border-[#e7e3d6] px-5 py-4 text-[27px] leading-[34px] whitespace-pre-line text-[#1f2a5a]">{a.handwriting}</div>
+              <div className="paper-lines font-hand relative rounded-lg border border-[#e7e3d6] px-5 py-4 text-[27px] leading-[34px] whitespace-pre-line text-[#1f2a5a]">
+                {a.handwriting}
+                {markRead ? (
+                  <span aria-hidden className="absolute top-2 right-3 -rotate-6 rounded-full border-2 border-[#c0392b] px-2.5 text-[26px] leading-9 text-[#c0392b]">
+                    {fmtMarks(a.paperMarks)}/{fmtMarks(q.maxMarks)}
+                  </span>
+                ) : null}
+              </div>
             ) : (
               <p className="text-sm text-ink-2">No scan stored for this answer.</p>
             )}
@@ -228,15 +304,36 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
         <section aria-label="AI feedback by criterion" className="flex min-w-0 flex-[1_1_460px] flex-col overflow-hidden rounded-card border border-line bg-white shadow-card">
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
             <div>
-              <h2 className="text-[17px] font-semibold">Feedback by criterion</h2>
+              <h2 className="text-[17px] font-semibold">Diagnosis by criterion</h2>
               <p className="text-[13px] text-ink-2">
-                {reviewed ? "Final" : "Suggested"} mark{" "}
+                Your mark on the paper{" "}
                 <strong className="text-ink">
-                  {fmtMarks(reviewed ? (a.finalMarks ?? suggested) : suggested)} / {fmtMarks(q.maxMarks)}
+                  {markRead ? fmtMarks(a.paperMarks) : "not found"} / {fmtMarks(q.maxMarks)}
                 </strong>
+                {markRead && a.paperMarkConfidence < 1 ? ` · read with ${Math.round(a.paperMarkConfidence * 100)}% confidence` : ""}
               </p>
+              <form action={setPaperMark} className="mt-1.5 flex items-center gap-1.5 text-[13px]">
+                <input type="hidden" name="answerId" value={a.id} />
+                <label htmlFor="paper-mark" className="text-ink-2">
+                  {markRead ? "Read wrong? Correct it:" : "Type the mark you gave:"}
+                </label>
+                <input
+                  id="paper-mark"
+                  name="mark"
+                  type="number"
+                  step="0.5"
+                  min={0}
+                  max={q.maxMarks}
+                  defaultValue={a.paperMarks ?? undefined}
+                  required
+                  className="h-8 w-16 rounded-lg border border-[#9ca3af] bg-white px-2 text-sm"
+                />
+                <SubmitButton size="sm" variant="ghost" className="h-8 px-2">
+                  Save
+                </SubmitButton>
+              </form>
             </div>
-            {reviewed ? <Badge tone="met">{a.status === "released" ? "Released to student" : "Approved"}</Badge> : <AiBadge />}
+            {reviewed ? <Badge tone="met">{a.status === "released" ? "Released to student" : "Approved"}</Badge> : <AiBadge>AI diagnosis · needs review</AiBadge>}
           </div>
 
           {results.length === 0 ? (
@@ -255,6 +352,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
 
           {results.map(({ result: r, criterion: c }) => {
             const slide = slideRef(c.slideId);
+            const cited = r.citedSlideId === c.slideId ? slide : slideRef(r.citedSlideId);
             return (
               <div key={r.id} className={cn("flex flex-col gap-2.5 border-t border-line-2 px-5 py-4", r.status === "partial" && "bg-[#fffdf8]")}>
                 <div className="flex items-start justify-between gap-3">
@@ -273,9 +371,15 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
                     <strong>Still needs to explain:</strong> {r.gap}
                   </p>
                 ) : null}
+                {r.explanation ? (
+                  <p className={cn("rounded-lg px-3 py-2 text-sm leading-[21px]", r.citedSlideId ? "bg-ground" : "bg-missing-soft text-[#991b1b]")}>
+                    <strong>{r.citedSlideId ? `From the slide (${cited ? `L${cited.lectureNumber} p.${cited.page}` : "cited"}):` : "Uncited, hidden from the student until you fix it:"}</strong> {r.explanation}
+                  </p>
+                ) : null}
                 <div className="flex flex-wrap items-center gap-2">
                   {slide ? <SlideLink href={`/slides/${slide.id}`} lecture={slide.lectureNumber} page={slide.page} title={slide.title} className="py-1.5" /> : null}
                   {r.edited ? <Badge>Edited by reviewer</Badge> : r.aiConfidence < 0.6 ? <Badge tone="partial">Low AI confidence</Badge> : null}
+                  {r.explanation && !r.citedSlideId ? <Badge tone="missing">Uncited</Badge> : null}
                 </div>
                 <details>
                   <summary className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-ink-2 hover:text-primary-600">
@@ -299,6 +403,10 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
                       What&apos;s missing
                       <input name="gap" defaultValue={r.gap} className="h-9 rounded-lg border border-[#9ca3af] bg-white px-2 text-sm font-normal" />
                     </label>
+                    <label className="grid gap-1 text-xs font-semibold sm:col-span-3">
+                      Explanation (from the slide)
+                      <input name="explanation" defaultValue={r.explanation} className="h-9 rounded-lg border border-[#9ca3af] bg-white px-2 text-sm font-normal" />
+                    </label>
                     <SubmitButton size="sm">Save</SubmitButton>
                   </form>
                 </details>
@@ -320,10 +428,10 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
                 Save
               </SubmitButton>
             </form>
-            <form id={approveId} action={approveAnswer}>
+            <form id={approveId} action={approveAnswer} title={markRead ? undefined : "Add your mark first"}>
               <input type="hidden" name="answerId" value={a.id} />
               <input type="hidden" name="next" value={href(nextPending) ?? `/instructor/exams/${examId}/review?q=${q.number}`} />
-              <SubmitButton pendingText="Approving…" variant={reviewed ? "secondary" : "primary"}>
+              <SubmitButton pendingText="Approving…" variant={reviewed ? "secondary" : "primary"} className={markRead ? "" : "pointer-events-none opacity-50"}>
                 {reviewed ? "Re-approve" : "Approve & next"}
               </SubmitButton>
             </form>

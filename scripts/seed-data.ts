@@ -327,7 +327,7 @@ export const studentDefs: [string, "A" | "B", boolean, Partial<Record<number, st
   ["Omar Khaled", "A", false, { 3: "describe" }],
   ["Salma Ibrahim", "A", false, { 3: "describe", 4: "table-reading" }],
   ["Hana Mostafa", "A", true, { 3: "unique" }],
-  ["Karim Tarek", "A", false, { 3: "name", 4: "table-reading" }],
+  ["Hassan Tarek", "A", false, { 3: "name", 4: "table-reading" }],
   ["Laila Fathy", "A", false, { 3: "describe" }],
   ["Mohamed Ashraf", "A", false, { 3: "describe", 4: "table-reading" }],
   ["Farida Sherif", "A", true, { 3: "full" }],
@@ -365,3 +365,21 @@ export function wrapHandwriting(text: string, width = 32) {
   if (line.trim()) lines.push(line.trim());
   return lines.join("\n");
 }
+
+/** The experiment cached for Primary keys, as the AI would draft it once from the slides. */
+export const pkExperiment = {
+  intro: "This table has no primary key. Two students got the same StudentID by mistake.",
+  table: {
+    columns: ["StudentID", "Name", "Email"],
+    rows: [
+      ["1042", "Mariam", "m@uni.edu"],
+      ["1042", "Omar", "o@uni.edu"],
+    ],
+  },
+  task: "Change only Omar's email.",
+  sql: "UPDATE Student\nSET Email = 'omar@uni.edu'\nWHERE StudentID = 1042;",
+  result: "2 rows updated — Mariam's email changed too",
+  prompt: "In your own words: why did this happen?",
+  checkFor: ["same", "both", "1042", "duplicate", "unique", "studentid"],
+  answer: "The WHERE clause matched both rows because they share StudentID 1042, so the update hit both. A primary key prevents that by refusing duplicate values.",
+};

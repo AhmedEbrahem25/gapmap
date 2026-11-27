@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Home, ListChecks, PenLine, MessageCircle, User } from "lucide-react";
+import { Home, FileText, ListChecks, PenLine, MessageCircle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { href: "/student", label: "Home", icon: Home, exact: true },
+  { href: "/student/papers", label: "My papers", icon: FileText },
   { href: "/student/plan", label: "Study plan", icon: ListChecks },
   { href: "/student/practice", label: "Practice", icon: PenLine },
   { href: "/student/ask", label: "Ask", icon: MessageCircle },

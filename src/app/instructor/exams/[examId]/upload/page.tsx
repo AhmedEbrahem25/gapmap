@@ -58,8 +58,8 @@ export default async function UploadPage({ params }: PageProps<"/instructor/exam
             endpoint="/api/papers"
             fields={{ examId }}
             accept="application/pdf,image/png,image/jpeg,image/webp"
-            title="Upload scanned answer papers"
-            hint={`One PDF or photo per student. Handwritten Arabic and English are supported.${aiEnabled() ? "" : " Demo mode: add a free GEMINI_API_KEY to read handwriting; otherwise a TA types the answer in."}`}
+            title="Upload marked papers"
+            hint={`Scan each paper after you mark it: one PDF or photo per student. GapMap reads the printed questions, the handwritten answer and your mark, never the student's name. Leave the cover page out, and pick the student below or name files like mariam-adel.pdf.${aiEnabled() ? "" : " Demo mode: add a free GEMINI_API_KEY to read scans; otherwise a TA types the answer and your mark in."}`}
             icon={<ScanLine size={28} aria-hidden />}
           >
             <div className="mb-3 flex flex-wrap gap-3 text-sm">
@@ -74,7 +74,7 @@ export default async function UploadPage({ params }: PageProps<"/instructor/exam
               <label className="flex items-center gap-2">
                 <span className="text-[13px] font-semibold">Student (single paper)</span>
                 <select name="studentId" className="h-9 max-w-[220px] rounded-lg border border-[#9ca3af] px-2">
-                  <option value="">Detect from cover page</option>
+                  <option value="">Match from the file name</option>
                   {students.map((x) => (
                     <option key={x.id} value={x.id}>
                       {x.name}
@@ -141,9 +141,9 @@ export default async function UploadPage({ params }: PageProps<"/instructor/exam
                     <Badge tone={ps.some((p) => busy.includes(p.paper.status)) ? "primary" : "met"}>{ps.some((p) => busy.includes(p.paper.status)) ? "Processing" : "Ready"}</Badge>
                   </div>
                   {[
-                    ["Split by student & question", split],
-                    ["Handwriting read", read],
-                    ["Matched to criteria", matched],
+                    ["Split by question", split],
+                    ["Answers and your marks read", read],
+                    ["Diagnosed against criteria", matched],
                   ].map(([label, n], i) => (
                     <div key={label as string} className="flex flex-col gap-1.5">
                       <div className="flex justify-between text-[13px]">
@@ -152,7 +152,7 @@ export default async function UploadPage({ params }: PageProps<"/instructor/exam
                           {n} / {ps.length}
                         </span>
                       </div>
-                      <AnimatedBar value={pctOf(n as number)} color={pctOf(n as number) >= 100 ? "#0F766E" : "#2445D8"} delay={0.1 + i * 0.1} />
+                      <AnimatedBar value={pctOf(n as number)} color={pctOf(n as number) >= 100 ? "#0F766E" : "#B51834"} delay={0.1 + i * 0.1} />
                     </div>
                   ))}
                   {hard ? (

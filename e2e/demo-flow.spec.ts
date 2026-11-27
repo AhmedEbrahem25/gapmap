@@ -13,7 +13,7 @@ async function signOut(page: Page) {
 
 test("hackathon demo: one answer from paper to class decision", async ({ page }) => {
   // 1–3 · Instructor reviews Mariam's Q3 and releases it
-  await demoLogin(page, "Dr. Salma Nour");
+  await demoLogin(page, "Dr. Karim Nour");
   await expect(page.getByRole("heading", { name: "Database Systems" })).toBeVisible();
   await page.getByRole("link", { name: "Exams" }).first().click();
   await page.getByRole("link", { name: "Review", exact: true }).click();
@@ -53,7 +53,7 @@ test("hackathon demo: one answer from paper to class decision", async ({ page })
   await signOut(page);
 
   // 8 · Instructor decides what to revisit
-  await demoLogin(page, "Dr. Salma Nour");
+  await demoLogin(page, "Dr. Karim Nour");
   await page.getByRole("link", { name: "Class insights" }).click();
   await expect(page.getByRole("heading", { name: /Primary keys need another pass/ })).toBeVisible();
   await expect(page.getByText("Describes the column instead of the rule")).toBeVisible();

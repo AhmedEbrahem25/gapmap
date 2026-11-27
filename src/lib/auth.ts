@@ -37,7 +37,8 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 /** Data Access Layer guard: every page and action calls this before touching data. */
 export async function requireRole(...roles: Role[]): Promise<CurrentUser> {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  // A valid cookie whose user is gone (e.g. after "Reset demo data") must be cleared, or /login bounces straight back.
+  if (!user) redirect((await cookies()).has(SESSION_COOKIE) ? "/login?expired=1" : "/login");
   if (roles.length && !roles.includes(user.role)) redirect(homeFor(user.role));
   return user;
 }

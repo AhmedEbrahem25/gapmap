@@ -13,6 +13,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { AnimatedBar, CountUp, Stagger, StaggerItem, FadeIn } from "@/components/ui/motion";
 import { decideFlag, reclusterQuestion, addClassDecision } from "@/lib/actions/instructor";
 import { cn, pct } from "@/lib/utils";
+import { RETEACH_SHARE, approvedWithoutEdits } from "@/lib/review";
 
 export const metadata: Metadata = { title: "Class insights" };
 
@@ -96,6 +97,14 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
     .all();
   const base = `/instructor/insights?exam=${exam.id}${section !== "all" ? `&section=${section}` : ""}`;
 
+  // Computed, not seeded: concepts that 40%+ of the class misses, unless a re-teach is already planned.
+  const reteachPlanned = new Set(decisions.filter(({ d }) => d.decision === "reteach").map(({ d }) => d.conceptId));
+  const reteach = conceptStats.filter((c) => c.share >= RETEACH_SHARE);
+
+  // AI quality: share of AI feedback on reviewed answers that the reviewer kept unchanged.
+  const reviewedIds = answers.filter((a) => (a.status === "approved" || a.status === "released") && a.model !== "csv-import").map((a) => a.id);
+  const aiQuality = approvedWithoutEdits(reviewedIds.length ? db.select({ edited: s.criterionResults.edited }).from(s.criterionResults).where(inArray(s.criterionResults.answerId, reviewedIds)).all() : []);
+
   return (
     <>
       <PageHeader
@@ -122,7 +131,7 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
         }
       />
 
-      <Stagger className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <Stagger className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         {[
           { label: "Papers analysed", value: <CountUp to={papers.length} /> },
           { label: "Students needing review", value: <CountUp to={needing.size} /> },
@@ -132,6 +141,14 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
             value: (
               <span className="text-met">
                 {improved.size} <span className="text-base font-semibold text-ink-2">of {needing.size}</span>
+              </span>
+            ),
+          },
+          {
+            label: "AI feedback approved without edits",
+            value: (
+              <span className={aiQuality === null ? "" : aiQuality >= 80 ? "text-met" : "text-partial"}>
+                {aiQuality === null ? "—" : `${aiQuality}%`} <span className="text-base font-semibold text-ink-2">target ≥ 80%</span>
               </span>
             ),
           },
@@ -151,7 +168,7 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
           {conceptStats.map((c, i) => (
             <div key={c.concept.id} className="grid grid-cols-[150px_1fr_48px] items-center gap-3 text-sm">
               <span className="truncate">{c.concept.name}</span>
-              <AnimatedBar value={c.share} height={12} color={i === 0 ? "#B45309" : c.share >= 35 ? "#D9A066" : "#9CA3AF"} delay={0.1 + i * 0.08} />
+              <AnimatedBar value={c.share} height={12} color={i === 0 ? "#B45309" : c.share >= RETEACH_SHARE ? "#D9A066" : "#9CA3AF"} delay={0.1 + i * 0.08} />
               <strong className="text-right">{c.share}%</strong>
             </div>
           ))}
@@ -164,7 +181,7 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
                   href={`${base}&q=${q.number}`}
                   className={cn(
                     "rounded-lg py-2 transition hover:ring-2 hover:ring-primary-200",
-                    rate >= 40 ? "bg-partial-soft text-partial-ink" : "bg-ground",
+                    rate >= RETEACH_SHARE ? "bg-partial-soft text-partial-ink" : "bg-ground",
                     focusQ?.id === q.id && "ring-2 ring-primary-600",
                   )}
                 >
@@ -210,6 +227,41 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
           <p className="text-xs text-ink-2">Examples are anonymous.</p>
         </Card>
       </div>
+
+      <Card className="flex flex-col gap-3 p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-semibold">What to re-teach</h2>
+          <span className="text-xs text-ink-2">Flagged when {RETEACH_SHARE}% or more of the class has a gap in a concept</span>
+        </div>
+        {reteach.length ? (
+          <ul className="flex flex-col">
+            {reteach.map((c) => (
+              <li key={c.concept.id} className="flex flex-wrap items-center justify-between gap-3 border-t border-line-2 py-2.5 text-sm first:border-0 first:pt-0">
+                <span>
+                  <strong>{c.concept.name}</strong> <span className="text-ink-2">· {c.share}% of answers have a gap</span>
+                </span>
+                {reteachPlanned.has(c.concept.id) ? (
+                  <Badge tone="met">
+                    <CheckCircle2 size={12} aria-hidden /> Re-teach planned
+                  </Badge>
+                ) : (
+                  <form action={addClassDecision}>
+                    <input type="hidden" name="examId" value={exam.id} />
+                    <input type="hidden" name="conceptId" value={c.concept.id} />
+                    <input type="hidden" name="decision" value="reteach" />
+                    <input type="hidden" name="note" value={`${c.share}% of the class had a gap in ${c.concept.name}.`} />
+                    <SubmitButton size="sm" variant="secondary">
+                      Plan a re-teach
+                    </SubmitButton>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-ink-2">No concept reaches {RETEACH_SHARE}%. Nothing needs a full re-teach.</p>
+        )}
+      </Card>
 
       {flags.map((f) => {
         const q = questions.find((x) => x.id === f.questionId)!;

@@ -8,9 +8,10 @@ import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
 import { audit, studentCourse } from "@/lib/data";
 import { ownAnswer, profileFor, resultsFor } from "@/lib/student";
-import { buildProfile, checkSubmission, chooseActivity, followupTurn, generateRetest, gradeRetest } from "@/lib/ai/pipelines";
+import { checkSubmission, followupTurn, generateRetest, gradeRetest } from "@/lib/ai/pipelines";
+import { activityFor } from "@/lib/activities";
 import type { ChatMessage } from "@/lib/db/schema";
-import { PROFILE_QUESTIONS } from "@/lib/profile-questions";
+import { PROFILE_QUESTIONS, cleanCheckin, profileFromCheckin } from "@/lib/profile-questions";
 
 const student = () => requireRole("student");
 const refresh = () => revalidatePath("/student", "layout");
@@ -61,11 +62,13 @@ export async function sendFollowup(answerId: string, reply: string): Promise<Fol
   let activityId: string | null = null;
   if (turn.done && concept) {
     const profile = profileFor(user.id);
-    const pick = chooseActivity({ concept: concept.name, branch: turn.branch, preferred: profile?.preferredActivity ?? "experiment" });
-    activityId = crypto.randomUUID();
-    db.insert(s.activities)
-      .values({ id: activityId, studentId: user.id, conceptId: concept.id, answerId, type: pick.type, title: pick.title, reason: pick.reason, payload: pick.payload, priority: 0 })
-      .run();
+    const pick = await activityFor({ conceptId: concept.id, branch: turn.branch, preferred: profile?.preferredActivity ?? "experiment", answerId });
+    if (pick) {
+      activityId = crypto.randomUUID();
+      db.insert(s.activities)
+        .values({ id: activityId, studentId: user.id, conceptId: concept.id, answerId, type: pick.type, title: pick.title, reason: pick.reason, payload: pick.payload, priority: 0 })
+        .run();
+    }
   }
   audit(user.id, "followup_reply", answerId);
   refresh();
@@ -84,9 +87,10 @@ export async function restartFollowup(answerId: string) {
 
 export async function saveProfile(formData: FormData) {
   const user = await student();
-  const answers: Record<string, string> = {};
-  for (const q of PROFILE_QUESTIONS) answers[q.label] = String(formData.get(q.key) ?? "").slice(0, 500);
-  const p = await buildProfile(answers);
+  // Taps only, scored by rules: the check-in never reaches the AI.
+  const answers = cleanCheckin(Object.fromEntries(formData));
+  if (Object.keys(answers).length < PROFILE_QUESTIONS.length) redirect("/student/profile");
+  const p = profileFromCheckin(answers);
   const row = { studentId: user.id, answers, traits: p.traits, preferredActivity: p.preferred, minutesPerDay: p.minutes, summary: p.summary };
   db.insert(s.studyProfiles)
     .values(row)
@@ -95,10 +99,9 @@ export async function saveProfile(formData: FormData) {
   // Re-shape any open activity to the new preference.
   const open = db.select().from(s.activities).where(and(eq(s.activities.studentId, user.id), eq(s.activities.status, "todo"))).all();
   for (const a of open) {
-    const concept = db.select().from(s.concepts).where(eq(s.concepts.id, a.conceptId)).get();
-    if (!concept || a.type === "own_words") continue;
-    const pick = chooseActivity({ concept: concept.name, branch: "misconception", preferred: p.preferred });
-    db.update(s.activities).set({ type: pick.type, title: pick.title, reason: pick.reason, payload: pick.payload }).where(eq(s.activities.id, a.id)).run();
+    if (a.type === "own_words") continue;
+    const pick = await activityFor({ conceptId: a.conceptId, branch: "misconception", preferred: p.preferred, answerId: a.answerId });
+    if (pick) db.update(s.activities).set({ type: pick.type, title: pick.title, reason: pick.reason, payload: pick.payload }).where(eq(s.activities.id, a.id)).run();
   }
   refresh();
   const next = String(formData.get("next") ?? "");
@@ -111,9 +114,8 @@ export async function setPreferredActivity(formData: FormData) {
   const activityId = String(formData.get("activityId") ?? "");
   db.update(s.studyProfiles).set({ preferredActivity: type }).where(eq(s.studyProfiles.studentId, user.id)).run();
   const a = db.select().from(s.activities).where(and(eq(s.activities.id, activityId), eq(s.activities.studentId, user.id))).get();
-  if (a) {
-    const concept = db.select().from(s.concepts).where(eq(s.concepts.id, a.conceptId)).get()!;
-    const pick = chooseActivity({ concept: concept.name, branch: "misconception", preferred: type });
+  const pick = a ? await activityFor({ conceptId: a.conceptId, branch: "misconception", preferred: type, answerId: a.answerId }) : null;
+  if (a && pick) {
     db.update(s.activities).set({ type: pick.type, title: pick.title, reason: "You asked to try a different approach.", payload: pick.payload, status: "todo", feedback: null }).where(eq(s.activities.id, a.id)).run();
   }
   refresh();
@@ -131,7 +133,14 @@ export async function submitActivity(_prev: SubmitState, formData: FormData): Pr
   const text = String(formData.get("submission") ?? "").trim().slice(0, 2000);
   if (text.length < 8) return { error: "Write at least a sentence." };
   const concept = db.select().from(s.concepts).where(eq(s.concepts.id, a.conceptId)).get();
-  const res = await checkSubmission({ concept: concept?.name ?? "", task: String(a.payload.prompt ?? a.title), submission: text });
+  const res = await checkSubmission({
+    concept: concept?.name ?? "",
+    task: String(a.payload.prompt ?? a.title),
+    submission: text,
+    reference: String(a.payload.reference ?? ""),
+    checkFor: Array.isArray(a.payload.checkFor) ? a.payload.checkFor.map(String) : [],
+    answer: typeof a.payload.answer === "string" ? a.payload.answer : undefined,
+  });
   db.update(s.activities)
     .set({ submission: text, feedback: res.feedback, status: res.ok ? "done" : "submitted" })
     .where(eq(s.activities.id, id))

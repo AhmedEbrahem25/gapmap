@@ -60,22 +60,29 @@ export async function structured<T extends z.ZodType>(opts: StructuredOpts<T>): 
   const provider = aiProvider();
   if (!provider) throw new Error("AI_DISABLED");
   let lastError: unknown;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  let current = opts;
+  for (let attempt = 0; attempt < 4; attempt++) {
     try {
-      const { raw, model } = provider === "gemini" ? await callGemini(opts) : await callAnthropic(opts);
+      const { raw, model } = provider === "gemini" ? await callGemini(current) : await callAnthropic(current);
       const parsed = opts.schema.safeParse(raw);
       if (!parsed.success) throw new Error("Schema validation failed: " + parsed.error.message);
       return { data: parsed.data, model };
     } catch (err) {
       lastError = err;
-      // Free tiers rate-limit by the minute: back off and try again.
-      if (err instanceof RateLimitError) await new Promise((r) => setTimeout(r, 2000 * (attempt + 1) ** 2));
+      // Free tiers rate-limit by the minute and the busiest models get overloaded: back off and try again.
+      if (err instanceof RateLimitError || err instanceof OverloadedError) await new Promise((r) => setTimeout(r, 2000 * (attempt + 1) ** 2));
+      // Still overloaded after a retry: move to the lighter model, which is usually free.
+      if (err instanceof OverloadedError && attempt >= 1 && current.kind !== "fast") {
+        console.warn(`[ai] ${opts.name}: model overloaded, retrying on the fast model`);
+        current = { ...opts, kind: "fast" };
+      }
     }
   }
   throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 class RateLimitError extends Error {}
+class OverloadedError extends Error {}
 
 /* ───────── Anthropic ───────── */
 
@@ -109,6 +116,7 @@ async function callAnthropic<T extends z.ZodType>(opts: StructuredOpts<T>) {
     return { raw: block.input, model };
   } catch (e) {
     if (e instanceof Anthropic.RateLimitError) throw new RateLimitError(e.message);
+    if (e instanceof Anthropic.InternalServerError) throw new OverloadedError(e.message);
     throw e;
   }
 }
@@ -145,6 +153,7 @@ async function callGemini<T extends z.ZodType>(opts: StructuredOpts<T>) {
     body: JSON.stringify(body),
   });
   if (res.status === 429) throw new RateLimitError("Gemini rate limit reached");
+  if (res.status >= 500) throw new OverloadedError(`Gemini error ${res.status}: model busy`);
   if (res.status === 404 && !resolvedModels.has(wanted)) {
     // The configured model name was retired or renamed: pick a current Flash model and retry.
     const fallback = await pickGeminiModel(opts.kind === "fast");

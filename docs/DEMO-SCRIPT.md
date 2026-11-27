@@ -5,14 +5,15 @@ http://localhost:3000/login in one window and keep a second, phone-sized window 
 
 | # | Who | Do | Say |
 | --- | --- | --- | --- |
-| 1 | Dr. Salma Nour | Courses → L4 → Confirm the AI tag on slide 12 | “Every slide knows the concept it teaches, so every lost mark can point to it.” |
+| 1 | Dr. Karim Nour | Courses → L4 → Confirm the AI tag on slide 12 | “Every slide knows the concept it teaches, so every lost mark can point to it.” |
 | 2 | Instructor | Exams → Rubric (Q3) | “The model answer became criteria, each linked to a slide. The instructor edits; the AI only drafts.” |
-| 3 | Instructor | Review → Mariam, Q3 | “Handwriting on the left, transcription below, uncertain words underlined. C2 is partial — and here are her exact words. The AI suggests one follow-up question.” → **Approve & next** → **Release** |
+| 3 | Instructor | Review → Mariam, Q3 | “Dr. Karim marked this paper by hand and scanned it. GapMap read his red-pen mark: the AI does not grade, it finds what is missing. Handwriting on the left, transcription below, uncertain words underlined. C2 is partial — and here are her exact words. The AI suggests one follow-up question.” → **Approve & next** → **Release** |
+| 3b | Instructor | Same page → **Approve N for Q3** | “Under each gap, an explanation written only from the slide, with its page. Laila's mark is smudged, so it is flagged. Everything with a clear mark, a readable answer and a cited explanation is approved for the whole question in one click; only flagged answers are opened one by one. That keeps review under 15 minutes.” |
 | 4 | Mariam (mobile) | Home | “One next step, not a wall of feedback. The slide is one tap away.” |
 | 5 | Mariam | Answer one quick question → choose a reply | “Two students could write the same answer for different reasons. One question tells them apart.” Show **Try the other reply** if time. |
-| 6 | Mariam | Activity (set the study profile if asked) → explain → Check | “She learns by experimenting, so she breaks the rule herself: two rows, same ID, update one.” |
+| 6 | Mariam | Activity (if asked, take the 5-tap study check-in and pick “Trying small changes myself”) → explain → Check | “She learns by experimenting, so she breaks the rule herself: two rows, same ID, update one.” |
 | 7 | Mariam | Take a fresh test → answer | “A new question on a new table. Partial → Met, per concept.” |
-| 8 | Instructor | Class insights | “16 students described the column instead of the rule. Q4 may be worded ambiguously. Decide: reteach next lecture.” |
+| 8 | Instructor | Class insights | “What to re-teach is computed: any concept 40%+ of the class misses. The AI-quality tile shows how much AI feedback we approved without edits (target 80%). 16 students described the column instead of the rule. Q4 may be worded ambiguously. Decide: reteach next lecture.” |
 | 9 | Instructor | Alerts, Internships | “Youssef passes overall but keeps missing foreign keys — joins depend on them. Later, faculty can nominate students for internships with assessed evidence.” |
 
 **Sample answers to type**

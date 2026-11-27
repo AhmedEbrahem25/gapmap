@@ -6,6 +6,9 @@ import { TriangleAlert, Sparkles } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
 import { profileFor } from "@/lib/student";
+import { slideRef } from "@/lib/data";
+import { SlideLink } from "@/components/ui/slide-link";
+import type { ExperimentPayload } from "@/lib/ai/pipelines";
 import { StudentHeader } from "@/components/shell/student-header";
 import { Stagger, StaggerItem } from "@/components/ui/motion";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -19,16 +22,9 @@ const approaches: { type: ActivityType; label: string }[] = [
   { type: "experiment", label: "Experiment" },
   { type: "mind_map", label: "Mind map" },
   { type: "worked_example", label: "Worked example" },
+  { type: "try_first", label: "Try it first" },
+  { type: "own_words", label: "Explain it" },
 ];
-
-type ExperimentPayload = {
-  intro: string;
-  table: { columns: string[]; rows: string[][] };
-  task: string;
-  sql: string;
-  result: string;
-  prompt: string;
-};
 
 export default async function ActivityPage({ params }: PageProps<"/student/plan/[activityId]">) {
   const user = await requireRole("student");
@@ -44,6 +40,7 @@ export default async function ActivityPage({ params }: PageProps<"/student/plan/
   const profile = profileFor(user.id);
   const isExperiment = a.type === "experiment" && "table" in a.payload;
   const p = a.payload as unknown as ExperimentPayload & { prompt?: string };
+  const slide = slideRef(typeof a.payload.slideId === "string" ? a.payload.slideId : null);
 
   return (
     <>
@@ -110,6 +107,12 @@ export default async function ActivityPage({ params }: PageProps<"/student/plan/
             <section className="rounded-sheet border-2 border-primary-600 bg-white p-4 text-[15px] leading-[22px]">{String(p.prompt ?? a.title)}</section>
           </StaggerItem>
         )}
+
+        {slide ? (
+          <StaggerItem>
+            <SlideLink href={`/slides/${slide.id}?from=/student/plan/${a.id}`} lecture={slide.lectureNumber} page={slide.page} title={slide.title} />
+          </StaggerItem>
+        ) : null}
 
         <StaggerItem>
           <ExplainForm activityId={a.id} label={isExperiment ? p.prompt : "Your answer"} initialFeedback={a.feedback} initialOk={a.status === "done"} initialText={a.submission ?? ""} />

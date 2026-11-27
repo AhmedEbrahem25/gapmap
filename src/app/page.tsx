@@ -93,7 +93,7 @@ export default async function Landing() {
               <span className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-800">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary-600" /> AI for learning from exams already taken
               </span>
-              <h1 className="mt-5 text-[40px] leading-[1.08] font-bold tracking-tight text-ink sm:text-[56px]">
+              <h1 className="mt-5 text-[40px] leading-[1.08] font-bold tracking-tight text-navy sm:text-[56px]">
                 Every gap gets a <span className="relative whitespace-nowrap text-primary-600">next step<svg className="absolute -bottom-2 left-0 w-full" height="10" viewBox="0 0 200 10" preserveAspectRatio="none" aria-hidden><path d="M2 7 Q 60 1 100 5 T 198 4" stroke="#FDBA74" strokeWidth="4" fill="none" strokeLinecap="round" /></svg></span>.
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-8 text-ink-2">
@@ -257,7 +257,7 @@ export default async function Landing() {
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-sm text-ink-2">
           <Logo />
-          <p>Built by Crafnova for the AI Educathon 2026.</p>
+          <p>Built by the Genesis Team for the AUF AI Educathon 2026.</p>
         </div>
       </footer>
     </div>

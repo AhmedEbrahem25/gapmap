@@ -4,7 +4,7 @@ import path from "node:path";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { db, schema as s } from "./db";
 import { aiEnabled } from "./ai/client";
-import { tagSlides, transcribePaper, matchAnswer } from "./ai/pipelines";
+import { tagSlides, transcribePaper, matchAnswer, draftRubric, type PaperAnswer } from "./ai/pipelines";
 
 export const STORAGE_DIR = path.resolve(/*turbopackIgnore: true*/ process.cwd(), process.env.STORAGE_DIR ?? "storage");
 
@@ -96,31 +96,48 @@ export async function analyseAnswer(answerId: string) {
   if (!answer) return;
   const q = db.select().from(s.questions).where(eq(s.questions.id, answer.questionId)).get()!;
   const crits = db.select().from(s.criteria).where(eq(s.criteria.questionId, q.id)).orderBy(asc(s.criteria.code)).all();
-  const slideTitles = new Map(
-    db
-      .select({ id: s.slides.id, title: s.slides.title })
-      .from(s.slides)
-      .where(inArray(s.slides.id, crits.map((c) => c.slideId).filter((x): x is string => !!x)))
-      .all()
-      .map((r) => [r.id, r.title]),
+  const slideIds = crits.map((c) => c.slideId).filter((x): x is string => !!x);
+  const slides = new Map(
+    (slideIds.length
+      ? db
+          .select({ id: s.slides.id, page: s.slides.page, title: s.slides.title, body: s.slides.body, lecture: s.lectures.number })
+          .from(s.slides)
+          .innerJoin(s.lectures, eq(s.lectures.id, s.slides.lectureId))
+          .where(inArray(s.slides.id, slideIds))
+          .all()
+      : []
+    ).map((r) => [r.id, r]),
   );
   const match = await matchAnswer({
     question: q.prompt,
     modelAnswer: q.modelAnswer,
-    criteria: crits.map((c) => ({ code: c.code, description: c.description, marks: c.marks, slideTitle: c.slideId ? slideTitles.get(c.slideId) : null })),
+    criteria: crits.map((c) => ({ code: c.code, description: c.description, marks: c.marks, slide: c.slideId ? (slides.get(c.slideId) ?? null) : null })),
     transcription: answer.transcription,
+    instructorMark: answer.paperMarks === null ? null : { marks: answer.paperMarks, max: q.maxMarks },
   });
   db.delete(s.criterionResults).where(eq(s.criterionResults.answerId, answerId)).run();
   for (const c of crits) {
     const r = match.results.find((x) => x.code === c.code)!;
     db.insert(s.criterionResults)
-      .values({ id: crypto.randomUUID(), answerId, criterionId: c.id, status: r.status, evidence: r.evidence, gap: r.gap, marks: r.marks, aiConfidence: r.confidence })
+      .values({
+        id: crypto.randomUUID(),
+        answerId,
+        criterionId: c.id,
+        status: r.status,
+        evidence: r.evidence,
+        gap: r.gap,
+        marks: r.marks,
+        aiConfidence: r.confidence,
+        explanation: r.explanation,
+        citedSlideId: r.citedSlideId,
+      })
       .run();
   }
   db.update(s.answers)
     .set({
       status: "analysed",
-      suggestedMarks: match.results.reduce((a, r) => a + r.marks, 0),
+      // The mark is the instructor's, read from the paper; the AI only diagnoses it.
+      suggestedMarks: answer.paperMarks,
       followupQuestion: match.followupQuestion,
       followupReason: match.followupReason,
       errorType: match.errorType,
@@ -130,42 +147,93 @@ export async function analyseAnswer(answerId: string) {
     .run();
 }
 
+/** Drafts criteria for a question (from its text, model answer and the course concepts) and links each to a slide. */
+export async function draftCriteriaFor(questionId: string) {
+  const q = db.select().from(s.questions).where(eq(s.questions.id, questionId)).get();
+  if (!q) return;
+  const exam = db.select().from(s.exams).where(eq(s.exams.id, q.examId)).get()!;
+  const concepts = db.select().from(s.concepts).where(eq(s.concepts.courseId, exam.courseId)).all();
+  const drafted = await draftRubric({ prompt: q.prompt, modelAnswer: q.modelAnswer, maxMarks: q.maxMarks, concepts: concepts.map((c) => c.name) });
+  db.delete(s.criteria).where(eq(s.criteria.questionId, questionId)).run();
+  drafted.forEach((c, i) => {
+    const concept = concepts.find((x) => x.name.toLowerCase() === (c.concept ?? "").toLowerCase()) ?? concepts.find((x) => x.id === q.conceptId);
+    const slide = concept
+      ? db
+          .select({ id: s.slides.id })
+          .from(s.slideConcepts)
+          .innerJoin(s.slides, eq(s.slides.id, s.slideConcepts.slideId))
+          .where(eq(s.slideConcepts.conceptId, concept.id))
+          .get()
+      : undefined;
+    db.insert(s.criteria)
+      .values({
+        id: crypto.randomUUID(),
+        questionId,
+        code: `C${i + 1}`,
+        description: c.description,
+        marks: c.marks,
+        conceptId: concept?.id ?? null,
+        slideId: slide?.id ?? null,
+        aiDrafted: true,
+      })
+      .run();
+    if (!q.conceptId && concept && i === 0) db.update(s.questions).set({ conceptId: concept.id }).where(eq(s.questions.id, questionId)).run();
+  });
+}
+
+/** Questions are printed on the paper: the first paper of an exam with no questions creates them. */
+async function questionsFromPaper(examId: string, read: PaperAnswer[]) {
+  for (const r of [...read].sort((x, y) => x.number - y.number)) {
+    if (!r.questionText.trim()) continue;
+    const id = crypto.randomUUID();
+    const maxMarks = r.maxMarks ?? (r.mark !== null && r.mark > 0 ? Math.max(1, Math.ceil(r.mark)) : 1);
+    db.insert(s.questions).values({ id, examId, number: r.number, prompt: r.questionText.trim(), maxMarks, modelAnswer: "" }).run();
+    await draftCriteriaFor(id);
+  }
+}
+
 export async function processPaper(paperId: string) {
   const paper = db.select().from(s.papers).where(eq(s.papers.id, paperId)).get();
   if (!paper?.filePath) return;
-  const questions = examQuestions(paper.examId);
+  let questions = examQuestions(paper.examId);
   try {
     db.update(s.papers).set({ status: "segmented", error: null }).where(eq(s.papers.id, paperId)).run();
-    let transcribed: { number: number; text: string; confidence: number; lowConfidence: string[] }[] = [];
-    let studentId = paper.studentId;
+    let read: PaperAnswer[] = [];
+    // The AI never sees who the paper belongs to: the student comes from the upload form or the file name.
+    const studentId = paper.studentId ?? matchStudentByFile(paper.examId, paper.fileName);
     if (aiEnabled() && paper.mimeType && /pdf|image/.test(paper.mimeType)) {
       const buf = await fs.readFile(storagePath(paper.filePath));
-      const t = await transcribePaper({ mediaType: paper.mimeType, base64: buf.toString("base64") }, questions);
-      transcribed = t.answers;
-      if (!studentId && t.studentName) studentId = matchStudent(paper.examId, t.studentName);
-    } else {
-      // Demo mode without an API key: create empty answers for a TA to type in.
-      transcribed = questions.map((q) => ({ number: q.number, text: "", confidence: 0, lowConfidence: [] }));
+      read = (await transcribePaper({ mediaType: paper.mimeType, base64: buf.toString("base64") }, questions)).answers;
+      if (!questions.length) {
+        await questionsFromPaper(paper.examId, read);
+        questions = examQuestions(paper.examId);
+      }
     }
     db.update(s.papers).set({ status: "transcribed", studentId }).where(eq(s.papers.id, paperId)).run();
 
+    // Without an API key a TA types the answer and the mark in the review screen.
+    // Save every answer first so the whole paper shows up at once, then diagnose them one by one.
+    const toAnalyse: string[] = [];
     for (const q of questions) {
-      const t = transcribed.find((x) => x.number === q.number);
+      const r = read.find((x) => x.number === q.number);
       const answerId = crypto.randomUUID();
       db.insert(s.answers)
         .values({
           id: answerId,
           paperId,
           questionId: q.id,
-          transcription: t?.text ?? "",
+          transcription: r?.text ?? "",
           handwriting: null,
-          confidence: t?.confidence ?? 0,
-          lowConfidence: t?.lowConfidence ?? [],
+          confidence: r?.confidence ?? 0,
+          lowConfidence: r?.lowConfidence ?? [],
+          paperMarks: r?.mark === null || r?.mark === undefined ? null : Math.max(0, Math.min(q.maxMarks, r.mark)),
+          paperMarkConfidence: r?.mark === null || r?.mark === undefined ? 0 : r.markConfidence,
           status: "pending",
         })
         .run();
-      if (t?.text) await analyseAnswer(answerId);
+      if (r?.text) toAnalyse.push(answerId);
     }
+    for (const answerId of toAnalyse) await analyseAnswer(answerId);
     db.update(s.papers).set({ status: "analysed" }).where(eq(s.papers.id, paperId)).run();
   } catch (e) {
     console.error("[jobs] processPaper failed", e);
@@ -176,15 +244,21 @@ export async function processPaper(paperId: string) {
   }
 }
 
-function matchStudent(examId: string, name: string) {
+/** Matches a scan to a student from its file name, e.g. "mariam-adel.pdf" or "youssef.kamal.jpg". Exactly one match or none. */
+export function matchStudentByFile(examId: string, fileName: string | null) {
   const exam = db.select().from(s.exams).where(eq(s.exams.id, examId)).get();
-  if (!exam) return null;
+  if (!exam || !fileName) return null;
   const students = db
-    .select({ id: s.users.id, name: s.users.name })
+    .select({ id: s.users.id, name: s.users.name, email: s.users.email })
     .from(s.enrollments)
     .innerJoin(s.users, eq(s.users.id, s.enrollments.userId))
     .where(and(eq(s.enrollments.courseId, exam.courseId), eq(s.enrollments.role, "student")))
     .all();
-  const n = name.toLowerCase().trim();
-  return students.find((st) => st.name.toLowerCase() === n || n.includes(st.name.toLowerCase().split(" ")[0]!))?.id ?? null;
+  const words = ` ${fileName.toLowerCase().replace(/\.[a-z0-9]+$/, "").replace(/[^a-z0-9\u0600-\u06ff]+/g, " ")} `;
+  const hits = students.filter((st) => {
+    const name = st.name.toLowerCase().split(/\s+/);
+    const local = st.email.split("@")[0]!.toLowerCase().split(/[._-]+/);
+    return name.every((w) => words.includes(` ${w} `)) || (local.length > 1 && local.every((w) => words.includes(` ${w} `)));
+  });
+  return hits.length === 1 ? hits[0]!.id : null;
 }

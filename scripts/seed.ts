@@ -9,6 +9,7 @@ import path from "node:path";
 import { nanoid } from "nanoid";
 import * as s from "../src/lib/db/schema";
 import { loadSqlJs, openDatabase } from "../src/lib/db/sqlite";
+import { explainFromSlide } from "../src/lib/ai/fallback";
 import {
   DEMO_PASSWORD,
   conceptDefs,
@@ -16,6 +17,7 @@ import {
   questionDefs,
   studentDefs,
   wrapHandwriting,
+  pkExperiment,
   type ConceptKey,
 } from "./seed-data";
 
@@ -38,8 +40,8 @@ export function seed(SQL: SqlJsStatic, dbFile = process.env.DATABASE_PATH ?? "da
     tx.insert(s.companies).values(company).run();
 
     const staff = {
-      instructor: { id: id("usr"), email: "dr.salma@gapmap.demo", name: "Dr. Salma Nour", role: "instructor" as const, title: "Lecturer, Faculty of Computing" },
-      ta: { id: id("usr"), email: "ta.karim@gapmap.demo", name: "Karim Lotfy", role: "ta" as const, title: "Teaching assistant" },
+      instructor: { id: id("usr"), email: "dr.karim@gapmap.demo", name: "Dr. Karim Nour", role: "instructor" as const, title: "Lecturer, Faculty of Computing" },
+      ta: { id: id("usr"), email: "ta.nada@gapmap.demo", name: "Nada Lotfy", role: "ta" as const, title: "Teaching assistant" },
       coordinator: { id: id("usr"), email: "coordinator@gapmap.demo", name: "Dr. Hany Fawzy", role: "coordinator" as const, title: "Programme coordinator" },
       company: { id: id("usr"), email: "hr@niledata.demo", name: "Reem Saleh", role: "company" as const, title: "Talent partner", companyId: company.id },
       admin: { id: id("usr"), email: "admin@gapmap.demo", name: "GapMap Admin", role: "admin" as const, title: "Platform admin" },
@@ -77,12 +79,14 @@ export function seed(SQL: SqlJsStatic, dbFile = process.env.DATABASE_PATH ?? "da
           description: c.description,
           unit: c.unit,
           prerequisiteId: "prereq" in c && c.prereq ? conceptIds[c.prereq as ConceptKey] : null,
+          activityCache: c.key === "pk" ? { experiment: pkExperiment } : null,
         })
         .run();
     }
 
     /* ── Lectures & slides ── */
     const slideIds = new Map<string, string>(); // "lecture:page" -> slide id
+    const slideText = new Map<string, { title: string; body: string }>();
     for (const l of lectureDefs) {
       const lectureId = id("lec");
       tx.insert(s.lectures)
@@ -91,6 +95,7 @@ export function seed(SQL: SqlJsStatic, dbFile = process.env.DATABASE_PATH ?? "da
       l.slides.forEach((sl, i) => {
         const slideId = id("sld");
         slideIds.set(`${l.number}:${i + 1}`, slideId);
+        slideText.set(`${l.number}:${i + 1}`, { title: sl.title, body: sl.body });
         tx.insert(s.slides).values({ id: slideId, lectureId, page: i + 1, title: sl.title, body: sl.body }).run();
         for (const ck of sl.concepts ?? []) {
           tx.insert(s.slideConcepts).values({ slideId, conceptId: conceptIds[ck], status: sl.suggested ? "suggested" : "confirmed" }).run();
@@ -155,6 +160,9 @@ export function seed(SQL: SqlJsStatic, dbFile = process.env.DATABASE_PATH ?? "da
             confidence: v.confidence ?? 0.95,
             lowConfidence: v.lowConfidence ?? [],
             status: isReleased ? "released" : "analysed",
+            // The demo papers carry Dr. Karim's red-pen marks; one is smudged so the review shows a flag.
+            paperMarks: suggested,
+            paperMarkConfidence: st.name === "Laila Fathy" && q.number === 3 ? 0.55 : 0.97,
             suggestedMarks: suggested,
             finalMarks: isReleased ? suggested : null,
             errorType: v.errorType ?? null,
@@ -168,8 +176,23 @@ export function seed(SQL: SqlJsStatic, dbFile = process.env.DATABASE_PATH ?? "da
           .run();
         q.criteria.forEach((c, ci) => {
           const r = v.results[ci]!;
+          // Same rule as the live pipeline: explanations come from the criterion's own slide and cite it.
+          const key = c.slide ? `${c.slide[0]}:${c.slide[1]}` : null;
+          const slide = key ? slideText.get(key) : undefined;
+          const explained = r.status !== "met" && key && slide;
           tx.insert(s.criterionResults)
-            .values({ id: id("res"), answerId, criterionId: critIds.get(`${q.number}:${c.code}`)!, status: r.status, evidence: r.evidence, gap: r.gap, marks: r.marks, aiConfidence: r.status === "partial" ? 0.84 : 0.93 })
+            .values({
+              id: id("res"),
+              answerId,
+              criterionId: critIds.get(`${q.number}:${c.code}`)!,
+              status: r.status,
+              evidence: r.evidence,
+              gap: r.gap,
+              marks: r.marks,
+              aiConfidence: r.status === "partial" ? 0.84 : 0.93,
+              explanation: explained ? explainFromSlide(slide.title, slide.body) : "",
+              citedSlideId: explained ? slideIds.get(key)! : null,
+            })
             .run();
         });
 
@@ -236,6 +259,107 @@ export function seed(SQL: SqlJsStatic, dbFile = process.env.DATABASE_PATH ?? "da
         decision: null,
       })
       .run();
+
+    /* ── A second course, so students with several courses pick the subject in "My papers" ── */
+    const mona = { id: id("usr"), email: "dr.mona@gapmap.demo", name: "Dr. Mona Saad", role: "instructor" as const, title: "Lecturer, Faculty of Computing" };
+    tx.insert(s.users).values({ ...mona, universityId: uni.id, passwordHash: hash }).run();
+    const se = { id: id("crs"), code: "SE 220", title: "Software Engineering", term: "Fall 2026", instructorId: mona.id, universityId: uni.id };
+    tx.insert(s.courses).values(se).run();
+    tx.insert(s.enrollments).values({ id: id("enr"), courseId: se.id, userId: mona.id, role: "instructor", section: "A" }).run();
+    const reqConcept = id("cpt");
+    tx.insert(s.concepts).values({ id: reqConcept, courseId: se.id, name: "Requirements", description: "Functional and non-functional requirements", unit: 1 }).run();
+    const seLecture = id("lec");
+    tx.insert(s.lectures).values({ id: seLecture, courseId: se.id, number: 1, title: "Requirements engineering", fileName: "Lecture 1 - Requirements engineering.pdf", status: "ready", progress: 100 }).run();
+    const seSlides = [
+      { title: "Functional requirements", body: "A functional requirement says what the system must do, for example: a student can register for a course." },
+      { title: "Non-functional requirements", body: "A non-functional requirement says how well the system must work: speed, security, usability. It must be measurable, for example: pages load in under 2 seconds." },
+    ].map((sl, i) => {
+      const slideId = id("sld");
+      tx.insert(s.slides).values({ id: slideId, lectureId: seLecture, page: i + 1, title: sl.title, body: sl.body }).run();
+      tx.insert(s.slideConcepts).values({ slideId, conceptId: reqConcept, status: "confirmed" }).run();
+      return { id: slideId, ...sl };
+    });
+    const seExam = { id: id("exm"), courseId: se.id, title: "Quiz 1", kind: "quiz" as const, date: "2026-10-20", status: "released" as const };
+    tx.insert(s.exams).values(seExam).run();
+    const seQuestions = [
+      {
+        prompt: "Give one functional and one non-functional requirement for a course registration system.",
+        criteria: [
+          { description: "Gives a functional requirement (what the system does)", slide: 0 },
+          { description: "Gives a measurable non-functional requirement (how well it works)", slide: 1 },
+        ],
+        full: { text: "Functional: a student can register for a course. Non-functional: the page loads in under 2 seconds.", evidence: ["a student can register for a course", "the page loads in under 2 seconds"] },
+        partial: { text: "A student can register for a course and see the timetable.", evidence: ["A student can register for a course", ""], gap: ["", "No non-functional requirement: how well the system must work."] },
+      },
+      {
+        prompt: "Is “The system must be fast” a good requirement? Explain.",
+        criteria: [
+          { description: "Identifies it as non-functional", slide: 1 },
+          { description: "Explains it must be measurable (e.g. under 2 seconds)", slide: 1 },
+        ],
+        full: { text: "It is non-functional but too vague. It should be measurable, like pages load in under 2 seconds.", evidence: ["It is non-functional", "It should be measurable"] },
+        partial: { text: "Yes, because speed is important for students.", evidence: ["", ""], gap: ["Does not say it is a non-functional requirement.", "Does not say it must be measurable."] },
+      },
+    ];
+    const seQ = seQuestions.map((q, i) => {
+      const qid = id("qst");
+      tx.insert(s.questions).values({ id: qid, examId: seExam.id, number: i + 1, prompt: q.prompt, maxMarks: 2, modelAnswer: "", conceptId: reqConcept }).run();
+      const crits = q.criteria.map((c, ci) => {
+        const cid = id("crt");
+        tx.insert(s.criteria).values({ id: cid, questionId: qid, code: `C${ci + 1}`, description: c.description, marks: 1, conceptId: reqConcept, slideId: seSlides[c.slide]!.id }).run();
+        return { id: cid, slide: seSlides[c.slide]! };
+      });
+      return { id: qid, def: q, crits };
+    });
+    for (const st of students.slice(0, 8)) {
+      tx.insert(s.enrollments).values({ id: id("enr"), courseId: se.id, userId: st.id, role: "student", section: "A" }).run();
+      // Mariam's quiz stays unreleased so the main demo story is unchanged.
+      if (st.index < 1 || st.index > 6) continue;
+      const paperId = id("ppr");
+      tx.insert(s.papers).values({ id: paperId, examId: seExam.id, studentId: st.id, section: "A", fileName: `se-quiz1-${st.name.replace(/\s/g, "-").toLowerCase()}.pdf`, status: "released" }).run();
+      seQ.forEach((q, qi) => {
+        const full = (st.index + qi) % 2 === 0;
+        const v = full ? q.def.full : q.def.partial;
+        const statuses = full ? ["met", "met"] : v.evidence.map((e) => (e ? "met" : "missing"));
+        const marks = statuses.filter((x) => x === "met").length;
+        const answerId = id("ans");
+        tx.insert(s.answers)
+          .values({
+            id: answerId,
+            paperId,
+            questionId: q.id,
+            handwriting: wrapHandwriting(`Q${qi + 1}) ${v.text}`),
+            transcription: v.text,
+            confidence: 0.95,
+            paperMarks: marks,
+            paperMarkConfidence: 0.97,
+            status: "released",
+            suggestedMarks: marks,
+            finalMarks: marks,
+            model: "seed",
+            reviewedBy: mona.id,
+            reviewedAt: new Date("2026-10-22T10:00:00Z"),
+          })
+          .run();
+        q.crits.forEach((c, ci) => {
+          const status = statuses[ci] as "met" | "missing";
+          tx.insert(s.criterionResults)
+            .values({
+              id: id("res"),
+              answerId,
+              criterionId: c.id,
+              status,
+              evidence: v.evidence[ci] ?? "",
+              gap: status === "met" ? "" : ((v as { gap?: string[] }).gap?.[ci] ?? ""),
+              marks: status === "met" ? 1 : 0,
+              aiConfidence: 0.92,
+              explanation: status === "met" ? "" : explainFromSlide(c.slide.title, c.slide.body),
+              citedSlideId: status === "met" ? null : c.slide.id,
+            })
+            .run();
+        });
+      });
+    }
 
     /* ── Anonymous discussions ── */
     const omar = students[4]!;

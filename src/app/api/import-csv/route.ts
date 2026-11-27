@@ -48,7 +48,7 @@ export async function POST(req: Request) {
       const marks = Math.max(0, Math.min(q.maxMarks, Number(r[col])));
       if (Number.isNaN(marks)) continue;
       db.insert(s.answers)
-        .values({ id: crypto.randomUUID(), paperId, questionId: q.id, transcription: "", status: "released", suggestedMarks: marks, finalMarks: marks, model: "csv-import", reviewedBy: user.id, reviewedAt: new Date() })
+        .values({ id: crypto.randomUUID(), paperId, questionId: q.id, transcription: "", status: "released", paperMarks: marks, suggestedMarks: marks, finalMarks: marks, model: "csv-import", reviewedBy: user.id, reviewedAt: new Date() })
         .run();
       if (q.conceptId) {
         db.insert(s.attempts)

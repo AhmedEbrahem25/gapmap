@@ -153,7 +153,7 @@ export default async function RubricPage({ params, searchParams }: PageProps<"/i
               </div>
             </FadeIn>
           ) : (
-            <p className="text-sm text-ink-2">Add the first question on the right.</p>
+            <p className="text-sm text-ink-2">Add the first question on the right, or skip this: the printed questions are read from the first marked paper you upload.</p>
           )}
         </Card>
 
@@ -191,7 +191,7 @@ export default async function RubricPage({ params, searchParams }: PageProps<"/i
           </Card>
           <Card className="flex flex-col gap-3 p-5">
             <p className="text-sm text-ink-2">
-              {aiEnabled() ? `${aiLabel()} is connected: drafting, reading handwriting and matching run live.` : "Demo mode: no AI key is set, so drafting and matching use the offline demo logic. Add a free GEMINI_API_KEY to read real handwriting."}
+              {aiEnabled() ? `${aiLabel()} is connected: it reads the printed questions, the answers and your marks, and diagnoses each gap.` : "Demo mode: no AI key is set, so drafting and matching use the offline demo logic. Add a free GEMINI_API_KEY to read real handwriting."}
             </p>
             <ButtonLink href={`/instructor/exams/${examId}/upload`}>Next: student papers →</ButtonLink>
           </Card>

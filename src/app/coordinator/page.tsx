@@ -64,7 +64,7 @@ export default async function CoordinatorPage() {
                   <div className="flex gap-4 text-xs text-ink-2">
                     {sections.map((sec, i) => (
                       <span key={sec} className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: i === 0 ? "#2445D8" : "#9CA3AF" }} /> Section {sec}
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: i === 0 ? "#B51834" : "#9CA3AF" }} /> Section {sec}
                       </span>
                     ))}
                   </div>
@@ -79,7 +79,7 @@ export default async function CoordinatorPage() {
                           const v = pct(r.reduce((t, x) => t + x.score, 0), r.reduce((t, x) => t + x.maxScore, 0));
                           return (
                             <div key={sec} className="grid grid-cols-[1fr_44px] items-center gap-2">
-                              <AnimatedBar value={v} color={i === 0 ? "#2445D8" : "#9CA3AF"} height={7} />
+                              <AnimatedBar value={v} color={i === 0 ? "#B51834" : "#9CA3AF"} height={7} />
                               <span className="text-right text-xs font-semibold">{v}%</span>
                             </div>
                           );

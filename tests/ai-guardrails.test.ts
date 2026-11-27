@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validateQuote } from "../src/lib/ai/quotes";
-import { heuristicMatch, classifyFollowupReply, profileFromAnswers, checkExplanationHeuristic, retestBank } from "../src/lib/ai/fallback";
+import { validateQuote, isGroundedIn, slideLabel } from "../src/lib/ai/quotes";
+import { heuristicMatch, classifyFollowupReply, checkExplanationHeuristic, retestBank, explainFromSlide } from "../src/lib/ai/fallback";
+import { answerFlags, approvedWithoutEdits } from "../src/lib/review";
+import { cleanCheckin, profileFromCheckin } from "../src/lib/profile-questions";
 
 const mariam = "I will choose StudentID as the primary key because it is the student number. Name can not be a key.";
 const criteria = [
@@ -36,16 +38,28 @@ test("follow-up replies pick the right branch", () => {
   assert.equal(classifyFollowupReply("not sure"), "unclear");
 });
 
-test("study profile describes habits and time, never ability", () => {
-  const p = profileFromAnswers({ a: "I like to try things myself and experiment", b: "about 45 min" });
+test("study check-in is scored by rules: habits and time, never ability", () => {
+  const p = profileFromCheckin({ habit: "reread", stuck: "experiment", timing: "night_before", minutes: "45", goal: "master" });
   assert.equal(p.preferred, "experiment");
   assert.equal(p.minutes, 45);
-  assert.ok(p.traits.includes("Tries things first"));
+  assert.ok(p.traits.includes("Reread my slides or notes"));
+  assert.match(p.summary, /testing yourself/);
+  assert.match(p.summary, /45-minute steps/);
+  assert.equal(profileFromCheckin({ habit: "practice", stuck: "worked_example" }).preferred, "try_first");
+});
+
+test("check-in keeps only real choices", () => {
+  assert.deepEqual(cleanCheckin({ habit: "self_test", stuck: "<script>", minutes: "999", goal: "grade" }), { habit: "self_test", goal: "grade" });
 });
 
 test("experiment explanation check and fresh question bank", () => {
-  assert.equal(checkExplanationHeuristic("Both rows have the same StudentID 1042").ok, true);
-  assert.equal(checkExplanationHeuristic("I don't know").ok, false);
+  const checkFor = ["same", "both", "1042", "duplicate", "unique", "studentid"];
+  assert.equal(checkExplanationHeuristic("Both rows have the same StudentID 1042", { checkFor }).ok, true);
+  assert.equal(checkExplanationHeuristic("I don't know", { checkFor }).ok, false);
+  // Any concept: without checkFor words the explanation must reuse the slide's ideas.
+  const reference = "Normalisation removes repeated data so each fact is stored once and updates cannot disagree.";
+  assert.equal(checkExplanationHeuristic("Normalisation stores each fact once, so repeated data cannot get out of step after updates.", { reference }).ok, true);
+  assert.equal(checkExplanationHeuristic("It makes the database better.", { reference }).ok, false);
   const q = retestBank("Primary keys");
   assert.match(q.prompt, /Course/);
   assert.equal(q.criteria.reduce((t, c) => t + c.marks, 0), 4);
@@ -68,4 +82,37 @@ test("JSON Schema is converted to Gemini's response schema", () => {
   assert.equal(props.followupQuestion!.nullable, true);
   const items = props.results!.items as Record<string, unknown>;
   assert.deepEqual((items.properties as Record<string, Record<string, unknown>>).status!.enum, ["met", "partial", "missing"]);
+});
+
+test("explanations count as cited only when they stay on the slide", () => {
+  const slide = "Primary keys. The primary key is the candidate key we choose to identify rows. PRIMARY KEY (StudentID).";
+  assert.equal(isGroundedIn("The primary key is the candidate key chosen to identify rows.", slide), true);
+  assert.equal(isGroundedIn("Indexes speed up lookups on large tables with B-trees.", slide), false);
+  assert.equal(slideLabel(4, 11), "L4 p.11");
+  const offline = explainFromSlide("Primary keys", "The primary key is the candidate key we choose to identify rows. PRIMARY KEY (StudentID).");
+  assert.ok(isGroundedIn(offline, slide), "the offline explanation is always grounded");
+});
+
+test("review rules flag answers that need a one-by-one look", () => {
+  const paper = { confidence: 0.95, transcription: "text", paperMarks: 3, paperMarkConfidence: 0.97 };
+  const ok = { aiConfidence: 0.9, explanation: "From the slide", citedSlideId: "sld_1", marks: 3 };
+  assert.deepEqual(answerFlags(paper, [ok], 4), []);
+  assert.deepEqual(answerFlags({ ...paper, confidence: 0.5 }, [ok], 4), ["Hard to read"]);
+  assert.deepEqual(answerFlags(paper, [{ ...ok, citedSlideId: null }], 4), ["Uncited explanation"]);
+  assert.deepEqual(answerFlags(paper, [{ ...ok, aiConfidence: 0.4 }], 4), ["Low AI confidence"]);
+  assert.deepEqual(answerFlags({ ...paper, transcription: "", confidence: 0 }, [], 4), ["Not diagnosed yet"]);
+});
+
+test("the mark is the instructor's: missing, smudged or contradicted marks are flagged", () => {
+  const paper = { confidence: 0.95, transcription: "text", paperMarks: 3, paperMarkConfidence: 0.97 };
+  const ok = { aiConfidence: 0.9, explanation: "", citedSlideId: null, marks: 3 };
+  assert.deepEqual(answerFlags({ ...paper, paperMarks: null }, [ok], 4), ["Mark not found"]);
+  assert.deepEqual(answerFlags({ ...paper, paperMarkConfidence: 0.5 }, [ok], 4), ["Mark hard to read"]);
+  assert.deepEqual(answerFlags({ ...paper, paperMarks: 4 }, [{ ...ok, marks: 1 }], 4), ["Diagnosis disagrees with the mark"]);
+  assert.deepEqual(answerFlags({ ...paper, paperMarks: 3.5 }, [ok], 4), [], "small differences are fine");
+});
+
+test("AI quality is the share approved without edits", () => {
+  assert.equal(approvedWithoutEdits([]), null);
+  assert.equal(approvedWithoutEdits([{ edited: false }, { edited: false }, { edited: false }, { edited: true }]), 75);
 });

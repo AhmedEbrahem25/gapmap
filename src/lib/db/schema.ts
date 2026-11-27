@@ -63,6 +63,8 @@ export const concepts = sqliteTable("concepts", {
   description: text("description"),
   prerequisiteId: text("prerequisite_id"),
   unit: integer("unit").notNull().default(1),
+  /** Activity scenario the AI drafted once for this concept (from its slides only), reused for every student. */
+  activityCache: text("activity_cache", { mode: "json" }).$type<Record<string, unknown>>(),
 });
 
 export const lectures = sqliteTable("lectures", {
@@ -155,6 +157,10 @@ export const answers = sqliteTable("answers", {
   confidence: real("confidence").notNull().default(1),
   lowConfidence: text("low_confidence", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
   status: text("status").$type<"pending" | "analysed" | "approved" | "released">().notNull().default("pending"),
+  /** The mark the instructor wrote on the paper, read from the scan. Null until it is found. The AI never sets marks. */
+  paperMarks: real("paper_marks"),
+  /** How sure the reader is about paperMarks (1 when typed by a reviewer). */
+  paperMarkConfidence: real("paper_mark_confidence").notNull().default(1),
   suggestedMarks: real("suggested_marks"),
   finalMarks: real("final_marks"),
   errorType: text("error_type"),
@@ -176,6 +182,10 @@ export const criterionResults = sqliteTable("criterion_results", {
   marks: real("marks").notNull().default(0),
   aiConfidence: real("ai_confidence").notNull().default(0.9),
   edited: integer("edited", { mode: "boolean" }).notNull().default(false),
+  /** Short explanation that closes the gap, written only from the cited slide. */
+  explanation: text("explanation").notNull().default(""),
+  /** Slide the explanation cites. Null with a non-empty explanation means uncited: flagged and hidden from students. */
+  citedSlideId: text("cited_slide_id").references(() => slides.id),
 });
 
 /* ───────── Student learning loop ───────── */

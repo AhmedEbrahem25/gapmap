@@ -13,6 +13,13 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const session = await verifySession(request.cookies.get(SESSION_COOKIE)?.value);
 
+  // Clear a session whose user no longer exists, then continue on a clean /login.
+  if (pathname === "/login" && request.nextUrl.searchParams.has("expired")) {
+    const res = NextResponse.redirect(new URL("/login", request.url));
+    res.cookies.delete(SESSION_COOKIE);
+    return res;
+  }
+
   if (pathname === "/login" && session) {
     return NextResponse.redirect(new URL(homeFor(session.role), request.url));
   }

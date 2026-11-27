@@ -15,7 +15,7 @@ links each gap to the lecture slide that teaches it, asks one short follow-up qu
 real misunderstanding, suggests an activity that fits how the student studies, and measures the
 change with a fresh test. Instructors see class-level misconceptions and decide what to reteach.
 
-Built for the **AI Educathon 2026** by Crafnova.
+Built for the **AUF AI Educathon 2026** by the Genesis Team.
 
 ## Quick start
 
@@ -71,7 +71,7 @@ demo data is re-created on every restart.
 
 ## The demo in 5 minutes
 
-1. **Instructor** (Dr. Salma Nour) → *Courses*: lectures split into slides and tagged by concept; confirm an AI tag.
+1. **Instructor** (Dr. Karim Nour) → *Courses*: lectures split into slides and tagged by concept; confirm an AI tag.
 2. *Exams → Rubric*: the model answer becomes criteria, each linked to a slide.
 3. *Review*: Mariam's handwritten answer beside its transcription; each criterion with her own words,
    what's still missing and the slide. **Approve & next**, then **Release** to students.
@@ -89,10 +89,10 @@ Full script with talking points and a backup plan: [docs/DEMO-SCRIPT.md](docs/DE
 | Area | Features |
 | --- | --- |
 | Courses & lectures | Upload PDF/Word → slides with text; AI concept tagging (instructor confirms); slide viewer with deep links |
-| Paper analysis | Rubric drafting from the model answer; scanned-paper upload (PDF/JPG/PNG/WebP); handwriting transcription with per-line confidence; criterion matching with **verbatim-quote validation**; TA transcription fixes; review queue with keyboard shortcuts; release to students; CSV import of reviewed marks |
+| Paper analysis | Papers are scanned **after the instructor marks them**: GapMap reads the printed questions (and creates them if the exam has none), the handwritten answers and the instructor's own marks, never names or IDs (the student comes from the upload form or the file name). The mark stays the instructor's; the AI diagnoses which criteria are missing and is flagged when its diagnosis disagrees with the mark; Rubric drafting from the model answer; scanned-paper upload (PDF/JPG/PNG/WebP); handwriting transcription with per-line confidence; criterion matching with **verbatim-quote validation**; TA transcription fixes; review queue with keyboard shortcuts; release to students; CSV import of reviewed marks; explanations written only from the linked slide and page-cited (uncited text is flagged and hidden from students); **approval per question**: one click approves every answer no rule flags, flagged ones open one by one |
 | Diagnosis | AI follow-up question with branch detection; instructor-tagged error types; anonymous student ↔ instructor threads |
-| Study loop | Editable study profile (habits, not personality); activity chosen from gap + reply + profile; explanation checker; fresh test generated for the gap; before/after per concept; “did it help?” feedback |
-| Class insights | Gap share by concept and question, misconception clusters with anonymous examples, ambiguous-question flag, decisions log, section filter |
+| Study loop | **My papers** tab: the whole marked paper (scan, every answer with the instructor's mark, links to the feedback); 5-question study check-in (habits, time, goals) by taps, scored by rules and never sent to the AI; it orders the plan and nudges self-testing over rereading; activity for any concept, built from its slide (experiments drafted once per concept by the AI and cached); explanation checker; fresh test generated for the gap; before/after per concept; “did it help?” feedback |
+| Class insights | Gap share by concept and question, misconception clusters with anonymous examples, ambiguous-question flag, decisions log, section filter; **What to re-teach** computed live when 40%+ of the class has a gap; **AI quality**: share of AI feedback approved without edits (target ≥ 80%) |
 | Early support | Rule-based alerts for students passing overall but repeatedly missing a prerequisite; actions and usefulness rating |
 | Internships | Partner vacancies mapped to concepts; opted-in students ranked by evidence; nomination quotas (instructor 2, TA 1); company portal sees only nominated students |
 | Coordinator | Programme overview across courses and sections; class-level CSV export |
@@ -113,7 +113,8 @@ no credit card) or **Anthropic Claude** (paid). Set `GEMINI_API_KEY` or `ANTHROP
 `.env.local`. With a key set, the model reads handwriting, drafts rubrics, matches criteria, runs the
 follow-up conversation, writes fresh questions and groups misconceptions. Every call returns
 schema-validated JSON; every evidence quote must appear word-for-word in the transcription or it is
-dropped. Without a key, GapMap runs deterministic **demo mode** logic so every screen still works
+dropped, and every explanation must cite a slide it was given and stay close to that slide's text, or it is
+flagged for the instructor. The study check-in is scored by rules and never sent to the AI. Without a key, GapMap runs deterministic **demo mode** logic so every screen still works
 offline (handwriting must then be typed in by a TA).
 
 ## Project structure
@@ -137,6 +138,7 @@ docs/             architecture, demo script, design system
 ## Privacy
 
 Students see only their own released feedback. Anonymous threads never expose the student's identity
-to staff. Companies see only students who opted in **and** were nominated by faculty. Every AI grade
-is a suggestion until an instructor approves it. Uploaded scans are served only to the course's staff
+to staff. Companies see only students who opted in **and** were nominated by faculty. Marks always come from the
+instructor's own marking on the paper: the AI reads them, diagnoses what is missing and explains it from the
+slides, and the instructor approves before students see anything. The AI is never asked for names or IDs. Uploaded scans are served only to the course's staff
 and to the student they belong to. See CREDENTIALS.md for how secrets are handled.

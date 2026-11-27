@@ -13,7 +13,7 @@ export function StudentHeader({ eyebrow, title, back, right }: { eyebrow?: strin
       ) : null}
       <FadeIn className="min-w-0 flex-1" y={6}>
         {eyebrow ? <p className="text-[13px] text-ink-2">{eyebrow}</p> : null}
-        <h1 className="text-[22px] leading-7 font-bold tracking-tight">{title}</h1>
+        <h1 className="text-[22px] leading-7 font-bold tracking-tight text-navy">{title}</h1>
       </FadeIn>
       {right}
     </header>

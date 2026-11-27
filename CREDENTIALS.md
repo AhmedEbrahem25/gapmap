@@ -14,9 +14,9 @@ GapMap@2026
 
 | Role | Name | Email | What to show with it |
 | --- | --- | --- | --- |
-| Instructor | Dr. Salma Nour | `dr.salma@gapmap.demo` | Course & lectures, rubric, paper upload, **review queue**, class insights, discussions, alerts, internships |
+| Instructor | Dr. Karim Nour | `dr.karim@gapmap.demo` | Course & lectures, rubric, paper upload, **review queue**, class insights, discussions, alerts, internships |
 | Student (demo student) | Mariam Adel | `mariam@gapmap.demo` | Report → follow-up question → study profile → activity → fresh test |
-| Teaching assistant | Karim Lotfy | `ta.karim@gapmap.demo` | Same course as the instructor; nomination quota of 1 |
+| Teaching assistant | Nada Lotfy | `ta.nada@gapmap.demo` | Same course as the instructor; nomination quota of 1 |
 | Coordinator | Dr. Hany Fawzy | `coordinator@gapmap.demo` | Programme overview, class-level CSV export (no individual papers) |
 | Partner company | Reem Saleh (Nile Data Labs, demo) | `hr@niledata.demo` | Vacancies, faculty nominations, request interview |
 | Platform admin | GapMap Admin | `admin@gapmap.demo` | Sees every course in the instructor area |

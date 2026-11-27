@@ -145,7 +145,7 @@ function Lectures({
                         </>
                       )}
                     </span>
-                    {l.status === "processing" ? <AnimatedBar value={l.progress} color="#2445D8" height={4} className="mt-2" /> : null}
+                    {l.status === "processing" ? <AnimatedBar value={l.progress} color="#B51834" height={4} className="mt-2" /> : null}
                   </span>
                 </Link>
               </StaggerItem>

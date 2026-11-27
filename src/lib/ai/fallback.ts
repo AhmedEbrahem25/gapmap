@@ -3,7 +3,7 @@
  * or when a live call fails. It keeps every screen working offline (e.g. on
  * hackathon Wi-Fi) and gives the same shape of output as the Claude pipelines.
  */
-import type { ActivityType, CriterionStatus } from "../db/schema";
+import type { CriterionStatus } from "../db/schema";
 
 const STOP = new Set(
   "the a an and or of to in on for is are be it its that this with as by from at which each every must should can not no into their they them have has was were will".split(
@@ -105,49 +105,6 @@ export function followupResponse(branch: "understands" | "misconception" | "uncl
   return "Let's make it concrete. If two students are both called “Mariam Adel”, how would the database know which one you mean when you update a grade?";
 }
 
-export function profileFromAnswers(a: Record<string, string>): {
-  traits: string[];
-  preferred: ActivityType;
-  minutes: number;
-  summary: string;
-} {
-  const all = Object.values(a).join(" ").toLowerCase();
-  const traits: string[] = [];
-  let preferred: ActivityType = "worked_example";
-  if (/try|experiment|figure|myself|test/.test(all)) {
-    traits.push("Tries things first");
-    preferred = "experiment";
-  }
-  if (/map|diagram|connect|draw|relationship/.test(all)) {
-    traits.push("Connects ideas visually");
-    if (preferred === "worked_example") preferred = "mind_map";
-  }
-  if (/example|video|watch|see how/.test(all)) traits.push("Stuck → looks for an example");
-  if (/explain|teach|write|own words/.test(all)) {
-    traits.push("Learns by explaining");
-    if (preferred === "worked_example") preferred = "own_words";
-  }
-  if (/friend|group|ask/.test(all)) traits.push("Asks others when stuck");
-  const m = all.match(/(\d{1,3})\s*(min|minute|m\b)/);
-  const h = all.match(/(\d(?:\.\d)?)\s*(hour|hr)/);
-  const minutes = m ? Number(m[1]) : h ? Math.round(Number(h[1]) * 60) : 30;
-  traits.push(`~${minutes} min a day`);
-  if (traits.length === 1) traits.unshift("Steady reader");
-  const label: Record<ActivityType, string> = {
-    experiment: "short experiments before reading",
-    mind_map: "mapping how ideas connect",
-    worked_example: "worked examples you can follow step by step",
-    own_words: "explaining ideas in your own words",
-    try_first: "trying a problem before the solution",
-  };
-  return {
-    traits,
-    preferred,
-    minutes,
-    summary: `You seem to learn best through ${label[preferred]}, with about ${minutes} minutes a day. You can change this at any time.`,
-  };
-}
-
 export function retestBank(concept: string): { prompt: string; criteria: { code: string; description: string; marks: number }[] } {
   const c = concept.toLowerCase();
   if (c.includes("primary")) {
@@ -187,18 +144,35 @@ export function retestBank(concept: string): { prompt: string; criteria: { code:
   };
 }
 
-export function checkExplanationHeuristic(text: string) {
+/**
+ * Offline check of a student's explanation. With the experiment's checkFor words it needs most of
+ * them; otherwise it needs a full sentence that reuses ideas from the slide.
+ */
+export function checkExplanationHeuristic(text: string, ref: { checkFor?: string[]; reference?: string; answer?: string } = {}) {
   const t = text.toLowerCase();
-  const good = /(same|duplicate|two rows|both|not unique|repeat|share)/.test(t) && /(id|key|studentid|1042)/.test(t);
-  return good
-    ? {
-        ok: true,
-        feedback:
-          "Yes. The WHERE clause matched both rows because they share StudentID 1042, so the update hit both. A primary key prevents that by refusing duplicate values.",
-      }
+  const checkFor = ref.checkFor ?? [];
+  const ok = checkFor.length
+    ? checkFor.filter((w) => t.includes(w.toLowerCase())).length >= Math.min(2, checkFor.length)
+    : t.split(/\s+/).length >= 8 && keywords(ref.reference ?? "").filter((k) => t.includes(k)).length >= 2;
+  return ok
+    ? { ok: true, feedback: ref.answer ? `Yes. ${ref.answer}` : "Yes, that is the idea on the slide. Put it in your own exam answer too, then take a fresh test to lock it in." }
     : {
         ok: false,
-        feedback:
-          "Close. Look at the WHERE clause: which rows have StudentID = 1042? Explain why the update could not tell Mariam and Omar apart.",
+        feedback: checkFor.length
+          ? "Close. Look again at the result: which rows or values were affected, and what rule would have stopped it?"
+          : "Close. Reuse the key idea from the slide in your own words, and say why it matters.",
       };
+}
+
+/** Offline explanation: the slide's own sentences, so it is always grounded and cited. */
+export function explainFromSlide(slideTitle: string, slideBody: string): string {
+  const body = slideBody.trim();
+  if (!body) return "";
+  const sentences = body.split(/(?<=[.!?])\s+/).filter(Boolean);
+  let out = "";
+  for (const s of sentences) {
+    if ((out + " " + s).trim().length > 240) break;
+    out = (out + " " + s).trim();
+  }
+  return `${slideTitle}: ${out || body.slice(0, 240)}`;
 }

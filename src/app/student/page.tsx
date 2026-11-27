@@ -50,8 +50,8 @@ export default async function StudentHome() {
               <Link href="/student/profile" className="flex items-center gap-3 rounded-2xl border border-primary-200 bg-primary-50 p-4 transition hover:shadow-lift">
                 <Sparkles className="text-primary-600" size={20} aria-hidden />
                 <span className="flex-1 text-sm">
-                  <strong className="block">While you wait: set up how you study</strong>
-                  <span className="text-ink-2">4 quick questions so your next steps fit you.</span>
+                  <strong className="block">While you wait: take the study check-in</strong>
+                  <span className="text-ink-2">5 taps (habits, time, goals) so your next steps fit you.</span>
                 </span>
                 <ChevronRight size={18} className="text-primary-600" aria-hidden />
               </Link>

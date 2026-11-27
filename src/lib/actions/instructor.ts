@@ -8,9 +8,10 @@ import { z } from "zod";
 import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
 import { assertCourseAccess, audit, examWithAccess } from "@/lib/data";
-import { analyseAnswer } from "@/lib/jobs";
-import { clusterMisconceptions, draftRubric } from "@/lib/ai/pipelines";
+import { analyseAnswer, draftCriteriaFor } from "@/lib/jobs";
+import { clusterMisconceptions } from "@/lib/ai/pipelines";
 import { computeAlerts } from "@/lib/alerts";
+import { answerFlags } from "@/lib/review";
 
 const staff = () => requireRole("instructor", "ta", "admin");
 const refresh = () => revalidatePath("/", "layout");
@@ -144,33 +145,8 @@ export async function aiDraftRubric(formData: FormData) {
   const questionId = String(formData.get("questionId"));
   const q = db.select().from(s.questions).where(eq(s.questions.id, questionId)).get();
   if (!q) return;
-  const { course } = examWithAccess(user, q.examId);
-  const concepts = db.select().from(s.concepts).where(eq(s.concepts.courseId, course.id)).all();
-  const drafted = await draftRubric({ prompt: q.prompt, modelAnswer: q.modelAnswer, maxMarks: q.maxMarks, concepts: concepts.map((c) => c.name) });
-  db.delete(s.criteria).where(eq(s.criteria.questionId, questionId)).run();
-  drafted.forEach((c, i) => {
-    const concept = concepts.find((x) => x.name.toLowerCase() === (c.concept ?? "").toLowerCase()) ?? concepts.find((x) => x.id === q.conceptId);
-    const slide = concept
-      ? db
-          .select({ id: s.slides.id })
-          .from(s.slideConcepts)
-          .innerJoin(s.slides, eq(s.slides.id, s.slideConcepts.slideId))
-          .where(eq(s.slideConcepts.conceptId, concept.id))
-          .get()
-      : undefined;
-    db.insert(s.criteria)
-      .values({
-        id: crypto.randomUUID(),
-        questionId,
-        code: `C${i + 1}`,
-        description: c.description,
-        marks: c.marks,
-        conceptId: concept?.id ?? null,
-        slideId: slide?.id ?? null,
-        aiDrafted: true,
-      })
-      .run();
-  });
+  examWithAccess(user, q.examId);
+  await draftCriteriaFor(questionId);
   refresh();
 }
 
@@ -258,12 +234,19 @@ export async function updateResult(formData: FormData) {
   const crit = db.select().from(s.criteria).where(eq(s.criteria.id, r.criterionId)).get()!;
   const status = z.enum(["met", "partial", "missing"]).catch(r.status).parse(formData.get("status"));
   const marks = Math.max(0, Math.min(crit.marks, Number(formData.get("marks") ?? r.marks)));
+  const explanation = formData.has("explanation") ? String(formData.get("explanation")).trim() : r.explanation;
   db.update(s.criterionResults)
-    .set({ status, marks, gap: String(formData.get("gap") ?? r.gap), edited: true })
+    .set({
+      status,
+      marks,
+      gap: String(formData.get("gap") ?? r.gap),
+      explanation,
+      // The reviewer vouches for the text they saved, so it cites the criterion's slide.
+      citedSlideId: explanation ? (r.citedSlideId ?? crit.slideId) : null,
+      edited: true,
+    })
     .where(eq(s.criterionResults.id, resultId))
     .run();
-  const total = db.select().from(s.criterionResults).where(eq(s.criterionResults.answerId, r.answerId)).all().reduce((a, x) => a + x.marks, 0);
-  db.update(s.answers).set({ suggestedMarks: total }).where(eq(s.answers.id, r.answerId)).run();
   audit(user.id, "edit_result", resultId);
   refresh();
 }
@@ -280,14 +263,49 @@ export async function setAnswerMeta(formData: FormData) {
   refresh();
 }
 
+/** Sets the instructor's mark when the reader could not find it or read it wrong. */
+export async function setPaperMark(formData: FormData) {
+  const user = await staff();
+  const answerId = String(formData.get("answerId"));
+  const ctx = answerContext(answerId);
+  examWithAccess(user, ctx.exam.id);
+  const q = db.select().from(s.questions).where(eq(s.questions.id, ctx.answer.questionId)).get()!;
+  const mark = Number(formData.get("mark"));
+  if (!Number.isFinite(mark)) return;
+  const paperMarks = Math.max(0, Math.min(q.maxMarks, mark));
+  db.update(s.answers).set({ paperMarks, paperMarkConfidence: 1, suggestedMarks: paperMarks }).where(eq(s.answers.id, answerId)).run();
+  audit(user.id, "set_paper_mark", answerId);
+  refresh();
+}
+
+/** Assigns an unmatched scan to a student of the course (the AI never reads names). */
+export async function assignPaperStudent(formData: FormData) {
+  const user = await staff();
+  const paperId = String(formData.get("paperId"));
+  const studentId = String(formData.get("studentId"));
+  const paper = db.select().from(s.papers).where(eq(s.papers.id, paperId)).get();
+  if (!paper) return;
+  const { exam } = examWithAccess(user, paper.examId);
+  const enrolled = db
+    .select()
+    .from(s.enrollments)
+    .where(and(eq(s.enrollments.courseId, exam.courseId), eq(s.enrollments.userId, studentId), eq(s.enrollments.role, "student")))
+    .get();
+  if (!enrolled) return;
+  db.update(s.papers).set({ studentId, section: enrolled.section }).where(eq(s.papers.id, paperId)).run();
+  audit(user.id, "assign_paper", paperId);
+  refresh();
+}
+
 export async function approveAnswer(formData: FormData) {
   const user = await staff();
   const answerId = String(formData.get("answerId"));
   const ctx = answerContext(answerId);
   examWithAccess(user, ctx.exam.id);
-  const total = db.select().from(s.criterionResults).where(eq(s.criterionResults.answerId, answerId)).all().reduce((a, x) => a + x.marks, 0);
+  // The final mark is the instructor's mark from the paper; without one there is nothing to approve yet.
+  if (ctx.answer.paperMarks === null) return;
   db.update(s.answers)
-    .set({ status: "approved", finalMarks: total, reviewedBy: user.id, reviewedAt: new Date() })
+    .set({ status: "approved", finalMarks: ctx.answer.paperMarks, reviewedBy: user.id, reviewedAt: new Date() })
     .where(eq(s.answers.id, answerId))
     .run();
   const pending = db
@@ -300,6 +318,43 @@ export async function approveAnswer(formData: FormData) {
   refresh();
   const next = String(formData.get("next") ?? "");
   if (next.startsWith("/instructor/")) redirect(next);
+}
+
+/** Approves every answer to one question that no review rule flags. Flagged answers stay for a one-by-one look. */
+export async function approveQuestion(formData: FormData) {
+  const user = await staff();
+  const examId = String(formData.get("examId"));
+  const questionId = String(formData.get("questionId"));
+  examWithAccess(user, examId);
+  const question = db.select().from(s.questions).where(and(eq(s.questions.id, questionId), eq(s.questions.examId, examId))).get();
+  if (!question) return;
+  const rows = db
+    .select({ answer: s.answers })
+    .from(s.answers)
+    .innerJoin(s.papers, eq(s.papers.id, s.answers.paperId))
+    .where(and(eq(s.papers.examId, examId), eq(s.answers.questionId, questionId), eq(s.answers.status, "analysed")))
+    .all();
+  const ids = rows.map((r) => r.answer.id);
+  const results = ids.length ? db.select().from(s.criterionResults).where(inArray(s.criterionResults.answerId, ids)).all() : [];
+  const now = new Date();
+  const papers = new Set<string>();
+  let approved = 0;
+  for (const { answer } of rows) {
+    const own = results.filter((r) => r.answerId === answer.id);
+    if (answer.paperMarks === null || answerFlags(answer, own, question.maxMarks).length) continue;
+    db.update(s.answers)
+      .set({ status: "approved", finalMarks: answer.paperMarks, reviewedBy: user.id, reviewedAt: now })
+      .where(eq(s.answers.id, answer.id))
+      .run();
+    papers.add(answer.paperId);
+    approved++;
+  }
+  for (const pid of papers) {
+    const left = db.select({ id: s.answers.id }).from(s.answers).where(and(eq(s.answers.paperId, pid), inArray(s.answers.status, ["pending", "analysed"]))).all();
+    if (!left.length) db.update(s.papers).set({ status: "reviewed" }).where(eq(s.papers.id, pid)).run();
+  }
+  audit(user.id, "approve_question", `${questionId}:${approved}`);
+  refresh();
 }
 
 export async function releaseApproved(formData: FormData) {

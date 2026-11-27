@@ -10,7 +10,7 @@ Rules: Only use the student's own words and the course's own lecture slides as e
 Quotes must be copied verbatim from the transcription. Never invent marks for criteria that do not exist.
 Be concise, kind and specific. Write for an undergraduate student.`;
 
-import { validateQuote } from "./quotes";
+import { validateQuote, isGroundedIn, slideLabel } from "./quotes";
 export { validateQuote };
 
 /* ───────── 6.1 Lecture ingestion: concept tagging ───────── */
@@ -105,7 +105,7 @@ export async function draftRubric(input: {
           required: ["criteria"],
         },
         system: GROUNDING,
-        prompt: `Question: ${input.prompt}\nModel answer: ${input.modelAnswer}\nTotal marks: ${input.maxMarks}\nConcepts: ${input.concepts.join(", ")}\n\nWrite 2–4 criteria whose marks add up to ${input.maxMarks}. Each criterion is one idea an examiner can see in a written answer.`,
+        prompt: `Question: ${input.prompt}\nModel answer: ${input.modelAnswer || "(not given: work from the question and the course concepts)"}\nTotal marks: ${input.maxMarks}\nConcepts: ${input.concepts.join(", ")}\n\nWrite 2–4 criteria whose marks add up to ${input.maxMarks}. Each criterion is one idea an examiner can see in a written answer.`,
       });
       return data.criteria;
     } catch (e) {
@@ -123,65 +123,98 @@ export async function draftRubric(input: {
 
 /* ───────── 6.2 Handwriting transcription ───────── */
 
+export type PaperAnswer = {
+  number: number;
+  /** The printed question, as it appears on the paper. */
+  questionText: string;
+  /** Marks printed next to the question, if any. */
+  maxMarks: number | null;
+  text: string;
+  confidence: number;
+  lowConfidence: string[];
+  /** The mark the instructor wrote by hand (a tick = full marks, a cross = 0). Null if no mark is visible. */
+  mark: number | null;
+  markConfidence: number;
+};
+
+/**
+ * Reads a paper the instructor has already marked: the printed questions, the student's handwritten
+ * answers and the instructor's own marks. It never reads or returns the student's name or ID.
+ */
 export async function transcribePaper(
   file: Attachment,
-  questions: { number: number; prompt: string }[],
-): Promise<{
-  studentName: string | null;
-  studentNumber: string | null;
-  answers: { number: number; text: string; confidence: number; lowConfidence: string[] }[];
-  model: string;
-}> {
+  questions: { number: number; prompt: string; maxMarks: number }[],
+): Promise<{ answers: PaperAnswer[]; model: string }> {
   const { data, model } = await structured({
-    name: "transcribe_exam_paper",
-    description: "Transcribe a scanned handwritten exam paper, split by question.",
+    name: "read_marked_paper",
+    description: "Read a marked exam paper: printed questions, handwritten answers and the instructor's handwritten marks.",
     kind: "vision",
     maxTokens: 4000,
     schema: z.object({
-      studentName: z.string().nullable(),
-      studentNumber: z.string().nullable(),
       answers: z.array(
         z.object({
           number: z.number(),
+          questionText: z.string(),
+          maxMarks: z.number().nullable(),
           text: z.string(),
           confidence: z.number().min(0).max(1),
           lowConfidence: z.array(z.string()),
+          mark: z.number().nullable(),
+          markConfidence: z.number().min(0).max(1),
         }),
       ),
     }),
     jsonSchema: {
       type: "object",
       properties: {
-        studentName: { type: ["string", "null"] },
-        studentNumber: { type: ["string", "null"] },
         answers: {
           type: "array",
           items: {
             type: "object",
             properties: {
               number: { type: "number" },
-              text: { type: "string", description: "Exact transcription. Keep spelling mistakes. Arabic stays Arabic." },
-              confidence: { type: "number", description: "0–1 overall legibility" },
+              questionText: { type: "string", description: "The printed question text, exactly as printed" },
+              maxMarks: { type: ["number", "null"], description: "Marks printed for the question, e.g. (4 marks); null if not printed" },
+              text: { type: "string", description: "The student's handwritten answer, exactly. Keep spelling mistakes. Arabic stays Arabic." },
+              confidence: { type: "number", description: "0–1 legibility of the handwritten answer" },
               lowConfidence: { type: "array", items: { type: "string" }, description: "Words or short phrases you were unsure about" },
+              mark: {
+                type: ["number", "null"],
+                description: "The instructor's handwritten mark for this answer (often red ink, e.g. 3/4, 2, ✓ or ✗). A tick = full marks (1 if no maximum is printed), a cross = 0. Null if you see no mark.",
+              },
+              markConfidence: { type: "number", description: "0–1 how sure you are about the mark" },
             },
-            required: ["number", "text", "confidence", "lowConfidence"],
+            required: ["number", "questionText", "maxMarks", "text", "confidence", "lowConfidence", "mark", "markConfidence"],
           },
         },
       },
-      required: ["studentName", "studentNumber", "answers"],
+      required: ["answers"],
     },
     system:
-      "You transcribe handwritten university exam papers (English, Arabic, or mixed; may include SQL or code). Copy exactly what is written; do not correct or improve it. If a word is illegible write [?].",
-    prompt: `The exam has these questions:\n${questions.map((q) => `Q${q.number}: ${q.prompt}`).join("\n")}\n\nRead the cover page for the student's name and number, then transcribe each answer under its question number.`,
+      "You read university exam papers that an instructor has already marked by hand. Questions are printed; answers are handwritten (English, Arabic, or mixed; may include SQL or code). Copy answers exactly; do not correct them. If a word is illegible write [?]. You never judge or change marks: you only report the mark the instructor wrote. Ignore names, student numbers and IDs anywhere on the paper and never write them in your output.",
+    prompt: `${questions.length ? `The exam has these questions:\n${questions.map((q) => `Q${q.number} (${q.maxMarks} marks): ${q.prompt}`).join("\n")}\n\n` : ""}For each question on the paper, return the printed question, the student's handwritten answer and the instructor's handwritten mark.`,
     attachments: [file],
   });
-  return { ...data, model };
+  return { answers: data.answers, model };
 }
 
 /* ───────── 6.2 Criterion matching ───────── */
 
+export type SlideSource = { id: string; lecture: number; page: number; title: string; body: string };
+
 export type MatchResult = {
-  results: { code: string; status: CriterionStatus; evidence: string; gap: string; marks: number; confidence: number }[];
+  results: {
+    code: string;
+    status: CriterionStatus;
+    evidence: string;
+    gap: string;
+    marks: number;
+    confidence: number;
+    /** Written only from the criterion's slide; empty when met. */
+    explanation: string;
+    /** The slide the explanation cites, or null when it is uncited (flagged for the instructor, hidden from students). */
+    citedSlideId: string | null;
+  }[];
   followupQuestion: string | null;
   followupReason: string | null;
   errorType: string | null;
@@ -191,14 +224,23 @@ export type MatchResult = {
 export async function matchAnswer(input: {
   question: string;
   modelAnswer: string;
-  criteria: { code: string; description: string; marks: number; slideTitle?: string | null }[];
+  criteria: { code: string; description: string; marks: number; slide?: SlideSource | null }[];
   transcription: string;
+  /** The mark the instructor gave on the paper. The diagnosis explains it; it never replaces it. */
+  instructorMark?: { marks: number; max: number } | null;
 }): Promise<MatchResult> {
+  // An explanation is "cited" only when it names the criterion's own slide and stays close to its text.
+  const cite = (c: (typeof input.criteria)[number], explanation: string, citation: string) => {
+    if (!explanation.trim()) return { explanation: "", citedSlideId: null };
+    const flat = (x: string) => x.replace(/\s+/g, "").toLowerCase();
+    const ok = !!c.slide && flat(citation) === flat(slideLabel(c.slide.lecture, c.slide.page)) && isGroundedIn(explanation, `${c.slide.title} ${c.slide.body}`);
+    return { explanation: explanation.trim(), citedSlideId: ok ? c.slide!.id : null };
+  };
   if (aiEnabled() && input.transcription.trim()) {
     try {
       const { data, model } = await structured({
         name: "match_criteria",
-        description: "Judge a written answer against each marking criterion.",
+        description: "Diagnose a marked written answer against each criterion: what is there, what is missing, and why.",
         schema: z.object({
           results: z.array(
             z.object({
@@ -208,6 +250,8 @@ export async function matchAnswer(input: {
               gap: z.string(),
               marks: z.number(),
               confidence: z.number(),
+              explanation: z.string(),
+              citation: z.string(),
             }),
           ),
           followupQuestion: z.string().nullable(),
@@ -228,8 +272,13 @@ export async function matchAnswer(input: {
                   gap: { type: "string", description: "What the student still needs to explain; empty if met" },
                   marks: { type: "number" },
                   confidence: { type: "number" },
+                  explanation: {
+                    type: "string",
+                    description: "If not met: 1–2 sentences that close the gap, using ONLY the text of this criterion's slide. Empty if met or if the slide does not cover it.",
+                  },
+                  citation: { type: "string", description: "The label of the slide the explanation uses, exactly as given (e.g. L4 p.11). Empty if no explanation." },
                 },
-                required: ["code", "status", "evidence", "gap", "marks", "confidence"],
+                required: ["code", "status", "evidence", "gap", "marks", "confidence", "explanation", "citation"],
               },
             },
             followupQuestion: {
@@ -247,15 +296,17 @@ export async function matchAnswer(input: {
         },
         system: GROUNDING,
         prompt: `Question: ${input.question}\nModel answer: ${input.modelAnswer}\n\nCriteria:\n${input.criteria
-          .map((c) => `${c.code} (${c.marks} marks): ${c.description}${c.slideTitle ? ` [taught on slide: ${c.slideTitle}]` : ""}`)
-          .join("\n")}\n\nStudent's transcribed answer:\n"""${input.transcription}"""\n\nFor every criterion decide met / partial / missing, quote the exact words that show it, and say what is still missing.`,
+          .map((c) => `${c.code} (${c.marks} marks): ${c.description}${c.slide ? `\n   Slide [${slideLabel(c.slide.lecture, c.slide.page)}] "${c.slide.title}": ${c.slide.body}` : "\n   (no slide linked)"}`)
+          .join("\n")}\n\nStudent's transcribed answer:\n"""${input.transcription}"""\n\nFor every criterion decide met / partial / missing, quote the exact words that show it, and say what is still missing. For each criterion that is not met, explain it from its own slide only and cite that slide's label. Never explain from outside knowledge.${input.instructorMark ? `\n\nThe instructor already marked this answer ${input.instructorMark.marks}/${input.instructorMark.max} on the paper. Do not re-mark it: make your met / partial / missing reading explain that mark.` : ""}`,
       });
       const results = input.criteria.map((c) => {
         const r = data.results.find((x) => x.code === c.code);
-        if (!r) return { code: c.code, status: "missing" as const, evidence: "", gap: `Not addressed: ${c.description}`, marks: 0, confidence: 0.5 };
+        if (!r) return { code: c.code, status: "missing" as const, evidence: "", gap: `Not addressed: ${c.description}`, marks: 0, confidence: 0.5, ...offlineExplanation(c, "missing") };
         const evidence = validateQuote(input.transcription, r.evidence);
+        const { citation, ...rest } = r;
         return {
-          ...r,
+          ...rest,
+          ...(r.status === "met" ? { explanation: "", citedSlideId: null } : cite(c, r.explanation, citation)),
           evidence,
           marks: Math.max(0, Math.min(c.marks, r.marks)),
           confidence: evidence || r.status === "missing" ? r.confidence : Math.min(r.confidence, 0.5),
@@ -266,9 +317,10 @@ export async function matchAnswer(input: {
       console.warn("[ai] matchAnswer fell back:", e);
     }
   }
-  const results = fb.heuristicMatch(input.transcription, input.criteria).map((r) => ({
+  const results = fb.heuristicMatch(input.transcription, input.criteria).map((r, i) => ({
     ...r,
     evidence: validateQuote(input.transcription, r.evidence),
+    ...offlineExplanation(input.criteria[i]!, r.status),
   }));
   const partial = results.find((r) => r.status === "partial");
   const isKeyQuestion = /primary key/i.test(input.question);
@@ -283,6 +335,12 @@ export async function matchAnswer(input: {
     errorType: partial ? "Describes, doesn't justify" : results.some((r) => r.status === "missing") ? "Missing step" : null,
     model: "demo-heuristic",
   };
+}
+
+/** Without the AI the explanation is the slide's own text, so it is always cited. */
+function offlineExplanation(c: { slide?: SlideSource | null }, status: CriterionStatus) {
+  if (status === "met" || !c.slide) return { explanation: "", citedSlideId: null };
+  return { explanation: fb.explainFromSlide(c.slide.title, c.slide.body), citedSlideId: c.slide.id };
 }
 
 /* ───────── 6.3 Diagnosis follow-up ───────── */
@@ -344,103 +402,143 @@ export async function followupTurn(input: {
 }
 
 /* ───────── 6.4 Study profile ───────── */
-
-export async function buildProfile(answers: Record<string, string>) {
-  const base = fb.profileFromAnswers(answers);
-  if (!aiEnabled()) return base;
-  try {
-    const { data } = await structured({
-      name: "study_profile",
-      description: "Summarise study habits into a short, editable profile.",
-      kind: "fast",
-      schema: z.object({
-        traits: z.array(z.string()).max(4),
-        preferred: z.enum(["experiment", "mind_map", "worked_example", "own_words", "try_first"]),
-        minutes: z.number(),
-        summary: z.string(),
-      }),
-      jsonSchema: {
-        type: "object",
-        properties: {
-          traits: { type: "array", items: { type: "string", description: "≤ 5 words, a habit not a personality label" } },
-          preferred: { type: "string", enum: ["experiment", "mind_map", "worked_example", "own_words", "try_first"] },
-          minutes: { type: "number" },
-          summary: { type: "string", description: "2 sentences addressed to the student, explaining the choice" },
-        },
-        required: ["traits", "preferred", "minutes", "summary"],
-      },
-      system:
-        "Describe study habits and preferences only. Never diagnose personality or ability. The student can edit everything you write.",
-      prompt: Object.entries(answers)
-        .map(([q, a]) => `${q}\n→ ${a}`)
-        .join("\n\n"),
-    });
-    return { ...data, traits: [...data.traits.slice(0, 3), `~${data.minutes} min a day`] };
-  } catch (e) {
-    console.warn("[ai] buildProfile fell back:", e);
-    return base;
-  }
-}
+// The study check-in is scored by rules in lib/profile-questions.ts: no AI call, so no student data leaves the server.
 
 /* ───────── 6.5 Activities, practice and retest ───────── */
 
+export type ExperimentPayload = {
+  intro: string;
+  table: { columns: string[]; rows: string[][] };
+  task: string;
+  sql: string;
+  result: string;
+  prompt: string;
+  /** Words a correct explanation mentions; used to check answers offline. */
+  checkFor: string[];
+  /** The explanation shown once the student gets it right. */
+  answer: string;
+};
+
+export type ActivitySlide = { id: string; lecture: number; page: number; title: string; body: string };
+
+/**
+ * Picks the activity from the gap, the follow-up branch and the check-in. Works for any concept:
+ * an experiment uses the scenario drafted once for the concept (see draftExperiment); everything
+ * else is built from the concept's own slide.
+ */
 export function chooseActivity(input: {
   concept: string;
   branch: "understands" | "misconception" | "unclear" | null;
   preferred: ActivityType;
+  slide?: ActivitySlide | null;
+  experiment?: ExperimentPayload | null;
 }): { type: ActivityType; title: string; reason: string; payload: Record<string, unknown> } {
-  const isKeys = /primary key/i.test(input.concept);
+  const where = input.slide ? `Lecture ${input.slide.lecture}, page ${input.slide.page} (“${input.slide.title}”)` : "the linked slide";
+  const base = { slideId: input.slide?.id ?? null, reference: input.slide ? `${input.slide.title}. ${input.slide.body}` : "" };
   if (input.branch === "understands") {
     return {
       type: "own_words",
       title: "Add your reasoning",
       reason: "You already understand the idea; writing it down makes it stick for the exam.",
-      payload: { prompt: `Rewrite your answer about ${input.concept} so it explains why, not just what.` },
+      payload: { ...base, prompt: `Rewrite your answer about ${input.concept} so it explains why, not just what.` },
     };
   }
   const type = input.preferred;
-  if (type === "experiment" && isKeys) {
+  if (type === "experiment" && input.experiment) {
     return {
       type,
       title: "Try breaking the rule",
-      reason: "Chosen because you said you learn best by experimenting before reading.",
-      payload: {
-        intro: "This table has no primary key. Two students got the same StudentID by mistake.",
-        table: {
-          columns: ["StudentID", "Name", "Email"],
-          rows: [
-            ["1042", "Mariam", "m@uni.edu"],
-            ["1042", "Omar", "o@uni.edu"],
-          ],
-        },
-        task: "Change only Omar's email.",
-        sql: "UPDATE Student\nSET Email = 'omar@uni.edu'\nWHERE StudentID = 1042;",
-        result: "2 rows updated — Mariam's email changed too",
-        prompt: "In your own words: why did this happen?",
-      },
+      reason: "Chosen because you said you learn best by trying small changes yourself.",
+      payload: { ...base, ...input.experiment },
+    };
+  }
+  if (type === "experiment") {
+    return {
+      type,
+      title: `Change one thing: ${input.concept}`,
+      reason: "Chosen because you said you learn best by trying small changes yourself.",
+      payload: { ...base, prompt: `Open the example on ${where}. Change one detail of it, predict what happens, then explain why in your own words.` },
     };
   }
   if (type === "mind_map") {
     return {
       type,
       title: `Map ${input.concept}`,
-      reason: "Chosen because you like seeing how ideas connect.",
-      payload: {
-        prompt: `List the ideas connected to ${input.concept} and write one sentence for each link (e.g. "Primary key → must be unique → so each row is identified once").`,
-      },
+      reason: "Chosen because you said drawing how ideas connect helps you.",
+      payload: { ...base, prompt: `Using ${where}, list the ideas connected to ${input.concept} and write one sentence for each link (idea → why → what it leads to).` },
+    };
+  }
+  if (type === "try_first") {
+    return {
+      type,
+      title: `Try it first: ${input.concept}`,
+      reason: "Chosen because you already practise with questions: answering before reading makes the slide stick.",
+      payload: { ...base, prompt: `Before opening the slide: in two sentences, what does ${input.concept} guarantee, and what goes wrong without it? Then check yourself against ${where}.` },
+    };
+  }
+  if (type === "own_words") {
+    return {
+      type,
+      title: `Explain ${input.concept}`,
+      reason: "Chosen because you said explaining in your own words helps you.",
+      payload: { ...base, prompt: `Read ${where}, close it, then explain ${input.concept} as if to a classmate who missed the lecture.` },
     };
   }
   return {
     type: "worked_example",
     title: `Worked example: ${input.concept}`,
     reason: "Chosen because you said an example helps when you're stuck.",
-    payload: {
-      prompt: `Read the worked example on the linked slide, then explain the key step of ${input.concept} in your own words.`,
-    },
+    payload: { ...base, prompt: `Read the worked example on ${where}, then explain the key step of ${input.concept} in your own words.` },
   };
 }
 
-export async function checkSubmission(input: { concept: string; task: string; submission: string }) {
+/** Drafts one experiment for a concept from its slides only. Called once per concept and cached; no student data. */
+export async function draftExperiment(input: { concept: string; description?: string | null; slides: { title: string; body: string }[] }): Promise<ExperimentPayload | null> {
+  if (!aiEnabled() || !input.slides.length) return null;
+  try {
+    const { data } = await structured({
+      name: "draft_experiment",
+      description: "Design a tiny 'break the rule' experiment that shows why a concept matters.",
+      kind: "fast",
+      schema: z.object({
+        intro: z.string(),
+        table: z.object({ columns: z.array(z.string()).min(1).max(5), rows: z.array(z.array(z.string())).min(1).max(4) }),
+        task: z.string(),
+        sql: z.string(),
+        result: z.string(),
+        prompt: z.string(),
+        checkFor: z.array(z.string()).min(1).max(6),
+        answer: z.string(),
+      }),
+      jsonSchema: {
+        type: "object",
+        properties: {
+          intro: { type: "string", description: "One sentence setting up a small example where the rule is broken" },
+          table: {
+            type: "object",
+            properties: { columns: { type: "array", items: { type: "string" } }, rows: { type: "array", items: { type: "array", items: { type: "string" } } } },
+            required: ["columns", "rows"],
+          },
+          task: { type: "string", description: "What the student tries to do" },
+          sql: { type: "string", description: "The short code or step that performs it" },
+          result: { type: "string", description: "The surprising result, one line" },
+          prompt: { type: "string", description: "Ask the student to explain in their own words why it happened" },
+          checkFor: { type: "array", items: { type: "string" }, description: "2–4 lowercase words a correct explanation would use" },
+          answer: { type: "string", description: "Two sentences explaining why it happened, from the slides" },
+        },
+        required: ["intro", "table", "task", "sql", "result", "prompt", "checkFor", "answer"],
+      },
+      system: GROUNDING,
+      prompt: `Concept: ${input.concept}${input.description ? ` — ${input.description}` : ""}\n\nLecture slides (use only these):\n${input.slides.map((s) => `- ${s.title}: ${s.body}`).join("\n")}`,
+    });
+    return { ...data, checkFor: data.checkFor.map((w) => w.toLowerCase()) };
+  } catch (e) {
+    console.warn("[ai] draftExperiment fell back:", e);
+    return null;
+  }
+}
+
+export async function checkSubmission(input: { concept: string; task: string; submission: string; reference: string; checkFor: string[]; answer?: string }) {
   if (aiEnabled()) {
     try {
       const { data } = await structured({
@@ -457,14 +555,14 @@ export async function checkSubmission(input: { concept: string; task: string; su
           required: ["ok", "feedback"],
         },
         system: GROUNDING,
-        prompt: `Concept: ${input.concept}\nTask: ${input.task}\nStudent's explanation: ${input.submission}`,
+        prompt: `Concept: ${input.concept}\nTask: ${input.task}${input.reference ? `\nLecture slide: ${input.reference}` : ""}\nStudent's explanation: ${input.submission}`,
       });
       return data;
     } catch (e) {
       console.warn("[ai] checkSubmission fell back:", e);
     }
   }
-  return fb.checkExplanationHeuristic(input.submission);
+  return fb.checkExplanationHeuristic(input.submission, { checkFor: input.checkFor, reference: input.reference, answer: input.answer });
 }
 
 export async function generateRetest(input: { concept: string; gap: string; avoid: string }) {

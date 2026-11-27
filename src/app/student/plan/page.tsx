@@ -24,9 +24,14 @@ export default async function PlanPage() {
   const mastery = masteryByConcept(user.id);
   const weak = concepts
     .map((c) => ({ c, m: mastery.get(c.id) }))
-    .filter((x) => x.m && x.m.score / x.m.max < 0.8)
-    .sort((a, b) => a.m!.score / a.m!.max - b.m!.score / b.m!.max);
+    .filter((x) => x.m && x.m.score / x.m.max < 0.8);
   const profile = profileFor(user.id);
+  // The check-in orders the plan: "master it" puts concepts that later units build on first, otherwise weakest first.
+  const buildsOn = (id: string) => concepts.filter((c) => c.prerequisiteId === id).length;
+  const ratio = (x: (typeof weak)[number]) => x.m!.score / x.m!.max;
+  weak.sort((a, b) => (profile?.answers.goal === "master" ? buildsOn(b.c.id) - buildsOn(a.c.id) : 0) || ratio(a) - ratio(b));
+  // About 15 minutes per step, so the daily time from the check-in decides how many steps are for today.
+  const todaySteps = profile ? Math.max(1, Math.floor(profile.minutesPerDay / 15)) : 0;
   const todo = activities.filter((x) => x.a.status !== "done");
   const done = activities.filter((x) => x.a.status === "done");
 
@@ -38,18 +43,20 @@ export default async function PlanPage() {
           <StaggerItem>
             <Link href="/student/profile?next=/student/plan" className="flex items-center gap-3 rounded-2xl border border-primary-200 bg-primary-50 p-4 text-sm">
               <span className="flex-1">
-                <strong className="block">Tell GapMap how you study</strong>
-                <span className="text-ink-2">Activities will match the way you learn.</span>
+                <strong className="block">Take the 5-question study check-in</strong>
+                <span className="text-ink-2">It orders your plan and matches activities to how you study.</span>
               </span>
               <ChevronRight size={18} className="text-primary-600" aria-hidden />
             </Link>
           </StaggerItem>
         ) : null}
         <StaggerItem>
-          <h2 className="mb-2 text-sm font-semibold text-ink-2">Up next</h2>
+          <h2 className="mb-2 text-sm font-semibold text-ink-2">
+            Up next{profile ? ` · ${profile.minutesPerDay} min a day` : ""}
+          </h2>
           {todo.length ? (
             <ul className="flex flex-col gap-2">
-              {todo.map(({ a, concept }) => {
+              {todo.map(({ a, concept }, i) => {
                 const Icon = activityIcon[a.type];
                 return (
                   <li key={a.id}>
@@ -61,6 +68,7 @@ export default async function PlanPage() {
                         <strong className="block">{a.title}</strong>
                         <span className="text-ink-2">{concept}</span>
                       </span>
+                      {i < todaySteps ? <Badge tone="met">Today</Badge> : null}
                       {a.status === "submitted" ? <Badge tone="partial">Revise</Badge> : <ChevronRight size={18} className="text-ink-3" aria-hidden />}
                     </Link>
                   </li>

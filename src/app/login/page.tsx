@@ -9,9 +9,9 @@ import { GraduationCap, Presentation, ClipboardCheck, LineChart, Building2, Rota
 export const metadata: Metadata = { title: "Sign in" };
 
 const demoAccounts = [
-  { email: "dr.salma@gapmap.demo", name: "Dr. Salma Nour", role: "Instructor", icon: Presentation, note: "Review papers, class insights" },
+  { email: "dr.karim@gapmap.demo", name: "Dr. Karim Nour", role: "Instructor", icon: Presentation, note: "Review papers, class insights" },
   { email: "mariam@gapmap.demo", name: "Mariam Adel", role: "Student", icon: GraduationCap, note: "The demo student" },
-  { email: "ta.karim@gapmap.demo", name: "Karim Lotfy", role: "Teaching assistant", icon: ClipboardCheck, note: "Fix transcriptions, review" },
+  { email: "ta.nada@gapmap.demo", name: "Nada Lotfy", role: "Teaching assistant", icon: ClipboardCheck, note: "Fix transcriptions, review" },
   { email: "coordinator@gapmap.demo", name: "Dr. Hany Fawzy", role: "Coordinator", icon: LineChart, note: "Programme-level trends" },
   { email: "hr@niledata.demo", name: "Reem Saleh", role: "Partner company", icon: Building2, note: "Vacancies & nominations" },
 ];
@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const demo = process.env.DEMO_MODE !== "false";
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
-      <aside className="relative hidden overflow-hidden bg-primary-800 text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
+      <aside className="relative hidden overflow-hidden bg-linear-to-br from-primary-600 to-primary-800 text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
         <div className="grid-dots absolute inset-0 opacity-30" aria-hidden />
         <div className="absolute -right-24 -bottom-24 h-96 w-96 rounded-full bg-primary-500/40 blur-3xl" aria-hidden />
         <Link href="/" className="relative">

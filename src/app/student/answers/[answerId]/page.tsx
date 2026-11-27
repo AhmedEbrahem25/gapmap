@@ -46,18 +46,28 @@ export default async function AnswerPage({ params }: PageProps<"/student/answers
           </section>
         </StaggerItem>
         {results.map(({ result: r, criterion: c }) => {
-          const slide = slideRef(c.slideId);
+          // Students only see explanations that cite a slide; uncited text stays with the instructor.
+          const cited = r.explanation && r.citedSlideId ? slideRef(r.citedSlideId) : null;
+          const slide = cited ?? slideRef(c.slideId);
           return (
             <StaggerItem key={r.id}>
               <section className="flex flex-col gap-2.5 rounded-sheet border border-line bg-white p-4">
                 <div className="flex items-start justify-between gap-2">
                   <strong className="text-sm">{c.description}</strong>
-                  <StatusChip status={r.status} suffix={`${fmtMarks(r.marks)}/${fmtMarks(c.marks)}`} />
+                  <StatusChip status={r.status} />
                 </div>
                 {r.evidence ? <EvidenceQuote>“{r.evidence}”</EvidenceQuote> : null}
                 {r.gap ? (
                   <p className="text-sm leading-[21px]">
                     <strong>Still to explain:</strong> {r.gap}
+                  </p>
+                ) : null}
+                {cited ? (
+                  <p className="rounded-lg bg-ground px-3 py-2 text-sm leading-[21px]">
+                    <strong>
+                      From Lecture {cited.lectureNumber}, page {cited.page}:
+                    </strong>{" "}
+                    {r.explanation}
                   </p>
                 ) : null}
                 {slide && r.status !== "met" ? <SlideLink href={`/slides/${slide.id}?from=/student/answers/${answerId}`} lecture={slide.lectureNumber} page={slide.page} title={slide.title} /> : null}
