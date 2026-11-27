@@ -100,7 +100,7 @@ export default async function RetestPage({ params }: PageProps<"/student/practic
                 </ul>
               </>
             ) : (
-              <RetestForm itemId={item.id} />
+              <RetestForm itemId={item.id} options={item.options} />
             )}
           </section>
         </StaggerItem>

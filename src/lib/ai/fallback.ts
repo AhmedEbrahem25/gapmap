@@ -3,7 +3,7 @@
  * or when a live call fails. It keeps every screen working offline (e.g. on
  * hackathon Wi-Fi) and gives the same shape of output as the Claude pipelines.
  */
-import type { CriterionStatus } from "../db/schema";
+import type { CriterionStatus, FollowupChoice } from "../db/schema";
 
 const STOP = new Set(
   "the a an and or of to in on for is are be it its that this with as by from at which each every must should can not no into their they them have has was were will".split(
@@ -96,13 +96,36 @@ export function classifyFollowupReply(reply: string): "understands" | "misconcep
 }
 
 export function followupResponse(branch: "understands" | "misconception" | "unclear", concept: string) {
+  const keys = concept === "Primary keys";
   if (branch === "understands") {
-    return `Exactly — that's uniqueness. No two records can share the key, so it always points to one ${concept === "Primary keys" ? "student" : "record"}. Add that reason to your answer, then try a fresh question to lock it in.`;
+    return keys
+      ? "Exactly — that's uniqueness. No two records can share the key, so it always points to one student. Add that reason to your answer, then try a fresh question to lock it in."
+      : `Exactly — that's the idea behind ${concept}. Add that reason to your answer, then try a fresh question to lock it in.`;
   }
   if (branch === "misconception") {
-    return "Good thing to check. A primary key must be unique: the database refuses two rows with the same key. Let's see why that matters with a quick experiment.";
+    return keys
+      ? "Good thing to check. A primary key must be unique: the database refuses two rows with the same key. Let's see why that matters with a quick experiment."
+      : `Good thing to check: that's a common mix-up with ${concept}. Read the slide below, then a short activity will show why.`;
   }
-  return "Let's make it concrete. If two students are both called “Mariam Adel”, how would the database know which one you mean when you update a grade?";
+  return keys
+    ? "Let's make it concrete. If two students are both called “Mariam Adel”, how would the database know which one you mean when you update a grade?"
+    : `No problem. The slide below explains ${concept}; a short activity comes next.`;
+}
+
+/** Tap replies to a follow-up question when the AI is off: one per branch. */
+export function followupChoicesFor(question: string): FollowupChoice[] {
+  if (/primary key/i.test(question)) {
+    return [
+      { text: "Their StudentIDs would still be different, so we can tell them apart", branch: "understands" },
+      { text: "They could also share a number, so we'd need the name too", branch: "misconception" },
+      { text: "I'm not sure", branch: "unclear" },
+    ];
+  }
+  return [
+    { text: "I know why — I just wrote it too briefly", branch: "understands" },
+    { text: "I thought describing it was enough", branch: "misconception" },
+    { text: "I'm not sure why it matters", branch: "unclear" },
+  ];
 }
 
 export function retestBank(concept: string): { prompt: string; criteria: { code: string; description: string; marks: number }[] } {

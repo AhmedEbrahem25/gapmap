@@ -9,7 +9,7 @@ import path from "node:path";
 import { nanoid } from "nanoid";
 import * as s from "../src/lib/db/schema";
 import { loadSqlJs, openDatabase } from "../src/lib/db/sqlite";
-import { explainFromSlide } from "../src/lib/ai/fallback";
+import { explainFromSlide, followupChoicesFor } from "../src/lib/ai/fallback";
 import {
   DEMO_PASSWORD,
   conceptDefs,
@@ -168,6 +168,7 @@ export function seed(SQL: SqlJsStatic, dbFile = process.env.DATABASE_PATH ?? "da
             errorType: v.errorType ?? null,
             followupQuestion: v.followup?.question ?? null,
             followupReason: v.followup?.reason ?? null,
+            followupChoices: v.followup ? followupChoicesFor(q.prompt) : null,
             followupEnabled: true,
             model: "seed",
             reviewedBy: isReleased ? staff.instructor.id : null,
@@ -324,6 +325,17 @@ export function seed(SQL: SqlJsStatic, dbFile = process.env.DATABASE_PATH ?? "da
           .run();
       });
     }
+    // A small question bank: fresh multiple-choice questions for after a 2-tap fix.
+    const bank = { id: id("exm"), courseId: course.id, title: "Question bank · Keys", kind: "practice" as const, date: "2026-10-01", status: "setup" as const };
+    tx.insert(s.exams).values(bank).run();
+    [
+      { prompt: "Course(CourseCode, Title, Credits, Instructor): which column should be the primary key?", options: ["Title", "Instructor", "CourseCode", "Credits"], correct: "C", concept: "pk" as ConceptKey },
+      { prompt: "Grade(StudentID, CourseCode, Mark): which columns are foreign keys?", options: ["Mark only", "StudentID and CourseCode", "None of them", "All three"], correct: "B", concept: "fk" as ConceptKey },
+    ].forEach((q, qi) => {
+      tx.insert(s.questions)
+        .values({ id: id("qst"), examId: bank.id, number: qi + 1, prompt: q.prompt, maxMarks: 1, kind: "mcq", options: q.options, correctOption: q.correct, conceptId: conceptIds[q.concept] })
+        .run();
+    });
     // Chains as the AI writes them from the question, the options and the slides (no student data).
     const rules = l4("Rules for primary keys");
     const fkSlide = l4("Foreign keys");

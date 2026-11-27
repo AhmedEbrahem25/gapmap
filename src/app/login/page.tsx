@@ -6,6 +6,8 @@ import { LoginForm } from "./login-form";
 import { demoLogin, resetDemo } from "@/lib/actions/auth";
 import { GraduationCap, Presentation, ClipboardCheck, LineChart, Building2, RotateCcw } from "lucide-react";
 
+import { partnersEnabled } from "@/lib/features";
+
 export const metadata: Metadata = { title: "Sign in" };
 
 const demoAccounts = [
@@ -73,7 +75,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
                 </form>
               </div>
               <ul className="mt-3 grid gap-2">
-                {demoAccounts.map((a) => (
+                {demoAccounts.filter((a) => partnersEnabled() || a.role !== "Partner company").map((a) => (
                   <li key={a.email}>
                     <form action={demoLogin}>
                       <input type="hidden" name="email" value={a.email} />

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { partnersEnabled } from "@/lib/features";
 import Link from "next/link";
 import { and, eq, inArray } from "drizzle-orm";
 import { LogOut, Briefcase, ChevronRight } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
-import { masteryByConcept, studentCourse } from "@/lib/data";
-import { profileFor } from "@/lib/student";
+import { masteryByConcept } from "@/lib/data";
+import { profileFor, activeCourse } from "@/lib/student";
 import { StudentHeader } from "@/components/shell/student-header";
 import { Badge, StatusChip, statusFromRatio } from "@/components/ui/badge";
 import { AnimatedBar, Stagger, StaggerItem } from "@/components/ui/motion";
@@ -20,12 +21,23 @@ const barColor = { met: "#0F766E", partial: "#B45309", missing: "#B91C1C" } as c
 
 export default async function MePage() {
   const user = await requireRole("student");
-  const enrolled = studentCourse(user.id);
+  const enrolled = await activeCourse(user.id);
   const profile = profileFor(user.id);
   const concepts = enrolled ? db.select().from(s.concepts).where(eq(s.concepts.courseId, enrolled.course.id)).all() : [];
   const mastery = masteryByConcept(user.id);
-  const vacancies = concepts.length ? db.select({ v: s.vacancies, company: s.companies.name }).from(s.vacancies).innerJoin(s.companies, eq(s.companies.id, s.vacancies.companyId)).where(eq(s.vacancies.status, "open")).all() : [];
-  const noms = db.select().from(s.nominations).where(and(eq(s.nominations.studentId, user.id), inArray(s.nominations.vacancyId, vacancies.length ? vacancies.map((v) => v.v.id) : ["-"]))).all();
+  const vacancies = concepts.length
+    ? db
+        .select({ v: s.vacancies, company: s.companies.name })
+        .from(s.vacancies)
+        .innerJoin(s.companies, eq(s.companies.id, s.vacancies.companyId))
+        .where(eq(s.vacancies.status, "open"))
+        .all()
+    : [];
+  const noms = db
+    .select()
+    .from(s.nominations)
+    .where(and(eq(s.nominations.studentId, user.id), inArray(s.nominations.vacancyId, vacancies.length ? vacancies.map((v) => v.v.id) : ["-"])))
+    .all();
 
   return (
     <>
@@ -91,35 +103,41 @@ export default async function MePage() {
           </section>
         </StaggerItem>
 
-        <StaggerItem>
-          <section className="flex flex-col gap-3 rounded-sheet border border-line bg-white p-4">
-            <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <Briefcase size={16} aria-hidden /> Opportunities
-            </h2>
-            <form action={toggleOptIn} className="flex items-center justify-between gap-3 text-sm">
-              <label htmlFor="optIn" className="leading-5">
-                Let my instructors consider me for internships, using my assessed work
-              </label>
-              <input id="optIn" type="checkbox" name="optIn" defaultChecked={user.recruitOptIn} className="h-5 w-5 shrink-0 accent-primary-600" />
-              <SubmitButton size="sm" variant="secondary">
-                Save
-              </SubmitButton>
-            </form>
-            {vacancies.map(({ v, company }) => {
-              const n = noms.find((x) => x.vacancyId === v.id);
-              return (
-                <div key={v.id} className="flex items-center justify-between gap-2 rounded-xl bg-ground px-3 py-2.5 text-sm">
-                  <span>
-                    <strong className="block">{v.title}</strong>
-                    <span className="text-xs text-ink-2">{company}</span>
-                  </span>
-                  {n ? <Badge tone="met">{n.status === "interview" ? "Interview requested" : "Nominated"}</Badge> : <ChevronRight size={16} className="text-ink-3" />}
-                </div>
-              );
-            })}
-            <p className="text-xs text-ink-2">Companies only see students their instructors nominate.</p>
-          </section>
-        </StaggerItem>
+        {partnersEnabled() ? (
+          <StaggerItem>
+            <section className="flex flex-col gap-3 rounded-sheet border border-line bg-white p-4">
+              <h2 className="flex items-center gap-2 text-sm font-semibold">
+                <Briefcase size={16} aria-hidden /> Opportunities
+              </h2>
+              <form action={toggleOptIn} className="flex items-center justify-between gap-3 text-sm">
+                <label htmlFor="optIn" className="leading-5">
+                  Let my instructors consider me for internships, using my assessed work
+                </label>
+                <input id="optIn" type="checkbox" name="optIn" defaultChecked={user.recruitOptIn} className="h-5 w-5 shrink-0 accent-primary-600" />
+                <SubmitButton size="sm" variant="secondary">
+                  Save
+                </SubmitButton>
+              </form>
+              {vacancies.map(({ v, company }) => {
+                const n = noms.find((x) => x.vacancyId === v.id);
+                return (
+                  <div key={v.id} className="flex items-center justify-between gap-2 rounded-xl bg-ground px-3 py-2.5 text-sm">
+                    <span>
+                      <strong className="block">{v.title}</strong>
+                      <span className="text-xs text-ink-2">{company}</span>
+                    </span>
+                    {n ? (
+                      <Badge tone="met">{n.status === "interview" ? "Interview requested" : "Nominated"}</Badge>
+                    ) : (
+                      <ChevronRight size={16} className="text-ink-3" />
+                    )}
+                  </div>
+                );
+              })}
+              <p className="text-xs text-ink-2">Companies only see students their instructors nominate.</p>
+            </section>
+          </StaggerItem>
+        ) : null}
       </Stagger>
     </>
   );

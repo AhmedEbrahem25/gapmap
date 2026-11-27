@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronLeft, SendHorizontal } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { sendFollowup, restartFollowup } from "@/lib/actions/student";
 import { SlideLink } from "@/components/ui/slide-link";
 import type { ChatMessage } from "@/lib/db/schema";
@@ -30,7 +30,6 @@ export function FollowupChat(props: {
   const [branch, setBranch] = useState<Branch>(props.initialBranch);
   const [done, setDone] = useState(props.initialDone);
   const [activityId, setActivityId] = useState(props.initialActivityId);
-  const [draft, setDraft] = useState("");
   const [error, setError] = useState<string>();
   const [pending, start] = useTransition();
   const end = useRef<HTMLDivElement>(null);
@@ -39,13 +38,13 @@ export function FollowupChat(props: {
     end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, pending]);
 
-  function send(text: string) {
-    if (!text.trim() || pending) return;
+  function send(choice: number) {
+    const text = props.quickReplies[choice];
+    if (!text || pending) return;
     setError(undefined);
     setMessages((m) => [...m, { role: "student", text, at: Date.now() }]);
-    setDraft("");
     start(async () => {
-      const res = await sendFollowup(props.answerId, text);
+      const res = await sendFollowup(props.answerId, choice);
       if (res.error) {
         setError(res.error);
         setMessages((m) => m.slice(0, -1));
@@ -122,10 +121,11 @@ export function FollowupChat(props: {
 
         {showQuick ? (
           <div className="mt-1 flex flex-col gap-2">
-            {props.quickReplies.map((q) => (
+            <p className="text-xs text-ink-2">Tap the reply closest to what you were thinking.</p>
+            {props.quickReplies.map((q, i) => (
               <button
                 key={q}
-                onClick={() => send(q)}
+                onClick={() => send(i)}
                 disabled={pending}
                 className="min-h-11 rounded-xl border border-primary-200 bg-[#f8f9ff] px-3.5 py-2.5 text-left text-sm font-medium text-primary-800 transition hover:border-primary-600 hover:bg-primary-50 active:scale-[0.99]"
               >
@@ -154,29 +154,6 @@ export function FollowupChat(props: {
         <div ref={end} />
       </div>
 
-      {!done ? (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            send(draft);
-          }}
-          className="sticky bottom-0 flex items-center gap-2 border-t border-line bg-white px-4 pt-3 pb-5"
-        >
-          <label htmlFor="reply" className="sr-only">
-            Your reply
-          </label>
-          <input
-            id="reply"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Or type your own reply…"
-            className="h-11 flex-1 rounded-full border border-[#9ca3af] px-4 text-[15px] outline-none focus:border-primary-600 focus:shadow-glow"
-          />
-          <button aria-label="Send" disabled={pending || !draft.trim()} className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-600 text-white transition hover:bg-primary-700 disabled:opacity-40">
-            <SendHorizontal size={18} />
-          </button>
-        </form>
-      ) : null}
     </div>
   );
 }

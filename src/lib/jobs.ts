@@ -6,6 +6,7 @@ import { db, schema as s } from "./db";
 import { aiEnabled } from "./ai/client";
 import { tagSlides, transcribePaper, matchAnswer, draftRubric, type PaperAnswer } from "./ai/pipelines";
 import { keywords } from "./ai/fallback";
+import { parseChoice, scoreChoice } from "./mcq";
 
 export const STORAGE_DIR = path.resolve(/*turbopackIgnore: true*/ process.cwd(), process.env.STORAGE_DIR ?? "storage");
 
@@ -141,6 +142,7 @@ export async function analyseAnswer(answerId: string) {
       suggestedMarks: answer.paperMarks,
       followupQuestion: match.followupQuestion,
       followupReason: match.followupReason,
+      followupChoices: match.followupChoices,
       errorType: match.errorType,
       model: match.model,
     })
@@ -191,9 +193,24 @@ async function questionsFromPaper(examId: string, read: PaperAnswer[]) {
   for (const r of [...read].sort((x, y) => x.number - y.number)) {
     if (!r.questionText.trim()) continue;
     const id = crypto.randomUUID();
+    const mcq = r.options.length >= 2;
     const maxMarks = r.maxMarks ?? (r.mark !== null && r.mark > 0 ? Math.max(1, Math.ceil(r.mark)) : 1);
-    db.insert(s.questions).values({ id, examId, number: r.number, prompt: r.questionText.trim(), maxMarks, modelAnswer: "" }).run();
-    await draftCriteriaFor(id);
+    const chosen = mcq ? parseChoice(r.text, r.options.length) : null;
+    db.insert(s.questions)
+      .values({
+        id,
+        examId,
+        number: r.number,
+        prompt: r.questionText.trim(),
+        maxMarks,
+        modelAnswer: "",
+        kind: mcq ? "mcq" : "written",
+        options: mcq ? r.options : null,
+        // A full mark from the lecturer on this answer means the chosen letter is the key.
+        correctOption: mcq && chosen && r.mark !== null && r.mark >= maxMarks ? chosen : null,
+      })
+      .run();
+    if (!mcq) await draftCriteriaFor(id);
   }
 }
 
@@ -222,6 +239,35 @@ export async function processPaper(paperId: string) {
     for (const q of questions) {
       const r = read.find((x) => x.number === q.number);
       const answerId = crypto.randomUUID();
+      if (q.kind === "mcq") {
+        // Multiple choice: the AI only reads the letter; rules score it on the key. Without a key yet,
+        // a full mark from the lecturer teaches it, and until then the lecturer's own mark counts.
+        const chosen = parseChoice(r?.text, q.options?.length ?? 4);
+        let correct = q.correctOption;
+        if (!correct && chosen && r?.mark !== null && r?.mark !== undefined && r.mark >= q.maxMarks && r.mark > 0) {
+          correct = chosen;
+          db.update(s.questions).set({ correctOption: chosen }).where(eq(s.questions.id, q.id)).run();
+          q.correctOption = chosen;
+        }
+        const marks = correct ? scoreChoice(chosen, correct, q.maxMarks) : (r?.mark ?? null);
+        db.insert(s.answers)
+          .values({
+            id: answerId,
+            paperId,
+            questionId: q.id,
+            transcription: chosen ? `${chosen}) ${q.options?.["ABCDE".indexOf(chosen)] ?? ""}`.trim() : (r?.text ?? ""),
+            chosenOption: chosen,
+            confidence: r?.confidence ?? 0,
+            lowConfidence: [],
+            paperMarks: marks,
+            paperMarkConfidence: chosen ? (r?.confidence ?? 0) : 0,
+            suggestedMarks: marks,
+            model: "rules",
+            status: "analysed",
+          })
+          .run();
+        continue;
+      }
       db.insert(s.answers)
         .values({
           id: answerId,

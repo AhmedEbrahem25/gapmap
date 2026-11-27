@@ -8,7 +8,7 @@ import { slideRef } from "@/lib/data";
 import { chainForAnswer } from "@/lib/chains";
 import { StudentHeader } from "@/components/shell/student-header";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { startRetest } from "@/lib/actions/student";
+import { startMcqRetest } from "@/lib/actions/student";
 import { LETTERS } from "@/lib/mcq";
 import { ChainRunner } from "./runner";
 
@@ -41,8 +41,8 @@ export default async function FixPage({ params }: PageProps<"/student/fix/[answe
           done={
             <div className="flex flex-col gap-2">
               {question.conceptId ? (
-                <form action={startRetest}>
-                  <input type="hidden" name="conceptId" value={question.conceptId} />
+                <form action={startMcqRetest}>
+                  <input type="hidden" name="questionId" value={question.id} />
                   <SubmitButton size="lg" className="w-full" pendingText="Writing a fresh question…">
                     <Sparkles size={16} aria-hidden /> Take a fresh test
                   </SubmitButton>

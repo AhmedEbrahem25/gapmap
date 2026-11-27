@@ -52,6 +52,8 @@ accounts (password `GapMap@2026`).
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
 | `npm test` | Unit tests for the AI guardrails and offline logic |
 | `npm run test:e2e` | Playwright: the full hackathon demo flow in a real browser |
+| `npm run demo:video` | Records the demo flows slowly (traces; `.webm` with `DEMO_VIDEO=1` after `npx playwright install ffmpeg`) |
+| `npx tsx --env-file=.env.local --conditions=react-server scripts/eval-mark-reading.ts <dataset> 5` | Measures reading of real marked papers against the true marks ([CC BY dataset](https://data.mendeley.com/datasets/sf3kvjwknt/1)) |
 
 ## Put it online
 
@@ -91,11 +93,11 @@ Full script with talking points and a backup plan: [docs/DEMO-SCRIPT.md](docs/DE
 | Courses & lectures | Upload PDF/Word → slides with text; AI concept tagging (instructor confirms); slide viewer with deep links |
 | Paper analysis | Papers are scanned **after the instructor marks them**: GapMap reads the printed questions (and creates them if the exam has none), the handwritten answers and the instructor's own marks, never names or IDs (the student comes from the upload form or the file name). The mark stays the instructor's; the AI diagnoses which criteria are missing and is flagged when its diagnosis disagrees with the mark; Rubric drafting from the model answer; scanned-paper upload (PDF/JPG/PNG/WebP); handwriting transcription with per-line confidence; criterion matching with **verbatim-quote validation**; TA transcription fixes; review queue with keyboard shortcuts; release to students; CSV import of reviewed marks; explanations written only from the linked slide and page-cited (uncited text is flagged and hidden from students); **approval per question**: one click approves every answer no rule flags, flagged ones open one by one |
 | Multiple choice | MCQ questions with a key; CSV import of the letter each student chose, scored by rules; **Socratic-style fix**: for every wrong option students actually chose (up to 30 per quiz) the AI writes 2 tap-to-answer questions and a slide hint from the question, its options and the slides only (no student data), cited and checked; the lecturer approves per question; students tap through, with the slide hint after a wrong tap; Tricky questions and self-found rate in Class insights |
-| Diagnosis | AI follow-up question with branch detection; instructor-tagged error types; anonymous student ↔ instructor threads |
+| Diagnosis | Follow-up question with **tap replies** written at diagnosis time, each tagged understands / misconception / unclear: rules pick the branch, so no student text reaches the AI; instructor-tagged error types; anonymous student ↔ instructor threads |
 | Study loop | **My papers** tab: the whole marked paper (scan, every answer with the instructor's mark, links to the feedback); 5-question study check-in (habits, time, goals) by taps, scored by rules and never sent to the AI; it orders the plan and nudges self-testing over rereading; activity for any concept, built from its slide (experiments drafted once per concept by the AI and cached); explanation checker; fresh test generated for the gap; before/after per concept; “did it help?” feedback |
 | Class insights | Gap share by concept and question, misconception clusters with anonymous examples, ambiguous-question flag, decisions log, section filter; **What to re-teach** computed live when 40%+ of the class has a gap; **AI quality**: share of AI feedback approved without edits (target ≥ 80%) |
 | Early support | Rule-based alerts for students passing overall but repeatedly missing a prerequisite; actions and usefulness rating |
-| Internships | Partner vacancies mapped to concepts; opted-in students ranked by evidence; nomination quotas (instructor 2, TA 1); company portal sees only nominated students |
+| Internships (off by default, `SHOW_PARTNERS=true`) | Partner vacancies mapped to concepts; opted-in students ranked by evidence; nomination quotas (instructor 2, TA 1); company portal sees only nominated students |
 | Coordinator | Programme overview across courses and sections; class-level CSV export |
 
 ## Tech stack
@@ -136,10 +138,19 @@ e2e/ tests/       Playwright demo flow, unit tests
 docs/             architecture, demo script, design system
 ```
 
+## Measured on real papers
+
+On 5 papers from a public CC BY 4.0 dataset of real, hand-marked exams (20 MCQs + 15 short answers;
+[Mendeley Data](https://data.mendeley.com/datasets/sf3kvjwknt/1)), GapMap read the chosen MCQ letter correctly
+**99% of the time (99/100)**. Reading the lecturer's handwritten marks on short answers was the hard part: the
+first run read 64% exactly, mostly confusing a written "1" with a tick. The prompt now treats a written number as
+the mark and reports unclear marks as missing, so they are flagged for the lecturer instead of being guessed. The
+dataset is not included in this repository; one of its CSV files contains real student names and should not be used.
+
 ## Privacy
 
 Students see only their own released feedback. Anonymous threads never expose the student's identity
 to staff. Companies see only students who opted in **and** were nominated by faculty. Marks always come from the
 instructor's own marking on the paper: the AI reads them, diagnoses what is missing and explains it from the
-slides, and the instructor approves before students see anything. The AI is never asked for names or IDs. Uploaded scans are served only to the course's staff
+slides, and the instructor approves before students see anything. The AI is never asked for names or IDs. Page 1 of each uploaded PDF (the cover with the name) is dropped before it is stored or read, unless the lecturer unticks it. Uploaded scans are served only to the course's staff
 and to the student they belong to. See CREDENTIALS.md for how secrets are handled.

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { CourseSwitch } from "@/components/student/course-switch";
+import { chainForAnswer } from "@/lib/chains";
 import Link from "next/link";
 import { and, eq } from "drizzle-orm";
 import { ChevronRight, Hourglass, ShieldCheck, Sparkles } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
-import { studentCourse, slideRef } from "@/lib/data";
-import { nextStep, releasedAnswers, resultsFor, profileFor, closedConcepts } from "@/lib/student";
+import { slideRef } from "@/lib/data";
+import { nextStep, releasedAnswers, resultsFor, profileFor, closedConcepts, activeCourse } from "@/lib/student";
 import { StudentHeader } from "@/components/shell/student-header";
 import { StatusChip, statusFromRatio } from "@/components/ui/badge";
 import { Mark } from "@/components/ui/quote";
@@ -22,9 +24,10 @@ const barColor = { met: "#0F766E", partial: "#B45309", missing: "#B91C1C" } as c
 
 export default async function StudentHome() {
   const user = await requireRole("student");
-  const enrolled = studentCourse(user.id);
-  const answers = releasedAnswers(user.id);
+  const enrolled = await activeCourse(user.id);
+  const answers = releasedAnswers(user.id, enrolled?.course.id);
   const profile = profileFor(user.id);
+  const switcher = <CourseSwitch userId={user.id} activeId={enrolled?.course.id} next="/student" />;
   const avatar = (
     <Link href="/student/me" aria-label="My profile" className="flex h-10 w-10 items-center justify-center rounded-full bg-met-soft text-[15px] font-bold text-met">
       {initials(user.name).slice(0, 1)}
@@ -36,6 +39,7 @@ export default async function StudentHome() {
       <>
         <StudentHeader eyebrow={enrolled?.course.title} title={`Hi ${user.name.split(" ")[0]}`} right={avatar} />
         <div className="flex flex-col gap-4 px-5">
+          {switcher}
           <FadeIn className="flex flex-col items-center gap-3 rounded-sheet border border-line bg-white px-6 py-10 text-center">
             <span className="animate-pulse-ring flex h-16 w-16 items-center justify-center rounded-full bg-primary-50 text-primary-600">
               <Hourglass size={28} aria-hidden />
@@ -65,7 +69,8 @@ export default async function StudentHome() {
   const exam = answers[0]!.exam;
   const current = answers.filter((a) => a.exam.id === exam.id);
   const results = resultsFor(current.map((a) => a.answer.id));
-  const step = nextStep(user.id);
+  const step = nextStep(user.id, enrolled?.course.id);
+  const stepChain = step?.question.kind === "mcq" ? chainForAnswer(step.question.id, step.answer.chosenOption) : null;
   const stepResults = step ? results.filter((r) => r.result.answerId === step.answer.id) : [];
   const gap = stepResults.find((r) => r.result.status !== "met");
   const quoted = stepResults.find((r) => r.result.status === "partial" && r.result.evidence) ?? gap;
@@ -91,7 +96,13 @@ export default async function StudentHome() {
 
   let cta: React.ReactNode = null;
   if (step) {
-    if (step.answer.followupQuestion && step.answer.followupEnabled && !followup?.resolved) {
+    if (stepChain) {
+      cta = (
+        <ButtonLink size="lg" href={`/student/fix/${step.answer.id}`} className="w-full">
+          Fix it in 2 taps
+        </ButtonLink>
+      );
+    } else if (step.answer.followupQuestion && step.answer.followupEnabled && !followup?.resolved) {
       cta = <ButtonLink size="lg" href={`/student/followup/${step.answer.id}`} className="w-full">Answer one quick question</ButtonLink>;
     } else if (activity && activity.status !== "done") {
       cta = <ButtonLink size="lg" href={`/student/plan/${activity.id}`} className="w-full">Start: {activity.title}</ButtonLink>;
@@ -111,9 +122,10 @@ export default async function StudentHome() {
     <>
       <StudentHeader eyebrow={enrolled?.course.title} title={`${exam.title.replace(/ exam$/i, "")} report`} right={avatar} />
       <Stagger className="flex flex-col gap-3.5 px-5">
+        {switcher}
         {step ? (
           <StaggerItem>
-            <section aria-label="Your next step" className="flex flex-col gap-3 rounded-sheet border-2 border-primary-600 bg-white p-[18px] shadow-[0_18px_40px_-24px_rgb(36_69_216/0.55)]">
+            <section aria-label="Your next step" className="flex flex-col gap-3 rounded-sheet border-2 border-primary-600 bg-white p-[18px] shadow-[0_18px_40px_-24px_rgb(181_24_52/0.45)]">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold tracking-[0.06em] text-primary-800 uppercase">Your next step</span>
                 <StatusChip status={stepStatus} />
@@ -127,7 +139,9 @@ export default async function StudentHome() {
                     Your answer said “<Mark tone={quoted.result.status === "met" ? "met" : "partial"}>{quoted.result.evidence}</Mark>”.{" "}
                   </>
                 ) : null}
-                {gap?.result.gap ?? "Review the marking comments for this question."}
+                {step.question.kind === "mcq"
+                  ? `You chose “${step.question.options?.["ABCDE".indexOf(step.answer.chosenOption ?? "")] ?? step.answer.chosenOption}”. Two quick questions will show why it doesn't fit.`
+                  : (gap?.result.gap ?? "Review the marking comments for this question.")}
               </p>
               {stepSlide ? (
                 <SlideLink href={`/slides/${stepSlide.id}?from=/student`} lecture={stepSlide.lectureNumber} page={stepSlide.page} title={stepSlide.title} />

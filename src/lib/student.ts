@@ -1,13 +1,22 @@
 import "server-only";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
+import { studentCourse } from "./data";
 import { db, schema as s } from "./db";
 
 export type ReleasedAnswer = ReturnType<typeof releasedAnswers>[number];
 
-/** Answers a student may see: released only. */
-export function releasedAnswers(studentId: string) {
-  return db
+export const COURSE_COOKIE = "gm_course";
+
+/** The course a student is looking at: the one they picked, else their first. */
+export async function activeCourse(studentId: string) {
+  return studentCourse(studentId, (await cookies()).get(COURSE_COOKIE)?.value);
+}
+
+/** Answers a student may see: released only, optionally for one course. */
+export function releasedAnswers(studentId: string, courseId?: string | null) {
+  const rows = db
     .select({ answer: s.answers, question: s.questions, exam: s.exams, paper: s.papers })
     .from(s.answers)
     .innerJoin(s.papers, eq(s.papers.id, s.answers.paperId))
@@ -16,6 +25,7 @@ export function releasedAnswers(studentId: string) {
     .where(and(eq(s.papers.studentId, studentId), eq(s.answers.status, "released")))
     .orderBy(desc(s.exams.date), asc(s.questions.number))
     .all();
+  return courseId ? rows.filter((r) => r.exam.courseId === courseId) : rows;
 }
 
 export function ownAnswer(studentId: string, answerId: string) {
@@ -36,8 +46,8 @@ export function resultsFor(answerIds: string[]) {
 }
 
 /** The single most useful next step: an unresolved follow-up first, then the biggest gap. */
-export function nextStep(studentId: string) {
-  const answers = releasedAnswers(studentId);
+export function nextStep(studentId: string, courseId?: string | null) {
+  const answers = releasedAnswers(studentId, courseId);
   if (!answers.length) return null;
   const latestExam = answers[0]!.exam.id;
   const current = answers.filter((a) => a.exam.id === latestExam);

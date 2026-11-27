@@ -5,12 +5,19 @@
 export const READABILITY_MIN = 0.7;
 export const AI_CONFIDENCE_MIN = 0.6;
 
-type FlagAnswer = { confidence: number; transcription: string; paperMarks: number | null; paperMarkConfidence: number };
+type FlagAnswer = { confidence: number; transcription: string; paperMarks: number | null; paperMarkConfidence: number; chosenOption?: string | null; model?: string | null };
 type FlagResult = { aiConfidence: number; explanation: string; citedSlideId: string | null; marks: number };
 
 /** Marks come from the instructor's pen. These rules decide what a reviewer must still check by hand. */
 export function answerFlags(answer: FlagAnswer, results: FlagResult[], maxMarks: number): string[] {
   const flags: string[] = [];
+  // Multiple choice is scored by rules: only the letter itself needs to be read clearly.
+  if (answer.model === "rules") {
+    if (!answer.chosenOption) flags.push("Letter not read");
+    else if (answer.confidence < READABILITY_MIN) flags.push("Letter hard to read");
+    if (answer.paperMarks === null) flags.push("No key yet");
+    return flags;
+  }
   if (answer.paperMarks === null) flags.push("Mark not found");
   else if (answer.paperMarkConfidence < READABILITY_MIN) flags.push("Mark hard to read");
   if (!results.length) flags.push("Not diagnosed yet");

@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { aiEnabled, structured, type Attachment } from "./client";
 import * as fb from "./fallback";
-import type { ActivityType, ChainStep, CriterionStatus } from "../db/schema";
+import type { ActivityType, ChainStep, CriterionStatus, FollowupChoice } from "../db/schema";
 import { LETTERS, chainFromSlide, chainIsGrounded, chainIsWellFormed, mixChoices } from "../mcq";
 
 /* Shared guardrails added to every system prompt. */
@@ -130,6 +130,8 @@ export type PaperAnswer = {
   questionText: string;
   /** Marks printed next to the question, if any. */
   maxMarks: number | null;
+  /** Printed options when the question is multiple choice (then `text` is the chosen letter). */
+  options: string[];
   text: string;
   confidence: number;
   lowConfidence: string[];
@@ -144,7 +146,7 @@ export type PaperAnswer = {
  */
 export async function transcribePaper(
   file: Attachment,
-  questions: { number: number; prompt: string; maxMarks: number }[],
+  questions: { number: number; prompt: string; maxMarks: number; kind?: "written" | "mcq" }[],
 ): Promise<{ answers: PaperAnswer[]; model: string }> {
   const { data, model } = await structured({
     name: "read_marked_paper",
@@ -157,6 +159,7 @@ export async function transcribePaper(
           number: z.number(),
           questionText: z.string(),
           maxMarks: z.number().nullable(),
+          options: z.array(z.string()),
           text: z.string(),
           confidence: z.number().min(0).max(1),
           lowConfidence: z.array(z.string()),
@@ -176,16 +179,21 @@ export async function transcribePaper(
               number: { type: "number" },
               questionText: { type: "string", description: "The printed question text, exactly as printed" },
               maxMarks: { type: ["number", "null"], description: "Marks printed for the question, e.g. (4 marks); null if not printed" },
-              text: { type: "string", description: "The student's handwritten answer, exactly. Keep spelling mistakes. Arabic stays Arabic." },
+              options: { type: "array", items: { type: "string" }, description: "For a multiple-choice question, the printed options in order (A, B, C, D); empty otherwise or if not printed" },
+              text: {
+                type: "string",
+                description: "The student's handwritten answer, exactly. Keep spelling mistakes. Arabic stays Arabic. For a multiple-choice question: only the letter the student chose (A–E).",
+              },
               confidence: { type: "number", description: "0–1 legibility of the handwritten answer" },
               lowConfidence: { type: "array", items: { type: "string" }, description: "Words or short phrases you were unsure about" },
               mark: {
                 type: ["number", "null"],
-                description: "The instructor's handwritten mark for this answer (often red ink, e.g. 3/4, 2, ✓ or ✗). A tick = full marks (1 if no maximum is printed), a cross = 0. Null if you see no mark.",
+                description:
+                  "The NUMBER the instructor wrote as the mark for this answer (often red ink, usually in the margin, e.g. 2, 1.5, 1, 0 or 3/4 → 3). Ticks inside the answer only show which parts were right: they are NOT the mark. Only if no number is written for this answer: a single tick next to it = full marks, a cross = 0. Null if you see no mark.",
               },
-              markConfidence: { type: "number", description: "0–1 how sure you are about the mark" },
+              markConfidence: { type: "number", description: "0–1 how sure you are about the mark; below 0.7 if a 1 and a 2 (or a 7) could be confused" },
             },
-            required: ["number", "questionText", "maxMarks", "text", "confidence", "lowConfidence", "mark", "markConfidence"],
+            required: ["number", "questionText", "maxMarks", "options", "text", "confidence", "lowConfidence", "mark", "markConfidence"],
           },
         },
       },
@@ -193,7 +201,7 @@ export async function transcribePaper(
     },
     system:
       "You read university exam papers that an instructor has already marked by hand. Questions are printed; answers are handwritten (English, Arabic, or mixed; may include SQL or code). Copy answers exactly; do not correct them. If a word is illegible write [?]. You never judge or change marks: you only report the mark the instructor wrote. Ignore names, student numbers and IDs anywhere on the paper and never write them in your output.",
-    prompt: `${questions.length ? `The exam has these questions:\n${questions.map((q) => `Q${q.number} (${q.maxMarks} marks): ${q.prompt}`).join("\n")}\n\n` : ""}For each question on the paper, return the printed question, the student's handwritten answer and the instructor's handwritten mark.`,
+    prompt: `${questions.length ? `The exam has these questions:\n${questions.map((q) => `Q${q.number} (${q.maxMarks} mark${q.maxMarks === 1 ? "" : "s"}${q.kind === "mcq" ? ", multiple choice" : ""}): ${q.prompt}`).join("\n")}\n\n` : ""}For each question on the paper, return the printed question, the student's handwritten answer and the instructor's handwritten mark. Students may answer in any order and write only the question number: match each answer to its number. For multiple-choice questions return only the chosen letter.`,
     attachments: [file],
   });
   return { answers: data.answers, model };
@@ -218,6 +226,7 @@ export type MatchResult = {
   }[];
   followupQuestion: string | null;
   followupReason: string | null;
+  followupChoices: FollowupChoice[];
   errorType: string | null;
   model: string;
 };
@@ -257,6 +266,7 @@ export async function matchAnswer(input: {
           ),
           followupQuestion: z.string().nullable(),
           followupReason: z.string().nullable(),
+          followupChoices: z.array(z.object({ text: z.string(), branch: z.enum(["understands", "misconception", "unclear"]) })),
           errorType: z.string().nullable(),
         }),
         jsonSchema: {
@@ -288,12 +298,22 @@ export async function matchAnswer(input: {
                 "If a partial criterion has two plausible explanations (brief wording vs real misunderstanding), ONE short concrete question that tells them apart. Otherwise null.",
             },
             followupReason: { type: ["string", "null"] },
+            followupChoices: {
+              type: "array",
+              description:
+                "If there is a follow-up question: 3 short replies a student could TAP (first person, under 14 words), one per branch: understands (brief wording only), misconception (the real misunderstanding), unclear. Empty if no follow-up.",
+              items: {
+                type: "object",
+                properties: { text: { type: "string" }, branch: { type: "string", enum: ["understands", "misconception", "unclear"] } },
+                required: ["text", "branch"],
+              },
+            },
             errorType: {
               type: ["string", "null"],
               description: "One of: Describes, doesn't justify | Misconception | Missing step | Off-topic | null",
             },
           },
-          required: ["results", "followupQuestion", "followupReason", "errorType"],
+          required: ["results", "followupQuestion", "followupReason", "followupChoices", "errorType"],
         },
         system: GROUNDING,
         prompt: `Question: ${input.question}\nModel answer: ${input.modelAnswer}\n\nCriteria:\n${input.criteria
@@ -313,7 +333,8 @@ export async function matchAnswer(input: {
           confidence: evidence || r.status === "missing" ? r.confidence : Math.min(r.confidence, 0.5),
         };
       });
-      return { results, followupQuestion: data.followupQuestion, followupReason: data.followupReason, errorType: data.errorType, model };
+      const choices = data.followupQuestion && new Set(data.followupChoices.map((c) => c.branch)).size === 3 ? data.followupChoices : data.followupQuestion ? fb.followupChoicesFor(input.question) : [];
+      return { results, followupQuestion: data.followupQuestion, followupReason: data.followupReason, followupChoices: choices, errorType: data.errorType, model };
     } catch (e) {
       console.warn("[ai] matchAnswer fell back:", e);
     }
@@ -333,6 +354,7 @@ export async function matchAnswer(input: {
         : "Can you give a concrete example that shows the part you explained briefly?"
       : null,
     followupReason: partial ? `${partial.code} has two likely readings: a short answer or a real misunderstanding.` : null,
+    followupChoices: partial ? fb.followupChoicesFor(input.question) : [],
     errorType: partial ? "Describes, doesn't justify" : results.some((r) => r.status === "missing") ? "Missing step" : null,
     model: "demo-heuristic",
   };
@@ -345,62 +367,6 @@ function offlineExplanation(c: { slide?: SlideSource | null }, status: Criterion
 }
 
 /* ───────── 6.3 Diagnosis follow-up ───────── */
-
-export async function followupTurn(input: {
-  question: string;
-  studentAnswer: string;
-  gap: string;
-  concept: string;
-  history: { role: "assistant" | "student"; text: string }[];
-  reply: string;
-}): Promise<{ reply: string; branch: "understands" | "misconception" | "unclear"; identifiedGap: string; done: boolean }> {
-  if (aiEnabled()) {
-    try {
-      const { data } = await structured({
-        name: "diagnose_reply",
-        description: "Classify the student's reply and respond.",
-        kind: "fast",
-        schema: z.object({
-          branch: z.enum(["understands", "misconception", "unclear"]),
-          identifiedGap: z.string(),
-          reply: z.string(),
-        }),
-        jsonSchema: {
-          type: "object",
-          properties: {
-            branch: { type: "string", enum: ["understands", "misconception", "unclear"] },
-            identifiedGap: { type: "string", description: "One sentence: what the student does or does not understand" },
-            reply: {
-              type: "string",
-              description:
-                "2–3 sentences. If understands: confirm and invite them to add the reasoning. If misconception: name the rule gently and say a short activity follows. If unclear: ask ONE more concrete question.",
-            },
-          },
-          required: ["branch", "identifiedGap", "reply"],
-        },
-        system: GROUNDING,
-        prompt: `Concept: ${input.concept}\nExam question: ${input.question}\nStudent's exam answer: ${input.studentAnswer}\nGap found: ${input.gap}\n\nConversation so far:\n${input.history
-          .map((m) => `${m.role}: ${m.text}`)
-          .join("\n")}\nstudent: ${input.reply}`,
-      });
-      return { ...data, done: data.branch !== "unclear" || input.history.length >= 4 };
-    } catch (e) {
-      console.warn("[ai] followupTurn fell back:", e);
-    }
-  }
-  const branch = fb.classifyFollowupReply(input.reply);
-  return {
-    branch,
-    reply: fb.followupResponse(branch, input.concept),
-    identifiedGap:
-      branch === "understands"
-        ? "Understands uniqueness; the exam answer was just brief."
-        : branch === "misconception"
-          ? "Believes the key value could repeat between students."
-          : "Not yet clear.",
-    done: branch !== "unclear" || input.history.length >= 4,
-  };
-}
 
 /* ───────── 6.4 Study profile ───────── */
 // The study check-in is scored by rules in lib/profile-questions.ts: no AI call, so no student data leaves the server.
@@ -751,4 +717,37 @@ export async function draftChain(input: {
   const o = offline();
   if (!o) throw new Error("No slide linked to this question's concept");
   return o;
+}
+
+/** A fresh multiple-choice question on the same concept, from the slides only. */
+export async function generateMcqRetest(input: { concept: string; avoid: string; slides: { title: string; body: string }[] }) {
+  if (!aiEnabled() || !input.slides.length) return null;
+  try {
+    const { data } = await structured({
+      name: "fresh_mcq",
+      description: "Write one new multiple-choice question that checks the same idea in a new situation.",
+      kind: "fast",
+      schema: z.object({ prompt: z.string(), options: z.array(z.string()).length(4), correct: z.enum(["A", "B", "C", "D"]) }),
+      jsonSchema: {
+        type: "object",
+        properties: {
+          prompt: { type: "string" },
+          options: { type: "array", items: { type: "string" }, description: "Exactly 4 short options" },
+          correct: { type: "string", enum: ["A", "B", "C", "D"] },
+        },
+        required: ["prompt", "options", "correct"],
+      },
+      system: GROUNDING,
+      prompt: `Concept: ${input.concept}\nDo NOT reuse this question: ${input.avoid}\nLecture slides (use only these):\n${input.slides.map((s) => `- ${s.title}: ${s.body}`).join("\n")}`,
+    });
+    // Put the key somewhere other than where the AI tends to put it.
+    const right = data.options[LETTERS.indexOf(data.correct)]!;
+    const others = data.options.filter((_, i) => LETTERS[i] !== data.correct);
+    const at = (data.prompt.length % 3) + 1;
+    const options = [...others.slice(0, at), right, ...others.slice(at)];
+    return { prompt: data.prompt, options, correct: LETTERS[at]! as string };
+  } catch (e) {
+    console.warn("[ai] generateMcqRetest fell back:", e);
+    return null;
+  }
 }

@@ -18,7 +18,7 @@ GapMap@2026
 | Student (demo student) | Mariam Adel | `mariam@gapmap.demo` | Report → follow-up question → study profile → activity → fresh test |
 | Teaching assistant | Nada Lotfy | `ta.nada@gapmap.demo` | Same course as the instructor; nomination quota of 1 |
 | Coordinator | Dr. Hany Fawzy | `coordinator@gapmap.demo` | Programme overview, class-level CSV export (no individual papers) |
-| Partner company | Reem Saleh (Nile Data Labs, demo) | `hr@niledata.demo` | Vacancies, faculty nominations, request interview |
+| Partner company | Reem Saleh (Nile Data Labs, demo) | `hr@niledata.demo` | Vacancies, faculty nominations, request interview (only with `SHOW_PARTNERS=true`) |
 | Platform admin | GapMap Admin | `admin@gapmap.demo` | Sees every course in the instructor area |
 
 Other students (all with the same password) follow the pattern

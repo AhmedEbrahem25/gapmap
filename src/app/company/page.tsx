@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { ShieldCheck } from "lucide-react";
+import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth";
+import { partnersEnabled } from "@/lib/features";
 import { db, schema as s } from "@/lib/db";
 import { PortalHeader } from "@/components/shell/portal-header";
 import { PageHeader, EmptyState } from "@/components/ui/page-header";
@@ -17,6 +19,7 @@ export const metadata: Metadata = { title: "Partner portal" };
 
 export default async function CompanyPage() {
   const user = await requireRole("company");
+  if (!partnersEnabled()) notFound();
   const company = user.companyId ? db.select().from(s.companies).where(eq(s.companies.id, user.companyId)).get() : undefined;
   const vacancies = user.companyId ? db.select().from(s.vacancies).where(eq(s.vacancies.companyId, user.companyId)).orderBy(desc(s.vacancies.createdAt)).all() : [];
   const noms = vacancies.length

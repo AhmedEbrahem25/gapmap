@@ -29,6 +29,20 @@
       "when": 1795792452744,
       "tag": "0003_mcq_and_chains",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1795793958522,
+      "tag": "0004_followup_choices",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1795794360099,
+      "tag": "0005_mcq_retest",
+      "breakpoints": true
     }
   ]
 }

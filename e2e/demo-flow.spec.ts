@@ -84,6 +84,13 @@ test("socratic-style fix: lecturer approves per question, student taps through",
   await page.getByRole("button", { name: "No two rows share its value" }).click();
   await expect(page.getByText(/The hint did its job/)).toBeVisible();
   await expect(page.getByText(/A primary key must be unique, must never be NULL/).first()).toBeVisible();
+
+  // Fresh test: another multiple-choice question on the same concept, from the question bank, scored by rules
+  await page.getByRole("button", { name: /Take a fresh test/ }).click();
+  await expect(page.getByText(/Course\(CourseCode, Title, Credits, Instructor\)/)).toBeVisible();
+  await page.getByRole("radio", { name: "C CourseCode" }).check({ force: true });
+  await page.getByRole("button", { name: "Submit answer" }).click();
+  await expect(page.getByRole("heading", { name: /you've got it/ })).toBeVisible();
 });
 
 test("roles cannot cross into other areas", async ({ page }) => {

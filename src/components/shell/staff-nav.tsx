@@ -17,7 +17,7 @@ const items = [
   { href: "/instructor/internships", label: "Internships", icon: Briefcase },
 ] as const;
 
-export function StaffNav({ counts, footer }: { counts: { threads: number; alerts: number }; footer: React.ReactNode }) {
+export function StaffNav({ counts, footer, partners }: { counts: { threads: number; alerts: number }; footer: React.ReactNode; partners: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const isActive = (href: string, exact?: boolean) =>
@@ -25,7 +25,7 @@ export function StaffNav({ counts, footer }: { counts: { threads: number; alerts
 
   const list = (
     <ul className="flex flex-col gap-1">
-      {items.map((it) => {
+      {items.filter((it) => partners || it.href !== "/instructor/internships").map((it) => {
         const active = isActive(it.href, "exact" in it ? it.exact : false);
         const count = "countKey" in it ? counts[it.countKey] : 0;
         return (

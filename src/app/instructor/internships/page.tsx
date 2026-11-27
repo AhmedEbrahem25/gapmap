@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { and, eq, inArray } from "drizzle-orm";
 import { Briefcase, ShieldCheck } from "lucide-react";
+import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth";
+import { partnersEnabled } from "@/lib/features";
 import { db, schema as s } from "@/lib/db";
 import { staffCourses } from "@/lib/data";
 import { PageHeader, EmptyState } from "@/components/ui/page-header";
@@ -18,6 +20,7 @@ export const metadata: Metadata = { title: "Internships" };
 
 export default async function InternshipsPage({ searchParams }: PageProps<"/instructor/internships">) {
   const user = await requireRole("instructor", "ta", "admin");
+  if (!partnersEnabled()) notFound();
   const sp = await searchParams;
   const vacancies = db
     .select({ v: s.vacancies, company: s.companies.name })

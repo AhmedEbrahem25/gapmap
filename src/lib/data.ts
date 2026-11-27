@@ -58,14 +58,20 @@ export function slideRef(slideId: string | null | undefined) {
   return row ?? null;
 }
 
-export function studentCourse(userId: string) {
-  const row = db
+export function studentCourses(userId: string) {
+  return db
     .select({ course: s.courses, section: s.enrollments.section })
     .from(s.enrollments)
     .innerJoin(s.courses, eq(s.courses.id, s.enrollments.courseId))
     .where(and(eq(s.enrollments.userId, userId), eq(s.enrollments.role, "student")))
-    .get();
-  return row ?? null;
+    .orderBy(asc(s.courses.title))
+    .all();
+}
+
+/** The course the student picked (see /student/course), or their first one. */
+export function studentCourse(userId: string, preferredId?: string | null) {
+  const all = studentCourses(userId);
+  return all.find((c) => c.course.id === preferredId) ?? all[0] ?? null;
 }
 
 export function audit(actorId: string | null, action: string, object: string) {

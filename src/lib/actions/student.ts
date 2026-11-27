@@ -6,9 +6,11 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
-import { audit, studentCourse } from "@/lib/data";
-import { ownAnswer, profileFor, resultsFor } from "@/lib/student";
-import { checkSubmission, followupTurn, generateRetest, gradeRetest } from "@/lib/ai/pipelines";
+import { audit } from "@/lib/data";
+import { activeCourse, ownAnswer, profileFor } from "@/lib/student";
+import { checkSubmission, generateMcqRetest, generateRetest, gradeRetest } from "@/lib/ai/pipelines";
+import { LETTERS, parseChoice, scoreChoice } from "@/lib/mcq";
+import { followupChoicesFor, followupResponse } from "@/lib/ai/fallback";
 import { activityFor } from "@/lib/activities";
 import { chainForAnswer } from "@/lib/chains";
 import type { ChatMessage } from "@/lib/db/schema";
@@ -27,11 +29,14 @@ export type FollowupState = {
   error?: string;
 };
 
-export async function sendFollowup(answerId: string, reply: string): Promise<FollowupState> {
+export async function sendFollowup(answerId: string, choice: number): Promise<FollowupState> {
   const user = await student();
   const { answer, question } = ownAnswer(user.id, answerId);
-  const text = reply.trim().slice(0, 800);
-  if (!text) return { messages: [], branch: null, activityId: null, done: false, error: "Write a short reply first." };
+  // Taps only: the branch comes from the choice the student tapped, so nothing they type reaches the AI.
+  const choices = answer.followupChoices?.length ? answer.followupChoices : followupChoicesFor(question.prompt);
+  const picked = choices[choice];
+  if (!picked) return { messages: [], branch: null, activityId: null, done: false, error: "Pick one of the replies." };
+  const text = picked.text;
 
   let f = db.select().from(s.followups).where(and(eq(s.followups.answerId, answerId), eq(s.followups.studentId, user.id))).get();
   if (!f) {
@@ -43,17 +48,13 @@ export async function sendFollowup(answerId: string, reply: string): Promise<Fol
   }
   if (f.resolved) return { messages: f.messages, branch: f.branch ?? null, activityId: null, done: true };
 
-  const results = resultsFor([answerId]);
-  const gap = results.find((r) => r.result.status !== "met")?.result.gap ?? "";
   const concept = question.conceptId ? db.select().from(s.concepts).where(eq(s.concepts.id, question.conceptId)).get() : undefined;
-  const turn = await followupTurn({
-    question: question.prompt,
-    studentAnswer: answer.transcription,
-    gap,
-    concept: concept?.name ?? "this topic",
-    history: f.messages.map((m) => ({ role: m.role, text: m.text })),
-    reply: text,
-  });
+  const turn = {
+    branch: picked.branch,
+    reply: followupResponse(picked.branch, concept?.name ?? "this topic"),
+    identifiedGap: picked.branch === "misconception" ? `Believes: ${picked.text}` : picked.branch === "understands" ? "Understands; wrote it too briefly." : "Not yet clear.",
+    done: true,
+  };
   const messages: ChatMessage[] = [...f.messages, { role: "student", text, at: Date.now() }, { role: "assistant", text: turn.reply, at: Date.now() + 1 }];
   db.update(s.followups)
     .set({ messages, branch: turn.branch, identifiedGap: turn.identifiedGap, resolved: turn.done })
@@ -164,7 +165,7 @@ export async function startRetest(formData: FormData) {
   const user = await student();
   const conceptId = String(formData.get("conceptId"));
   const concept = db.select().from(s.concepts).where(eq(s.concepts.id, conceptId)).get();
-  const enrolled = studentCourse(user.id);
+  const enrolled = await activeCourse(user.id);
   if (!concept || concept.courseId !== enrolled?.course.id) return;
   const followup = db
     .select({ gap: s.followups.identifiedGap })
@@ -187,6 +188,27 @@ export async function submitRetest(_prev: SubmitState, formData: FormData): Prom
   const item = db.select().from(s.practiceItems).where(and(eq(s.practiceItems.id, id), eq(s.practiceItems.studentId, user.id))).get();
   if (!item) return { error: "Question not found." };
   if (item.answer) return { ok: true };
+  if (item.options?.length) {
+    // Multiple choice: scored by rules on the key.
+    const chosen = parseChoice(String(formData.get("choice") ?? ""), item.options.length);
+    if (!chosen) return { error: "Tap an answer first." };
+    const score = scoreChoice(chosen, item.correctOption, item.maxScore);
+    const right = item.options[LETTERS.indexOf(item.correctOption as (typeof LETTERS)[number])] ?? "";
+    db.update(s.practiceItems)
+      .set({
+        answer: `${chosen}) ${item.options[LETTERS.indexOf(chosen as (typeof LETTERS)[number])] ?? ""}`,
+        result: [{ code: "C1", status: score ? "met" : "missing", evidence: "", gap: score ? "" : `The answer is ${item.correctOption}) ${right}.` }],
+        score,
+      })
+      .where(eq(s.practiceItems.id, id))
+      .run();
+    db.insert(s.attempts)
+      .values({ id: crypto.randomUUID(), studentId: user.id, conceptId: item.conceptId, label: "Fresh test", date: new Date().toISOString().slice(0, 10), score, maxScore: item.maxScore, source: "retest" })
+      .run();
+    audit(user.id, "retest", id);
+    refresh();
+    return { ok: true };
+  }
   const answer = String(formData.get("answer") ?? "").trim().slice(0, 2000);
   if (answer.length < 5) return { error: "Write your answer first." };
   const results = await gradeRetest({ prompt: item.prompt, criteria: item.criteria, answer });
@@ -208,7 +230,7 @@ export async function submitRetest(_prev: SubmitState, formData: FormData): Prom
 
 export async function askQuestion(formData: FormData) {
   const user = await student();
-  const enrolled = studentCourse(user.id);
+  const enrolled = await activeCourse(user.id);
   if (!enrolled) return;
   const subject = String(formData.get("subject") ?? "").trim().slice(0, 140);
   const body = String(formData.get("body") ?? "").trim().slice(0, 2000);
@@ -257,4 +279,65 @@ export async function recordChainRun(answerId: string, taps: { step: number; cho
   audit(user.id, "chain_run", chain.id);
   refresh();
   return { ok: true, selfFound };
+}
+
+/** After a 2-tap fix: a fresh multiple-choice question on the same concept (course bank first, then the AI). */
+export async function startMcqRetest(formData: FormData) {
+  const user = await student();
+  const questionId = String(formData.get("questionId"));
+  const q = db.select().from(s.questions).where(eq(s.questions.id, questionId)).get();
+  if (!q?.conceptId) return;
+  const enrolled = await activeCourse(user.id);
+  const exam = db.select().from(s.exams).where(eq(s.exams.id, q.examId)).get();
+  if (!exam || exam.courseId !== enrolled?.course.id) return;
+  const examIds = db.select({ id: s.exams.id }).from(s.exams).where(eq(s.exams.courseId, exam.courseId)).all().map((e) => e.id);
+  const bank = db
+    .select()
+    .from(s.questions)
+    .where(and(eq(s.questions.kind, "mcq"), eq(s.questions.conceptId, q.conceptId)))
+    .all()
+    .filter((x) => x.id !== q.id && examIds.includes(x.examId) && x.correctOption && x.options?.length);
+  const answered = new Set(
+    db
+      .select({ questionId: s.answers.questionId })
+      .from(s.answers)
+      .innerJoin(s.papers, eq(s.papers.id, s.answers.paperId))
+      .where(eq(s.papers.studentId, user.id))
+      .all()
+      .map((a) => a.questionId),
+  );
+  const pick = bank.find((x) => !answered.has(x.id)) ?? bank[0];
+  const concept = db.select().from(s.concepts).where(eq(s.concepts.id, q.conceptId)).get()!;
+  let fresh: { prompt: string; options: string[]; correct: string } | null = pick ? { prompt: pick.prompt, options: pick.options!, correct: pick.correctOption! } : null;
+  if (!fresh) {
+    const slides = db
+      .select({ title: s.slides.title, body: s.slides.body })
+      .from(s.slideConcepts)
+      .innerJoin(s.slides, eq(s.slides.id, s.slideConcepts.slideId))
+      .where(eq(s.slideConcepts.conceptId, q.conceptId))
+      .limit(5)
+      .all();
+    fresh = await generateMcqRetest({ concept: concept.name, avoid: q.prompt, slides });
+  }
+  if (!fresh) {
+    // No bank question and no AI: fall back to a written fresh test.
+    const fd = new FormData();
+    fd.set("conceptId", q.conceptId);
+    return startRetest(fd);
+  }
+  const id = crypto.randomUUID();
+  db.insert(s.practiceItems)
+    .values({
+      id,
+      studentId: user.id,
+      conceptId: q.conceptId,
+      kind: "retest",
+      prompt: fresh.prompt,
+      criteria: [{ code: "C1", description: "Chooses the right option", marks: 1 }],
+      maxScore: 1,
+      options: fresh.options,
+      correctOption: fresh.correct,
+    })
+    .run();
+  redirect(`/student/practice/${id}`);
 }

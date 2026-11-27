@@ -5,6 +5,7 @@ import { db, schema as s } from "@/lib/db";
 import { slideRef } from "@/lib/data";
 import { ownAnswer, resultsFor } from "@/lib/student";
 import { FollowupChat } from "./chat";
+import { followupChoicesFor } from "@/lib/ai/fallback";
 
 export const metadata: Metadata = { title: "Quick check" };
 
@@ -31,11 +32,7 @@ export default async function FollowupPage({ params }: PageProps<"/student/follo
       initialBranch={existing?.branch ?? null}
       initialDone={existing?.resolved ?? false}
       initialActivityId={activity?.id ?? null}
-      quickReplies={
-        isKeys
-          ? ["Their StudentIDs would still be different, so we can tell them apart", "They could also share a number, so we'd need the name too"]
-          : []
-      }
+      quickReplies={(answer.followupChoices?.length ? answer.followupChoices : followupChoicesFor(question.prompt)).map((c) => c.text)}
       slide={slide ? { id: slide.id, lecture: slide.lectureNumber, page: slide.page, title: slide.title } : null}
       showIntro={isKeys}
     />

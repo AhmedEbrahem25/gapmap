@@ -13,6 +13,7 @@ import { clusterMisconceptions } from "@/lib/ai/pipelines";
 import { computeAlerts } from "@/lib/alerts";
 import { answerFlags } from "@/lib/review";
 import { draftChainsForExam } from "@/lib/chains";
+import { scoreChoice } from "@/lib/mcq";
 
 const staff = () => requireRole("instructor", "ta", "admin");
 const refresh = () => revalidatePath("/", "layout");
@@ -656,5 +657,27 @@ export async function redraftChain(formData: FormData) {
   db.delete(s.chainRuns).where(eq(s.chainRuns.chainId, chainId)).run();
   db.delete(s.chains).where(eq(s.chains.id, chainId)).run();
   await draftChainsForExam(q.examId);
+  refresh();
+}
+
+/** Sets an MCQ key and rescores every answer to the question by rules. */
+export async function setCorrectOption(formData: FormData) {
+  const user = await staff();
+  const questionId = String(formData.get("questionId"));
+  const q = db.select().from(s.questions).where(eq(s.questions.id, questionId)).get();
+  if (!q || q.kind !== "mcq") return;
+  examWithAccess(user, q.examId);
+  const correct = String(formData.get("correctOption") ?? "");
+  if ("ABCDE".indexOf(correct) < 0 || "ABCDE".indexOf(correct) >= (q.options?.length ?? 0)) return;
+  db.update(s.questions).set({ correctOption: correct }).where(eq(s.questions.id, questionId)).run();
+  for (const a of db.select().from(s.answers).where(eq(s.answers.questionId, questionId)).all()) {
+    if (!a.chosenOption) continue;
+    const marks = scoreChoice(a.chosenOption, correct, q.maxMarks);
+    db.update(s.answers)
+      .set({ paperMarks: marks, suggestedMarks: marks, ...(a.finalMarks !== null ? { finalMarks: marks } : {}) })
+      .where(eq(s.answers.id, a.id))
+      .run();
+  }
+  audit(user.id, "set_key", `${questionId}:${correct}`);
   refresh();
 }

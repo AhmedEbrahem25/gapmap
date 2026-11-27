@@ -173,6 +173,8 @@ export const answers = sqliteTable("answers", {
   errorType: text("error_type"),
   followupQuestion: text("followup_question"),
   followupReason: text("followup_reason"),
+  /** Tap replies to the follow-up question, each tagged with what it shows. Students only tap: no free text reaches the AI. */
+  followupChoices: text("followup_choices", { mode: "json" }).$type<FollowupChoice[]>(),
   followupEnabled: integer("followup_enabled", { mode: "boolean" }).notNull().default(true),
   model: text("model"),
   reviewedBy: text("reviewed_by"),
@@ -198,6 +200,8 @@ export const criterionResults = sqliteTable("criterion_results", {
 /* ───────── Student learning loop ───────── */
 
 export type ChatMessage = { role: "assistant" | "student"; text: string; at: number };
+export type FollowupBranch = "understands" | "misconception" | "unclear";
+export type FollowupChoice = { text: string; branch: FollowupBranch };
 
 export const followups = sqliteTable("followups", {
   id: id(),
@@ -251,6 +255,9 @@ export const practiceItems = sqliteTable("practice_items", {
   score: real("score"),
   maxScore: real("max_score").notNull(),
   feedback: text("feedback"),
+  /** Multiple-choice fresh test: the options and the key (scored by rules). */
+  options: text("options", { mode: "json" }).$type<string[]>(),
+  correctOption: text("correct_option"),
   createdAt: createdAt(),
 });
 

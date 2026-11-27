@@ -14,7 +14,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FadeIn } from "@/components/ui/motion";
 import { ExamSteps } from "./steps";
-import { aiDraftRubric, updateCriterion, addCriterion, deleteCriterion, addQuestion, addMcqQuestion } from "@/lib/actions/instructor";
+import { aiDraftRubric, updateCriterion, addCriterion, deleteCriterion, addQuestion, addMcqQuestion, setCorrectOption } from "@/lib/actions/instructor";
 import { cn, fmtMarks } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Rubric" };
@@ -88,6 +88,20 @@ export default async function RubricPage({ params, searchParams }: PageProps<"/i
                   );
                 })}
               </ol>
+              <form action={setCorrectOption} className="flex items-center gap-2 text-[13px]">
+                <input type="hidden" name="questionId" value={q.id} />
+                <label htmlFor="key" className="font-semibold">
+                  {q.correctOption ? "Change the key" : "Set the key"}
+                </label>
+                <select id="key" name="correctOption" defaultValue={q.correctOption ?? ""} className="h-8 rounded-lg border border-[#9ca3af] px-2">
+                  {(q.options ?? []).map((_, i) => (
+                    <option key={i}>{"ABCDE"[i]}</option>
+                  ))}
+                </select>
+                <SubmitButton size="sm" variant="secondary">
+                  Save and rescore
+                </SubmitButton>
+              </form>
               <p className="text-[13px] text-ink-2">
                 After you import results, the AI writes a 2-step fix for each wrong option students chose. Review them in{" "}
                 <Link href={`/instructor/exams/${examId}/chains`} className="font-semibold">

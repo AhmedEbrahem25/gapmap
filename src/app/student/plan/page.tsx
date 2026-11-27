@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { CourseSwitch } from "@/components/student/course-switch";
 import Link from "next/link";
 import { asc, eq } from "drizzle-orm";
 import { ChevronRight, FlaskConical, Map, BookOpenCheck, PenLine, Lightbulb } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
-import { masteryByConcept, studentCourse } from "@/lib/data";
-import { profileFor } from "@/lib/student";
+import { masteryByConcept } from "@/lib/data";
+import { profileFor, activeCourse } from "@/lib/student";
 import { StudentHeader } from "@/components/shell/student-header";
 import { Badge, StatusChip, statusFromRatio } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/page-header";
@@ -19,7 +20,7 @@ const activityIcon = { experiment: FlaskConical, mind_map: Map, worked_example: 
 export default async function PlanPage() {
   const user = await requireRole("student");
   const activities = db.select({ a: s.activities, concept: s.concepts.name }).from(s.activities).innerJoin(s.concepts, eq(s.concepts.id, s.activities.conceptId)).where(eq(s.activities.studentId, user.id)).orderBy(asc(s.activities.priority)).all();
-  const enrolled = studentCourse(user.id);
+  const enrolled = await activeCourse(user.id);
   const concepts = enrolled ? db.select().from(s.concepts).where(eq(s.concepts.courseId, enrolled.course.id)).all() : [];
   const mastery = masteryByConcept(user.id);
   const weak = concepts
@@ -39,6 +40,7 @@ export default async function PlanPage() {
     <>
       <StudentHeader eyebrow={enrolled?.course.title} title="Study plan" />
       <Stagger className="flex flex-col gap-3.5 px-5">
+        <CourseSwitch userId={user.id} activeId={enrolled?.course.id} next="/student/plan" />
         {!profile ? (
           <StaggerItem>
             <Link href="/student/profile?next=/student/plan" className="flex items-center gap-3 rounded-2xl border border-primary-200 bg-primary-50 p-4 text-sm">

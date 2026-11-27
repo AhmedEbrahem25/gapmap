@@ -3,8 +3,9 @@ import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { requireRole } from "@/lib/auth";
+import { activeCourse } from "@/lib/student";
 import { db, schema as s } from "@/lib/db";
-import { masteryByConcept, studentCourse } from "@/lib/data";
+import { masteryByConcept } from "@/lib/data";
 import { StudentHeader } from "@/components/shell/student-header";
 import { StatusChip, statusFromRatio } from "@/components/ui/badge";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -16,7 +17,7 @@ export const metadata: Metadata = { title: "Practice" };
 
 export default async function PracticePage() {
   const user = await requireRole("student");
-  const enrolled = studentCourse(user.id);
+  const enrolled = await activeCourse(user.id);
   const concepts = enrolled ? db.select().from(s.concepts).where(eq(s.concepts.courseId, enrolled.course.id)).all() : [];
   const mastery = masteryByConcept(user.id);
   const items = db.select({ i: s.practiceItems, concept: s.concepts.name }).from(s.practiceItems).innerJoin(s.concepts, eq(s.concepts.id, s.practiceItems.conceptId)).where(eq(s.practiceItems.studentId, user.id)).orderBy(desc(s.practiceItems.createdAt)).all();

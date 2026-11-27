@@ -59,7 +59,7 @@ export default async function UploadPage({ params }: PageProps<"/instructor/exam
             fields={{ examId }}
             accept="application/pdf,image/png,image/jpeg,image/webp"
             title="Upload marked papers"
-            hint={`Scan each paper after you mark it: one PDF or photo per student. GapMap reads the printed questions, the handwritten answer and your mark, never the student's name. Leave the cover page out, and pick the student below or name files like mariam-adel.pdf.${aiEnabled() ? "" : " Demo mode: add a free GEMINI_API_KEY to read scans; otherwise a TA types the answer and your mark in."}`}
+            hint={`Scan each paper after you mark it: one PDF or photo per student. GapMap reads the printed questions, the handwritten answer and your mark, never the student's name. Page 1 of each PDF (the cover with the name) is left out unless you untick it; pick the student below or name files like mariam-adel.pdf.${aiEnabled() ? "" : " Demo mode: add a free GEMINI_API_KEY to read scans; otherwise a TA types the answer and your mark in."}`}
             icon={<ScanLine size={28} aria-hidden />}
           >
             <div className="mb-3 flex flex-wrap gap-3 text-sm">
@@ -70,6 +70,12 @@ export default async function UploadPage({ params }: PageProps<"/instructor/exam
                     <option key={x}>{x}</option>
                   ))}
                 </select>
+              </label>
+              <label className="flex items-center gap-2 text-[13px]">
+                <input type="checkbox" name="skipCover" defaultChecked className="h-[18px] w-[18px] accent-primary-600" />
+                <span>
+                  <strong>Leave out page 1</strong> of each PDF (the cover with the name)
+                </span>
               </label>
               <label className="flex items-center gap-2">
                 <span className="text-[13px] font-semibold">Student (single paper)</span>
