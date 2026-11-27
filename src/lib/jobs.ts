@@ -5,6 +5,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { db, schema as s } from "./db";
 import { aiEnabled } from "./ai/client";
 import { tagSlides, transcribePaper, matchAnswer, draftRubric, type PaperAnswer } from "./ai/pipelines";
+import { keywords } from "./ai/fallback";
 
 export const STORAGE_DIR = path.resolve(/*turbopackIgnore: true*/ process.cwd(), process.env.STORAGE_DIR ?? "storage");
 
@@ -157,13 +158,17 @@ export async function draftCriteriaFor(questionId: string) {
   db.delete(s.criteria).where(eq(s.criteria.questionId, questionId)).run();
   drafted.forEach((c, i) => {
     const concept = concepts.find((x) => x.name.toLowerCase() === (c.concept ?? "").toLowerCase()) ?? concepts.find((x) => x.id === q.conceptId);
+    // Of the concept's slides, link the one whose text is closest to the criterion.
+    const words = keywords(c.description);
     const slide = concept
       ? db
-          .select({ id: s.slides.id })
+          .select({ id: s.slides.id, title: s.slides.title, body: s.slides.body })
           .from(s.slideConcepts)
           .innerJoin(s.slides, eq(s.slides.id, s.slideConcepts.slideId))
           .where(eq(s.slideConcepts.conceptId, concept.id))
-          .get()
+          .all()
+          .map((sl) => ({ sl, hits: words.filter((w) => `${sl.title} ${sl.body}`.toLowerCase().includes(w)).length }))
+          .sort((a, b) => b.hits - a.hits)[0]?.sl
       : undefined;
     db.insert(s.criteria)
       .values({
