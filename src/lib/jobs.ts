@@ -93,6 +93,16 @@ export function examQuestions(examId: string) {
   return qs.map((q) => ({ ...q, criteria: crits.filter((c) => c.questionId === q.id) }));
 }
 
+/** Answers already diagnosed against this question's criteria: redrafting would throw that work away. */
+export function rubricInUse(questionId: string) {
+  return !!db
+    .select({ id: s.criterionResults.id })
+    .from(s.criterionResults)
+    .innerJoin(s.criteria, eq(s.criteria.id, s.criterionResults.criterionId))
+    .where(eq(s.criteria.questionId, questionId))
+    .get();
+}
+
 export async function analyseAnswer(answerId: string) {
   const answer = db.select().from(s.answers).where(eq(s.answers.id, answerId)).get();
   if (!answer) return;
@@ -153,7 +163,7 @@ export async function analyseAnswer(answerId: string) {
 /** Drafts criteria for a question (from its text, model answer and the course concepts) and links each to a slide. */
 export async function draftCriteriaFor(questionId: string) {
   const q = db.select().from(s.questions).where(eq(s.questions.id, questionId)).get();
-  if (!q) return;
+  if (!q || rubricInUse(questionId)) return;
   const exam = db.select().from(s.exams).where(eq(s.exams.id, q.examId)).get()!;
   const concepts = db.select().from(s.concepts).where(eq(s.concepts.courseId, exam.courseId)).all();
   const drafted = await draftRubric({ prompt: q.prompt, modelAnswer: q.modelAnswer, maxMarks: q.maxMarks, concepts: concepts.map((c) => c.name) });

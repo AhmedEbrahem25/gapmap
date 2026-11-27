@@ -5,7 +5,7 @@ import { Sparkles, Trash2, Plus } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
 import { examWithAccess, conceptsFor } from "@/lib/data";
-import { examQuestions } from "@/lib/jobs";
+import { examQuestions, rubricInUse } from "@/lib/jobs";
 import { aiEnabled, aiLabel } from "@/lib/ai/client";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -189,12 +189,14 @@ export default async function RubricPage({ params, searchParams }: PageProps<"/i
                     <Plus size={16} aria-hidden /> Add criterion
                   </SubmitButton>
                 </form>
-                <form action={aiDraftRubric}>
-                  <input type="hidden" name="questionId" value={q.id} />
-                  <SubmitButton variant="ai" pendingText="Drafting…">
-                    <Sparkles size={15} aria-hidden /> {q.criteria.length ? "Redraft with AI" : "Draft criteria with AI"}
-                  </SubmitButton>
-                </form>
+                {rubricInUse(q.id) ? null : (
+                  <form action={aiDraftRubric}>
+                    <input type="hidden" name="questionId" value={q.id} />
+                    <SubmitButton variant="ai" pendingText="Drafting…">
+                      <Sparkles size={15} aria-hidden /> {q.criteria.length ? "Redraft with AI" : "Draft criteria with AI"}
+                    </SubmitButton>
+                  </form>
+                )}
               </div>
             </FadeIn>
           ) : (
