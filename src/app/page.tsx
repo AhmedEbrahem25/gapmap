@@ -24,31 +24,31 @@ import { getCurrentUser } from "@/lib/auth";
 import { homeFor } from "@/lib/session";
 
 const steps = [
-  { icon: ScanLine, title: "The lecturer marks as usual", body: "Upload the papers after marking, or import a quiz file with its key. Lecture slides go in once, tagged by concept." },
-  { icon: Sparkles, title: "AI reads, rules score", body: "The AI reads each answer and the lecturer's own mark; multiple choice is scored by rules on the key. The AI never grades." },
-  { icon: BookOpen, title: "Every gap gets its slide", body: "Each gap is explained only from the lecturer's slide, with the page cited. Uncited text is flagged and hidden." },
-  { icon: UserCheck, title: "The lecturer approves", body: "One click per question; only flagged answers need a look. Nothing reaches a student before that." },
-  { icon: MousePointerClick, title: "Fix in 2 taps, then retest", body: "Two tap questions lead the student to the idea, then a fresh question shows the gap is closed." },
+  { icon: ScanLine, title: "The lecturer marks as usual", body: "Then uploads the papers." },
+  { icon: Sparkles, title: "AI reads, rules score", body: "The AI never grades." },
+  { icon: BookOpen, title: "Every gap gets its slide", body: "With the page cited." },
+  { icon: UserCheck, title: "The lecturer approves", body: "One click per question." },
+  { icon: MousePointerClick, title: "Fix in 2 taps, then retest", body: "A new question checks it." },
 ];
 
 const instructorFeatures = [
-  { icon: FileText, title: "Exam file + key", body: "Import a quiz as PDF or Word: questions are read and linked to concepts. Type the key once." },
-  { icon: Sparkles, title: "Socratic-style fixes", body: "For every wrong option students chose, two tap questions and a slide hint, approved by you." },
-  { icon: LineChart, title: "Weak concepts, tricky questions", body: "The most common wrong answer per question, and what to re-teach when 40% of the class misses it." },
-  { icon: BellRing, title: "Early support alerts", body: "Students who pass overall but keep missing a prerequisite." },
+  { icon: FileText, title: "Exam file + key", body: "Upload a PDF or Word quiz." },
+  { icon: Sparkles, title: "Socratic-style fixes", body: "Two tap questions per wrong answer." },
+  { icon: LineChart, title: "Weak concepts, tricky questions", body: "What to re-teach." },
+  { icon: BellRing, title: "Early support alerts", body: "Who needs help early." },
 ];
 
 const studentFeatures = [
-  { icon: FileText, title: "My papers", body: "Your whole marked paper: every answer with the lecturer's mark and what was missing." },
-  { icon: MousePointerClick, title: "Fix it in 2 taps", body: "Find the mistake yourself, with a hint from the slide if you tap wrong." },
-  { icon: ListChecks, title: "A plan that fits you", body: "A 5-tap check-in orders your plan and nudges you to test yourself instead of rereading." },
-  { icon: MessageCircleQuestion, title: "Ask without your name", body: "Question a marking comment anonymously; the lecturer sees the question, not you." },
+  { icon: FileText, title: "My papers", body: "Every answer and what was missing." },
+  { icon: MousePointerClick, title: "Fix it in 2 taps", body: "Find the mistake yourself." },
+  { icon: ListChecks, title: "A plan that fits you", body: "Built from a 5-tap check-in." },
+  { icon: MessageCircleQuestion, title: "Ask without your name", body: "Ask about a mark anonymously." },
 ];
 
 const principles = [
-  { icon: UserCheck, title: "Lecturer in control", body: "Marks come from the lecturer or from rules; AI text is approved per question." },
-  { icon: Quote, title: "Slides, not guesses", body: "Every explanation cites a slide page, or it is flagged and hidden." },
-  { icon: ShieldCheck, title: "Private by design", body: "The AI never sees names or IDs; students only tap, so nothing they type reaches it." },
+  { icon: UserCheck, title: "Lecturer in control", body: "Marks come from the lecturer." },
+  { icon: Quote, title: "Slides, not guesses", body: "Every explanation cites a page." },
+  { icon: ShieldCheck, title: "Private by design", body: "The AI never sees names." },
   { icon: Languages, title: "Arabic & English", body: "Handwritten answers in either language." },
 ];
 
@@ -102,8 +102,7 @@ export default async function Landing() {
                 Every gap gets a <span className="relative whitespace-nowrap text-primary-600">next step<svg className="absolute -bottom-2 left-0 w-full" height="10" viewBox="0 0 200 10" preserveAspectRatio="none" aria-hidden><path d="M2 7 Q 60 1 100 5 T 198 4" stroke="#FDBA74" strokeWidth="4" fill="none" strokeLinecap="round" /></svg></span>.
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-8 text-ink-2">
-                A marked paper tells students where they lost marks. GapMap tells them what to practise next — using their own answer, the
-                lecturer&apos;s mark and the lecture slides — then checks whether it helped.
+                Shows each student what to fix, from the lecturer&apos;s own slides.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <ButtonLink href={appHref} size="lg">
@@ -140,7 +139,7 @@ export default async function Landing() {
         <section id="how" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-24">
           <Reveal className="max-w-2xl">
             <p className="text-sm font-semibold tracking-wide text-primary-600 uppercase">How it works</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">From a marked paper to a measured improvement</h2>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">From marked paper to next step</h2>
           </Reveal>
           <ol data-tour="how" className="mt-12 grid gap-5 md:grid-cols-5">
             {steps.map((st, i) => (
@@ -162,10 +161,9 @@ export default async function Landing() {
           <div className="mx-auto grid max-w-6xl gap-12 px-5 py-24 lg:grid-cols-[0.9fr_1.1fr]">
             <Reveal>
               <p className="text-sm font-semibold tracking-wide text-marker uppercase">For instructors</p>
-              <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Review a class in minutes, then decide what to re-teach</h2>
+              <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Review a class in minutes</h2>
               <p className="mt-4 leading-7 text-[#c7cbd4]">
-                Your mark read from the scan, each gap explained from your own slide, one click per question. Then see which concept and which
-                wrong answer cost the class the most marks.
+                One click per question. See what to re-teach.
               </p>
             </Reveal>
             <div data-tour="instructors" className="grid gap-4 sm:grid-cols-2">
@@ -196,10 +194,9 @@ export default async function Landing() {
           </div>
           <Reveal className="order-1 lg:order-2">
             <p className="text-sm font-semibold tracking-wide text-met uppercase">For students</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">One next step at a time, never a wall of feedback</h2>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">One next step at a time</h2>
             <p className="mt-4 leading-7 text-ink-2">
-              The report opens on the single most useful thing to do next, with the slide beside it. Two quick taps find what you were really
-              thinking, and a fresh question shows whether it clicked.
+              One thing to do next, with the slide beside it.
             </p>
           </Reveal>
         </section>
@@ -225,9 +222,9 @@ export default async function Landing() {
           </Reveal>
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
             {[
-              { name: "Pilot", tag: "One term", body: "One or two courses, full paper analysis, student revision and instructor insights. We measure review time and retest gains with you.", cta: "Request a pilot" },
-              { name: "University", tag: "Per active student, per term", body: "Every course in a faculty, coordinator analytics, early-support alerts, SSO and data-retention controls.", cta: "Talk to us", featured: true },
-              { name: "Partner companies", tag: "After two terms of records", body: "Post vacancies mapped to course skills and receive faculty-reviewed nominations backed by assessed work.", cta: "Join the waitlist" },
+              { name: "Pilot", tag: "One term", body: "One or two courses. We measure the results with you.", cta: "Request a pilot" },
+              { name: "University", tag: "Per active student, per term", body: "Every course in a faculty.", cta: "Talk to us", featured: true },
+              { name: "Partner companies", tag: "After two terms of records", body: "Nominations backed by assessed work.", cta: "Join the waitlist" },
             ].map((p, i) => (
               <Reveal key={p.name} delay={i * 0.08}>
                 <div className={`flex h-full flex-col gap-3 rounded-sheet border p-6 ${p.featured ? "border-2 border-primary-600 shadow-lift" : "border-line"}`}>

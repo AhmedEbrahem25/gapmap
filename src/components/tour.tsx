@@ -180,16 +180,16 @@ export function Tour({ id }: { id: TourId }) {
         >
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs font-semibold tracking-wide text-primary-700 uppercase">
-              {step.eyebrow ?? "Tour"} · {index + 1} of {steps.length}
+              {index + 1} of {steps.length}
             </span>
             <button onClick={close} aria-label="Close the tour" className="-m-1 flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 hover:bg-ground hover:text-ink">
               <X size={16} />
             </button>
           </div>
-          <h2 id="tour-title" className="text-[17px] leading-6 font-semibold text-navy">
+          <h2 id="tour-title" className="text-lg leading-6 font-semibold text-navy">
             {step.title}
           </h2>
-          <p id="tour-body" className="text-sm leading-[21px] text-ink-2">
+          <p id="tour-body" className="text-base leading-6 text-ink-2">
             {step.body}
           </p>
           <div className="flex gap-1" aria-hidden>
