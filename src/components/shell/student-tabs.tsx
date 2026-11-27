@@ -26,6 +26,7 @@ export function StudentTabs({ hidden }: { hidden?: boolean }) {
           <Link
             key={t.href}
             href={t.href}
+            data-tour={`tab-${t.href.split("/")[2] ?? "home"}`}
             aria-current={active ? "page" : undefined}
             className={cn("relative flex flex-1 flex-col items-center gap-1 pt-2.5 text-[11px] font-medium transition-colors", active ? "font-semibold text-primary-600" : "text-ink-2 hover:text-ink")}
           >

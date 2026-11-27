@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { TourButton } from "@/components/tour";
 import { partnersEnabled } from "@/lib/features";
 import Link from "next/link";
 import { and, eq, inArray } from "drizzle-orm";
-import { LogOut, Briefcase, ChevronRight } from "lucide-react";
+import { LogOut, Briefcase, ChevronRight, Compass } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
 import { masteryByConcept } from "@/lib/data";
@@ -50,6 +51,9 @@ export default async function MePage() {
               <strong className="block">{user.name}</strong>
               <span className="block truncate text-[13px] text-ink-2">{user.email}</span>
             </span>
+            <TourButton id="student" className="flex h-11 items-center gap-1.5 rounded-xl px-2.5 text-[13px] font-semibold text-primary-700 hover:bg-primary-50">
+              <Compass size={16} aria-hidden /> Tour
+            </TourButton>
             <form action={logout}>
               <button aria-label="Sign out" className="flex h-11 w-11 items-center justify-center rounded-xl text-ink-2 hover:bg-ground">
                 <LogOut size={18} />

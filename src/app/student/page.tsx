@@ -125,7 +125,7 @@ export default async function StudentHome() {
         {switcher}
         {step ? (
           <StaggerItem>
-            <section aria-label="Your next step" className="flex flex-col gap-3 rounded-sheet border-2 border-primary-600 bg-white p-[18px] shadow-[0_18px_40px_-24px_rgb(181_24_52/0.45)]">
+            <section aria-label="Your next step" data-tour="next-step" className="flex flex-col gap-3 rounded-sheet border-2 border-primary-600 bg-white p-[18px] shadow-[0_18px_40px_-24px_rgb(181_24_52/0.45)]">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold tracking-[0.06em] text-primary-800 uppercase">Your next step</span>
                 <StatusChip status={stepStatus} />

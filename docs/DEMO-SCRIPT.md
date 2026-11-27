@@ -2,6 +2,8 @@
 
 Before you start: `npm run db:seed` (or **Reset demo data** on the login page), open
 http://localhost:3000/login in one window and keep a second, phone-sized window ready for the student.
+Each area shows a one-minute guided tour the first time it is opened in a browser; use **Take the tour** (website header,
+lecturer sidebar, student Me page) to show it again, for example to open the pitch with the website tour.
 
 | # | Who | Do | Say |
 | --- | --- | --- | --- |

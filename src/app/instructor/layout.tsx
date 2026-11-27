@@ -5,6 +5,7 @@ import { staffCourses } from "@/lib/data";
 import { StaffNav } from "@/components/shell/staff-nav";
 import { partnersEnabled } from "@/lib/features";
 import { UserMenu } from "@/components/shell/user-menu";
+import { Tour } from "@/components/tour";
 
 export default async function InstructorLayout({ children }: LayoutProps<"/instructor">) {
   const user = await requireRole("instructor", "ta", "admin");
@@ -21,6 +22,7 @@ export default async function InstructorLayout({ children }: LayoutProps<"/instr
       <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 lg:px-10 lg:py-8">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-6">{children}</div>
       </main>
+      <Tour id="instructor" />
     </div>
   );
 }

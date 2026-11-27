@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { BookOpen, FileText, BarChart3, MessagesSquare, BellRing, Briefcase, Menu, X } from "lucide-react";
+import { BookOpen, FileText, BarChart3, MessagesSquare, BellRing, Briefcase, Menu, X, Compass } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { TourButton } from "@/components/tour";
 import { Logo } from "@/components/ui/logo";
 
 const items = [
@@ -35,6 +36,7 @@ export function StaffNav({ counts, footer, partners }: { counts: { threads: numb
             ) : null}
             <Link
               href={it.href}
+              data-tour={`nav-${it.href.split("/")[2] ?? "courses"}`}
               onClick={() => setOpen(false)}
               aria-current={active ? "page" : undefined}
               className={cn(
@@ -73,6 +75,13 @@ export function StaffNav({ counts, footer, partners }: { counts: { threads: numb
           <Logo />
         </Link>
         {list}
+        <TourButton
+          id="instructor"
+          data-tour="tour-button"
+          className="mt-4 flex h-10 items-center gap-2.5 rounded-lg px-3 text-sm font-medium text-primary-700 hover:bg-primary-50"
+        >
+          <Compass size={17} aria-hidden /> Take the tour
+        </TourButton>
         <div className="mt-auto border-t border-line pt-3">{footer}</div>
       </nav>
     </>

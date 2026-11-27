@@ -9,11 +9,13 @@ import {
   Languages,
   UserCheck,
   BookOpen,
-  FlaskConical,
   BellRing,
-  Briefcase,
   ArrowRight,
+  FileText,
+  ListChecks,
+  MousePointerClick,
 } from "lucide-react";
+import { Tour, TourButton } from "@/components/tour";
 import { Logo } from "@/components/ui/logo";
 import { ButtonLink } from "@/components/ui/button";
 import { FadeIn, Reveal } from "@/components/ui/motion";
@@ -22,32 +24,32 @@ import { getCurrentUser } from "@/lib/auth";
 import { homeFor } from "@/lib/session";
 
 const steps = [
-  { icon: ScanLine, title: "Upload the marked papers", body: "Lecture slides, the model answer and the scanned handwritten papers. Arabic and English." },
-  { icon: Sparkles, title: "AI reads and matches", body: "Each answer is checked against every marking criterion, quoting the student's own words and linking the slide." },
-  { icon: UserCheck, title: "The instructor approves", body: "Nothing reaches a student until it has been reviewed. Edits are one click; the AI only suggests." },
-  { icon: MessageCircleQuestion, title: "One question, one next step", body: "A short follow-up finds the real gap, then an activity that fits how the student learns." },
-  { icon: LineChart, title: "A fresh test proves it", body: "A new question on the same gap shows whether studying helped — per concept, per student, per class." },
+  { icon: ScanLine, title: "The lecturer marks as usual", body: "Upload the papers after marking, or import a quiz file with its key. Lecture slides go in once, tagged by concept." },
+  { icon: Sparkles, title: "AI reads, rules score", body: "The AI reads each answer and the lecturer's own mark; multiple choice is scored by rules on the key. The AI never grades." },
+  { icon: BookOpen, title: "Every gap gets its slide", body: "Each gap is explained only from the lecturer's slide, with the page cited. Uncited text is flagged and hidden." },
+  { icon: UserCheck, title: "The lecturer approves", body: "One click per question; only flagged answers need a look. Nothing reaches a student before that." },
+  { icon: MousePointerClick, title: "Fix in 2 taps, then retest", body: "Two tap questions lead the student to the idea, then a fresh question shows the gap is closed." },
 ];
 
 const instructorFeatures = [
-  { icon: BookOpen, title: "Slides tagged by concept", body: "Every lost mark links to the exact slide that teaches it." },
-  { icon: Sparkles, title: "Misconceptions grouped", body: "Answers that share the same misunderstanding, with anonymous examples." },
+  { icon: FileText, title: "Exam file + key", body: "Import a quiz as PDF or Word: questions are read and linked to concepts. Type the key once." },
+  { icon: Sparkles, title: "Socratic-style fixes", body: "For every wrong option students chose, two tap questions and a slide hint, approved by you." },
+  { icon: LineChart, title: "Weak concepts, tricky questions", body: "The most common wrong answer per question, and what to re-teach when 40% of the class misses it." },
   { icon: BellRing, title: "Early support alerts", body: "Students who pass overall but keep missing a prerequisite." },
-  { icon: Briefcase, title: "Evidence for internships", body: "Nominate students to partner companies using assessed work." },
 ];
 
 const studentFeatures = [
-  { icon: Quote, title: "Feedback in your own words", body: "See what you wrote, what you got right and what's still missing." },
-  { icon: FlaskConical, title: "Activities that fit you", body: "Experiment, map ideas or follow an example — your choice, always editable." },
-  { icon: MessageCircleQuestion, title: "Ask without your name", body: "Question a marking comment anonymously; the instructor sees the answer, not you." },
-  { icon: LineChart, title: "See yourself improve", body: "Fresh tests show the change for every concept." },
+  { icon: FileText, title: "My papers", body: "Your whole marked paper: every answer with the lecturer's mark and what was missing." },
+  { icon: MousePointerClick, title: "Fix it in 2 taps", body: "Find the mistake yourself, with a hint from the slide if you tap wrong." },
+  { icon: ListChecks, title: "A plan that fits you", body: "A 5-tap check-in orders your plan and nudges you to test yourself instead of rereading." },
+  { icon: MessageCircleQuestion, title: "Ask without your name", body: "Question a marking comment anonymously; the lecturer sees the question, not you." },
 ];
 
 const principles = [
-  { icon: UserCheck, title: "Instructor in control", body: "Every grade and nomination is a human decision." },
-  { icon: Quote, title: "Evidence, not guesses", body: "Quotes must appear word-for-word in the transcription." },
-  { icon: ShieldCheck, title: "Private by design", body: "Students see only themselves; classmates stay anonymous." },
-  { icon: Languages, title: "Arabic & English", body: "Handwriting in either language, with RTL support." },
+  { icon: UserCheck, title: "Lecturer in control", body: "Marks come from the lecturer or from rules; AI text is approved per question." },
+  { icon: Quote, title: "Slides, not guesses", body: "Every explanation cites a slide page, or it is flagged and hidden." },
+  { icon: ShieldCheck, title: "Private by design", body: "The AI never sees names or IDs; students only tap, so nothing they type reaches it." },
+  { icon: Languages, title: "Arabic & English", body: "Handwritten answers in either language." },
 ];
 
 export default async function Landing() {
@@ -75,12 +77,15 @@ export default async function Landing() {
             </a>
           </nav>
           <div className="flex items-center gap-2">
+            <TourButton id="landing" className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50 sm:block" />
             {user ? null : (
               <Link href="/login" className="hidden rounded-lg px-3 py-2 text-sm font-semibold hover:bg-ground sm:block">
                 Sign in
               </Link>
             )}
-            <ButtonLink href={appHref}>{user ? "Open GapMap" : "Try the demo"}</ButtonLink>
+            <ButtonLink href={appHref} data-tour="try">
+              {user ? "Open GapMap" : "Try the demo"}
+            </ButtonLink>
           </div>
         </div>
       </header>
@@ -93,12 +98,12 @@ export default async function Landing() {
               <span className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-800">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary-600" /> AI for learning from exams already taken
               </span>
-              <h1 className="mt-5 text-[40px] leading-[1.08] font-bold tracking-tight text-navy sm:text-[56px]">
+              <h1 data-tour="hero" className="mt-5 text-[40px] leading-[1.08] font-bold tracking-tight text-navy sm:text-[56px]">
                 Every gap gets a <span className="relative whitespace-nowrap text-primary-600">next step<svg className="absolute -bottom-2 left-0 w-full" height="10" viewBox="0 0 200 10" preserveAspectRatio="none" aria-hidden><path d="M2 7 Q 60 1 100 5 T 198 4" stroke="#FDBA74" strokeWidth="4" fill="none" strokeLinecap="round" /></svg></span>.
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-8 text-ink-2">
                 A marked paper tells students where they lost marks. GapMap tells them what to practise next — using their own answer, the
-                instructor&apos;s marking criteria and the lecture slides — then checks whether it helped.
+                lecturer&apos;s mark and the lecture slides — then checks whether it helped.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <ButtonLink href={appHref} size="lg">
@@ -108,7 +113,7 @@ export default async function Landing() {
                   See how it works
                 </ButtonLink>
               </div>
-              <p className="mt-5 text-sm text-ink-2">Works with handwritten papers that are never returned to students.</p>
+              <p className="mt-5 text-sm text-ink-2">Works with marked paper exams and multiple-choice quizzes.</p>
             </FadeIn>
             <FadeIn delay={0.15}>
               <HeroDemo />
@@ -119,7 +124,7 @@ export default async function Landing() {
         <section className="border-y border-line bg-ground">
           <div className="mx-auto grid max-w-6xl gap-px overflow-hidden px-5 py-10 sm:grid-cols-3">
             {[
-              ["Handwritten exams", "Most papers are written by hand and never returned."],
+              ["Feedback comes too late", "Gaps show up after the exam, when the marks are already lost."],
               ["A grade, not a plan", "Students see a number, not which idea they're missing."],
               ["Patterns stay hidden", "Instructors can't see which misreading cost the class marks."],
             ].map(([t, b], i) => (
@@ -137,7 +142,7 @@ export default async function Landing() {
             <p className="text-sm font-semibold tracking-wide text-primary-600 uppercase">How it works</p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">From a marked paper to a measured improvement</h2>
           </Reveal>
-          <ol className="mt-12 grid gap-5 md:grid-cols-5">
+          <ol data-tour="how" className="mt-12 grid gap-5 md:grid-cols-5">
             {steps.map((st, i) => (
               <Reveal key={st.title} delay={i * 0.07}>
                 <li className="group relative flex h-full flex-col gap-3 rounded-sheet border border-line bg-white p-5 transition hover:-translate-y-1 hover:shadow-lift">
@@ -157,13 +162,13 @@ export default async function Landing() {
           <div className="mx-auto grid max-w-6xl gap-12 px-5 py-24 lg:grid-cols-[0.9fr_1.1fr]">
             <Reveal>
               <p className="text-sm font-semibold tracking-wide text-marker uppercase">For instructors</p>
-              <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Review a class in an afternoon, then decide what to reteach</h2>
+              <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Review a class in minutes, then decide what to re-teach</h2>
               <p className="mt-4 leading-7 text-[#c7cbd4]">
-                Scan beside transcription, each criterion with the student&apos;s own words, one click to approve. Then see which concept and
-                which misunderstanding cost the class the most marks.
+                Your mark read from the scan, each gap explained from your own slide, one click per question. Then see which concept and which
+                wrong answer cost the class the most marks.
               </p>
             </Reveal>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div data-tour="instructors" className="grid gap-4 sm:grid-cols-2">
               {instructorFeatures.map((f, i) => (
                 <Reveal key={f.title} delay={i * 0.06}>
                   <div className="h-full rounded-sheet border border-white/10 bg-white/5 p-5 transition hover:bg-white/10">
@@ -178,7 +183,7 @@ export default async function Landing() {
         </section>
 
         <section id="students" className="mx-auto grid max-w-6xl scroll-mt-20 gap-12 px-5 py-24 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="order-2 grid gap-4 sm:grid-cols-2 lg:order-1">
+          <div data-tour="students" className="order-2 grid gap-4 sm:grid-cols-2 lg:order-1">
             {studentFeatures.map((f, i) => (
               <Reveal key={f.title} delay={i * 0.06}>
                 <div className="h-full rounded-sheet border border-line bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-lift">
@@ -193,13 +198,13 @@ export default async function Landing() {
             <p className="text-sm font-semibold tracking-wide text-met uppercase">For students</p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">One next step at a time, never a wall of feedback</h2>
             <p className="mt-4 leading-7 text-ink-2">
-              The report opens on the single most useful thing to do next, with the slide beside it. A quick question finds what you were really
-              thinking, and a fresh test shows whether it clicked.
+              The report opens on the single most useful thing to do next, with the slide beside it. Two quick taps find what you were really
+              thinking, and a fresh question shows whether it clicked.
             </p>
           </Reveal>
         </section>
 
-        <section className="border-y border-line bg-ground">
+        <section className="border-y border-line bg-ground" data-tour="principles">
           <div className="mx-auto grid max-w-6xl gap-6 px-5 py-16 sm:grid-cols-2 lg:grid-cols-4">
             {principles.map((p, i) => (
               <Reveal key={p.title} delay={i * 0.06} className="flex gap-3">
@@ -260,6 +265,7 @@ export default async function Landing() {
           <p>Built by the Genesis Team for the AUF AI Educathon 2026.</p>
         </div>
       </footer>
+      <Tour id="landing" />
     </div>
   );
 }
