@@ -10,6 +10,7 @@ import { StudentHeader } from "@/components/shell/student-header";
 import { StatusChip, statusFromRatio } from "@/components/ui/badge";
 import { Stagger, StaggerItem } from "@/components/ui/motion";
 import { fmtMarks } from "@/lib/utils";
+import { McqAnswer } from "@/components/student/mcq-answer";
 
 export const metadata: Metadata = { title: "My paper" };
 
@@ -70,22 +71,35 @@ export default async function PaperPage({ params }: PageProps<"/student/papers/[
                     <span className="mr-1.5 text-primary-600">Q{question.number}.</span>
                     {question.prompt}
                   </p>
-                  <StatusChip status={statusFromRatio(answer.finalMarks ?? 0, question.maxMarks)} suffix={`${fmtMarks(answer.finalMarks)}/${fmtMarks(question.maxMarks)}`} />
+                  <StatusChip
+                    status={statusFromRatio(answer.finalMarks ?? 0, question.maxMarks)}
+                    suffix={`${fmtMarks(answer.finalMarks)}/${fmtMarks(question.maxMarks)}`}
+                  />
                 </div>
-                {answer.handwriting ? (
+                {question.kind === "mcq" ? (
+                  <McqAnswer answerId={answer.id} question={question} chosen={answer.chosenOption} />
+                ) : answer.handwriting ? (
                   <div className="paper-lines font-hand relative rounded-lg border border-[#e7e3d6] px-4 py-3 pr-16 text-[22px] leading-[32px] whitespace-pre-line text-[#1f2a5a]">
                     {answer.handwriting}
-                    <span aria-hidden className="absolute top-2 right-2.5 -rotate-6 rounded-full border-2 border-[#c0392b] px-2 text-[22px] leading-8 text-[#c0392b]">
+                    <span
+                      aria-hidden
+                      className="absolute top-2 right-2.5 -rotate-6 rounded-full border-2 border-[#c0392b] px-2 text-[22px] leading-8 text-[#c0392b]"
+                    >
                       {fmtMarks(answer.finalMarks)}/{fmtMarks(question.maxMarks)}
                     </span>
                   </div>
                 ) : answer.transcription ? (
                   <p className="rounded-lg bg-ground px-3 py-2 text-[15px] leading-6">{answer.transcription}</p>
                 ) : null}
-                <Link href={`/student/answers/${answer.id}`} className="flex items-center justify-between rounded-xl border border-line px-3 py-2.5 text-sm font-semibold text-primary-600 hover:bg-ground">
-                  {gaps ? `See what was missing (${gaps}) and the slide` : "See the feedback"}
-                  <ChevronRight size={16} aria-hidden />
-                </Link>
+                {question.kind === "mcq" ? null : (
+                  <Link
+                    href={`/student/answers/${answer.id}`}
+                    className="flex items-center justify-between rounded-xl border border-line px-3 py-2.5 text-sm font-semibold text-primary-600 hover:bg-ground"
+                  >
+                    {gaps ? `See what was missing (${gaps}) and the slide` : "See the feedback"}
+                    <ChevronRight size={16} aria-hidden />
+                  </Link>
+                )}
               </section>
             </StaggerItem>
           );

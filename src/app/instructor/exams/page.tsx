@@ -23,6 +23,7 @@ export default async function ExamsPage() {
   const exams = courses.flatMap((c) => courseExams(c.id).map((e) => ({ ...e, course: c })));
   const papers = exams.length ? db.select({ examId: s.papers.examId, status: s.papers.status }).from(s.papers).where(inArray(s.papers.examId, exams.map((e) => e.id))).all() : [];
   const qCount = (id: string) => db.select({ id: s.questions.id }).from(s.questions).where(eq(s.questions.examId, id)).all().length;
+  const hasMcq = (id: string) => db.select({ kind: s.questions.kind }).from(s.questions).where(eq(s.questions.examId, id)).all().some((q) => q.kind === "mcq");
 
   return (
     <>
@@ -45,13 +46,18 @@ export default async function ExamsPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2 text-sm font-semibold">
-                    <Link className="rounded-lg px-3 py-2 text-primary-600 hover:bg-primary-50" href={`/instructor/exams/${e.id}`}>
-                      Rubric
+                    <Link aria-label={`Questions · ${e.title}`} className="rounded-lg px-3 py-2 text-primary-600 hover:bg-primary-50" href={`/instructor/exams/${e.id}`}>
+                      Questions
                     </Link>
-                    <Link className="rounded-lg px-3 py-2 text-primary-600 hover:bg-primary-50" href={`/instructor/exams/${e.id}/upload`}>
+                    <Link aria-label={`Papers · ${e.title}`} className="rounded-lg px-3 py-2 text-primary-600 hover:bg-primary-50" href={`/instructor/exams/${e.id}/upload`}>
                       Papers
                     </Link>
-                    <Link className="rounded-lg bg-primary-600 px-3 py-2 text-white hover:bg-primary-700" href={`/instructor/exams/${e.id}/review`}>
+                    {hasMcq(e.id) ? (
+                      <Link aria-label={`Fix chains · ${e.title}`} className="rounded-lg px-3 py-2 text-primary-600 hover:bg-primary-50" href={`/instructor/exams/${e.id}/chains`}>
+                        Fix chains
+                      </Link>
+                    ) : null}
+                    <Link aria-label={`Review · ${e.title}`} className="rounded-lg bg-primary-600 px-3 py-2 text-white hover:bg-primary-700" href={`/instructor/exams/${e.id}/review`}>
                       Review
                     </Link>
                   </div>

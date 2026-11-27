@@ -2,7 +2,8 @@ import "server-only";
 import { z } from "zod";
 import { aiEnabled, structured, type Attachment } from "./client";
 import * as fb from "./fallback";
-import type { ActivityType, CriterionStatus } from "../db/schema";
+import type { ActivityType, ChainStep, CriterionStatus } from "../db/schema";
+import { LETTERS, chainFromSlide, chainIsGrounded, chainIsWellFormed, mixChoices } from "../mcq";
 
 /* Shared guardrails added to every system prompt. */
 const GROUNDING = `You work inside GapMap, a tool that helps university instructors give exam feedback.
@@ -675,4 +676,79 @@ export async function clusterMisconceptions(input: {
       examples: Array.from(new Set(list.map((l) => l.evidence).filter(Boolean))).slice(0, 3),
     }))
     .sort((a, b) => b.count - a.count);
+}
+
+/* ───────── 6.7 Socratic-style fix for a wrong MCQ option ───────── */
+
+/**
+ * Writes a 2-step tap-to-answer chain for one wrong option. The AI sees only the question, the
+ * options, the key and the slides: never a student. Chains that leave the slide are kept but uncited.
+ */
+export async function draftChain(input: {
+  question: string;
+  options: string[];
+  correct: string;
+  chosen: string;
+  slides: { id: string; lecture: number; page: number; title: string; body: string }[];
+}): Promise<{ misconception: string; steps: ChainStep[]; explanation: string; citedSlideId: string | null; model: string }> {
+  const offline = () => {
+    const slide = input.slides[0];
+    if (!slide) return null;
+    return { ...chainFromSlide({ ...input, slide }), citedSlideId: slide.id, model: "demo-slide" };
+  };
+  if (aiEnabled() && input.slides.length) {
+    try {
+      const { data, model } = await structured({
+        name: "socratic_chain",
+        description: "Write a 2-step tap-to-answer Socratic chain that leads a student from a wrong option to the idea on the slide.",
+        kind: "fast",
+        schema: z.object({
+          misconception: z.string(),
+          steps: z
+            .array(z.object({ prompt: z.string(), choices: z.array(z.object({ text: z.string(), correct: z.boolean() })).min(2).max(4), hint: z.string() }))
+            .min(2)
+            .max(2),
+          explanation: z.string(),
+          citation: z.string(),
+        }),
+        jsonSchema: {
+          type: "object",
+          properties: {
+            misconception: { type: "string", description: "One sentence: the likely misunderstanding behind choosing this wrong option" },
+            steps: {
+              type: "array",
+              description: "Exactly 2 steps. Step 1 makes the student notice the flaw; step 2 asks them to apply the right idea. Lead, don't tell.",
+              items: {
+                type: "object",
+                properties: {
+                  prompt: { type: "string", description: "A short question the student answers with one tap" },
+                  choices: {
+                    type: "array",
+                    items: { type: "object", properties: { text: { type: "string" }, correct: { type: "boolean" } }, required: ["text", "correct"] },
+                    description: "2–3 short choices, exactly one correct. Mix the position of the correct one.",
+                  },
+                  hint: { type: "string", description: "Shown after a wrong tap: one sentence using only the slide's words" },
+                },
+                required: ["prompt", "choices", "hint"],
+              },
+            },
+            explanation: { type: "string", description: "Shown at the end: 1–2 sentences from the slide only" },
+            citation: { type: "string", description: "Label of the slide you used, exactly as given (e.g. L4 p.12)" },
+          },
+          required: ["misconception", "steps", "explanation", "citation"],
+        },
+        system: `${GROUNDING}\nYou write Socratic tutoring steps for one wrong multiple-choice option. You never see any student: only the question, its options and the lecturer's slides.`,
+        prompt: `Question: ${input.question}\nOptions:\n${input.options.map((o, i) => `${LETTERS[i]}) ${o}`).join("\n")}\nCorrect: ${input.correct}\nWrong option chosen by some students: ${input.chosen}\n\nLecture slides (use only these):\n${input.slides.map((s) => `[${slideLabel(s.lecture, s.page)}] ${s.title}: ${s.body}`).join("\n")}`,
+      });
+      const slide = input.slides.find((s) => slideLabel(s.lecture, s.page).replace(/\s+/g, "").toLowerCase() === data.citation.replace(/\s+/g, "").toLowerCase());
+      if (!chainIsWellFormed(data.steps)) throw new Error("chain is not well formed");
+      const cited = slide && chainIsGrounded(data, `${slide.title} ${slide.body}`) ? slide.id : null;
+      return { misconception: data.misconception, steps: mixChoices(data.steps, `${input.question}${input.chosen}`), explanation: data.explanation, citedSlideId: cited, model };
+    } catch (e) {
+      console.warn("[ai] draftChain fell back:", e);
+    }
+  }
+  const o = offline();
+  if (!o) throw new Error("No slide linked to this question's concept");
+  return o;
 }

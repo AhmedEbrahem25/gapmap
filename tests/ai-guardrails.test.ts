@@ -116,3 +116,47 @@ test("AI quality is the share approved without edits", () => {
   assert.equal(approvedWithoutEdits([]), null);
   assert.equal(approvedWithoutEdits([{ edited: false }, { edited: false }, { edited: false }, { edited: true }]), 75);
 });
+
+import { parseChoice, scoreChoice, chainTargets, chainIsWellFormed, chainIsGrounded, chainFromSlide } from "../src/lib/mcq";
+
+test("MCQ is scored by rules on the key", () => {
+  assert.equal(parseChoice("b"), "B");
+  assert.equal(parseChoice(" (C) "), "C");
+  assert.equal(parseChoice("Option D"), "D");
+  assert.equal(parseChoice("E", 4), null, "only letters that exist");
+  assert.equal(parseChoice("maybe"), null);
+  assert.equal(scoreChoice("B", "B", 2), 2);
+  assert.equal(scoreChoice("A", "B", 2), 0);
+  assert.equal(scoreChoice(null, "B", 2), 0);
+});
+
+test("chains go to the wrong options students chose, most common first, capped", () => {
+  const qs = [{ id: "q1", correctOption: "B" }, { id: "q2", correctOption: "C" }];
+  const answers = [
+    ...Array.from({ length: 5 }, () => ({ questionId: "q1", chosenOption: "A" })),
+    ...Array.from({ length: 2 }, () => ({ questionId: "q2", chosenOption: "D" })),
+    { questionId: "q1", chosenOption: "B" },
+    { questionId: "q2", chosenOption: null },
+  ];
+  assert.deepEqual(chainTargets(qs, answers).map((t) => `${t.questionId}:${t.option}:${t.count}`), ["q1:A:5", "q2:D:2"]);
+  assert.equal(chainTargets(qs, answers, 1).length, 1);
+});
+
+test("an offline chain is well formed and stays on the slide", () => {
+  const slide = { title: "Rules for primary keys", body: "A primary key must be unique, must never be NULL, and should not change over time." };
+  const chain = chainFromSlide({ question: "Can a primary key value be NULL?", options: ["Yes", "Once", "No, never"], correct: "C", chosen: "B", slide });
+  assert.ok(chainIsWellFormed(chain.steps));
+  assert.ok(chainIsGrounded(chain, `${slide.title} ${slide.body}`));
+  assert.equal(chainIsWellFormed([{ prompt: "?", choices: [{ text: "a", correct: true }, { text: "b", correct: true }], hint: "" }]), false, "exactly one right choice");
+  assert.equal(chainIsGrounded({ ...chain, explanation: "Indexes speed up lookups with B-trees." }, `${slide.title} ${slide.body}`), false);
+});
+
+import { mixChoices } from "../src/lib/mcq";
+
+test("the right choice does not always sit first", () => {
+  const step = (p: string) => ({ prompt: p, hint: "", choices: [{ text: "right", correct: true }, { text: "w1", correct: false }, { text: "w2", correct: false }] });
+  const mixed = mixChoices([step("one"), step("two")], "Q1A");
+  assert.ok(mixed.every((s) => s.choices.filter((c) => c.correct).length === 1 && s.choices.length === 3));
+  assert.notDeepEqual(mixed.map((s) => s.choices.findIndex((c) => c.correct)), [0, 0]);
+  assert.deepEqual(mixChoices([step("one")], "Q1A"), mixChoices([step("one")], "Q1A"), "same every time");
+});

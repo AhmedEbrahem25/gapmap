@@ -117,6 +117,11 @@ export const questions = sqliteTable("questions", {
   maxMarks: real("max_marks").notNull(),
   modelAnswer: text("model_answer").notNull().default(""),
   conceptId: text("concept_id").references(() => concepts.id),
+  /** "written" answers are marked by the lecturer; "mcq" answers are scored by rules against the key. */
+  kind: text("kind").$type<"written" | "mcq">().notNull().default("written"),
+  /** MCQ option texts, in order A, B, C, D. */
+  options: text("options", { mode: "json" }).$type<string[]>(),
+  correctOption: text("correct_option"),
 });
 
 export const criteria = sqliteTable("criteria", {
@@ -157,6 +162,8 @@ export const answers = sqliteTable("answers", {
   confidence: real("confidence").notNull().default(1),
   lowConfidence: text("low_confidence", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
   status: text("status").$type<"pending" | "analysed" | "approved" | "released">().notNull().default("pending"),
+  /** MCQ only: the letter the student chose. */
+  chosenOption: text("chosen_option"),
   /** The mark the instructor wrote on the paper, read from the scan. Null until it is found. The AI never sets marks. */
   paperMarks: real("paper_marks"),
   /** How sure the reader is about paperMarks (1 when typed by a reviewer). */
@@ -350,4 +357,39 @@ export const auditLog = sqliteTable("audit_log", {
   action: text("action").notNull(),
   object: text("object").notNull(),
   at: createdAt(),
+});
+
+/* ───────── Socratic-style fix (MCQ) ───────── */
+
+export type ChainStep = { prompt: string; choices: { text: string; correct: boolean }[]; hint: string };
+
+/**
+ * One chain per question and wrong option that students actually chose. Written by the AI from the
+ * question, the options and the slides only (no student data), then approved by the lecturer.
+ */
+export const chains = sqliteTable("chains", {
+  id: id(),
+  questionId: text("question_id").notNull().references(() => questions.id),
+  option: text("option").notNull(),
+  misconception: text("misconception").notNull(),
+  steps: text("steps", { mode: "json" }).$type<ChainStep[]>().notNull(),
+  explanation: text("explanation").notNull(),
+  /** Slide the hints and explanation come from; null means uncited (flagged, never shown to students). */
+  citedSlideId: text("cited_slide_id").references(() => slides.id),
+  status: text("status").$type<"draft" | "approved">().notNull().default("draft"),
+  edited: integer("edited", { mode: "boolean" }).notNull().default(false),
+  model: text("model"),
+  createdAt: createdAt(),
+});
+
+/** A student's taps through a chain. Taps only: nothing the student does is sent to the AI. */
+export const chainRuns = sqliteTable("chain_runs", {
+  id: id(),
+  chainId: text("chain_id").notNull().references(() => chains.id),
+  studentId: text("student_id").notNull().references(() => users.id),
+  answerId: text("answer_id").references(() => answers.id),
+  taps: text("taps", { mode: "json" }).$type<{ step: number; choice: number; correct: boolean }[]>().notNull(),
+  /** Every step answered right on the first tap: the student found the gap before the explanation. */
+  selfFound: integer("self_found", { mode: "boolean" }).notNull(),
+  createdAt: createdAt(),
 });

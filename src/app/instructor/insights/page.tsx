@@ -14,6 +14,7 @@ import { AnimatedBar, CountUp, Stagger, StaggerItem, FadeIn } from "@/components
 import { decideFlag, reclusterQuestion, addClassDecision } from "@/lib/actions/instructor";
 import { cn, pct } from "@/lib/utils";
 import { RETEACH_SHARE, approvedWithoutEdits } from "@/lib/review";
+import { LETTERS } from "@/lib/mcq";
 
 export const metadata: Metadata = { title: "Class insights" };
 
@@ -101,9 +102,27 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
   const reteachPlanned = new Set(decisions.filter(({ d }) => d.decision === "reteach").map(({ d }) => d.conceptId));
   const reteach = conceptStats.filter((c) => c.share >= RETEACH_SHARE);
 
-  // AI quality: share of AI feedback on reviewed answers that the reviewer kept unchanged.
+  // Multiple choice: the most common wrong option per question, and the Socratic-style chains written for them.
+  const mcq = questions.filter((q) => q.kind === "mcq");
+  const chains = mcq.length ? db.select().from(s.chains).where(inArray(s.chains.questionId, mcq.map((q) => q.id))).all() : [];
+  const runs = chains.length ? db.select({ selfFound: s.chainRuns.selfFound }).from(s.chainRuns).where(inArray(s.chainRuns.chainId, chains.map((c) => c.id))).all() : [];
+  const tricky = mcq
+    .map((q) => {
+      const own = answers.filter((a) => a.questionId === q.id && a.chosenOption);
+      const counts = (q.options ?? []).map((_, i) => ({ letter: LETTERS[i]!, n: own.filter((a) => a.chosenOption === LETTERS[i]).length }));
+      const top = counts.filter((c) => c.letter !== q.correctOption).sort((a, b) => b.n - a.n)[0];
+      const chain = top ? chains.find((c) => c.questionId === q.id && c.option === top.letter) : undefined;
+      return { q, top, total: own.length, chain };
+    })
+    .filter((x) => x.top && x.top.n > 0)
+    .sort((a, b) => b.top!.n / b.total - a.top!.n / a.total);
+
+  // AI quality: share of AI texts (feedback on reviewed answers, approved chains) the lecturer kept unchanged.
   const reviewedIds = answers.filter((a) => (a.status === "approved" || a.status === "released") && a.model !== "csv-import").map((a) => a.id);
-  const aiQuality = approvedWithoutEdits(reviewedIds.length ? db.select({ edited: s.criterionResults.edited }).from(s.criterionResults).where(inArray(s.criterionResults.answerId, reviewedIds)).all() : []);
+  const aiQuality = approvedWithoutEdits([
+    ...(reviewedIds.length ? db.select({ edited: s.criterionResults.edited }).from(s.criterionResults).where(inArray(s.criterionResults.answerId, reviewedIds)).all() : []),
+    ...chains.filter((c) => c.status === "approved"),
+  ]);
 
   return (
     <>
@@ -115,8 +134,15 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
         }
         title={weakest ? `${weakest.concept.name} need${weakest.concept.name.endsWith("s") ? "" : "s"} another pass before the next unit` : "Class insights"}
         actions={
-          <form className="flex items-center gap-2 text-[13px] text-ink-2">
-            <input type="hidden" name="exam" value={exam.id} />
+          <form className="flex flex-wrap items-center gap-2 text-[13px] text-ink-2">
+            <label htmlFor="exam">Exam</label>
+            <select id="exam" name="exam" defaultValue={exam.id} className="h-9 rounded-lg border border-[#9ca3af] bg-white px-2 text-sm text-ink">
+              {exams.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.title}
+                </option>
+              ))}
+            </select>
             <label htmlFor="section">Section</label>
             <select id="section" name="section" defaultValue={section} className="h-9 rounded-lg border border-[#9ca3af] bg-white px-2 text-sm text-ink">
               <option value="all">All sections</option>
@@ -227,6 +253,35 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
           <p className="text-xs text-ink-2">Examples are anonymous.</p>
         </Card>
       </div>
+
+      {tricky.length ? (
+        <Card className="flex flex-col gap-3 p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-semibold">Tricky questions</h2>
+            <span className="text-xs text-ink-2">
+              Most common wrong answer per question
+              {runs.length ? ` · ${pct(runs.filter((r) => r.selfFound).length, runs.length)}% of 2-tap fixes self-found (target ≥ 50%)` : ""}
+            </span>
+          </div>
+          <ul className="flex flex-col">
+            {tricky.map(({ q, top, total, chain }) => (
+              <li key={q.id} className="flex flex-wrap items-center justify-between gap-3 border-t border-line-2 py-2.5 text-sm first:border-0 first:pt-0">
+                <span className="min-w-0 flex-[1_1_320px]">
+                  <strong>Q{q.number}</strong> {q.prompt}
+                  <span className="block text-ink-2">
+                    {pct(top!.n, total)}% chose {top!.letter}) {q.options?.[LETTERS.indexOf(top!.letter as (typeof LETTERS)[number])]}
+                  </span>
+                </span>
+                <Link href={`/instructor/exams/${exam.id}/chains`} className="shrink-0">
+                  <Badge tone={chain?.status === "approved" ? "met" : chain ? "ai" : "neutral"}>
+                    {chain?.status === "approved" ? "2-tap fix live" : chain ? "Fix drafted · approve" : "No fix yet"}
+                  </Badge>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
 
       <Card className="flex flex-col gap-3 p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

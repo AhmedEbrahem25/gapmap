@@ -16,7 +16,7 @@ test("hackathon demo: one answer from paper to class decision", async ({ page })
   await demoLogin(page, "Dr. Karim Nour");
   await expect(page.getByRole("heading", { name: "Database Systems" })).toBeVisible();
   await page.getByRole("link", { name: "Exams" }).first().click();
-  await page.getByRole("link", { name: "Review", exact: true }).click();
+  await page.getByRole("link", { name: "Review · Midterm exam" }).click();
   await expect(page.getByRole("heading", { name: /Mariam Adel/ })).toBeVisible();
   await expect(page.getByText("because it is the student number").first()).toBeVisible();
   await expect(page.getByText("What would happen if two students had the same name?")).toBeVisible();
@@ -59,6 +59,31 @@ test("hackathon demo: one answer from paper to class decision", async ({ page })
   await expect(page.getByText("Describes the column instead of the rule")).toBeVisible();
   await page.getByRole("button", { name: "Reteach next lecture" }).click();
   await expect(page.getByText(/Decision: Reteach in the next lecture/)).toBeVisible();
+});
+
+test("socratic-style fix: lecturer approves per question, student taps through", async ({ page }) => {
+  // Lecturer: Quiz 2 (MCQ) → MCQ fix chains → approve the drafted chain for Q3
+  await demoLogin(page, "Dr. Karim Nour");
+  await page.getByRole("link", { name: "Exams" }).first().click();
+  await page.getByRole("link", { name: /Fix chains · Quiz 2/ }).click();
+  await expect(page.getByText("No student data reaches the AI.")).toBeVisible();
+  await expect(page.getByText("Thinks a single empty key value is harmless.")).toBeVisible();
+  await page.getByRole("button", { name: "Approve 1 for Q3" }).click();
+  await expect(page.getByText("All chains approved").first()).toBeVisible();
+  await signOut(page);
+
+  // Mariam: My papers → Quiz 2 → her wrong Q1 → Fix it in 2 taps
+  await demoLogin(page, "Mariam Adel");
+  await page.getByRole("link", { name: "My papers" }).click();
+  await page.getByRole("link", { name: /Quiz 2/ }).click();
+  await page.getByRole("link", { name: /Fix it in 2 taps/ }).first().click();
+  await expect(page.getByRole("heading", { name: /both called Mariam Adel/ })).toBeVisible();
+  await page.getByRole("button", { name: "The one added first" }).click();
+  await expect(page.getByText(/Hint from the slide/)).toBeVisible();
+  await page.getByRole("button", { name: "The database can't tell them apart" }).click();
+  await page.getByRole("button", { name: "No two rows share its value" }).click();
+  await expect(page.getByText(/The hint did its job/)).toBeVisible();
+  await expect(page.getByText(/A primary key must be unique, must never be NULL/).first()).toBeVisible();
 });
 
 test("roles cannot cross into other areas", async ({ page }) => {

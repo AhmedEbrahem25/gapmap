@@ -10,6 +10,7 @@ import { SlideLink } from "@/components/ui/slide-link";
 import { ButtonLink } from "@/components/ui/button";
 import { Stagger, StaggerItem } from "@/components/ui/motion";
 import { fmtMarks } from "@/lib/utils";
+import { McqAnswer } from "@/components/student/mcq-answer";
 
 export const metadata: Metadata = { title: "Answer feedback" };
 
@@ -33,7 +34,8 @@ export default async function AnswerPage({ params }: PageProps<"/student/answers
         </StaggerItem>
         <StaggerItem>
           <section className="flex flex-col gap-2 rounded-sheet border border-line bg-white p-4">
-            <h2 className="text-sm font-semibold">What you wrote</h2>
+            <h2 className="text-sm font-semibold">{question.kind === "mcq" ? "Your answer" : "What you wrote"}</h2>
+            {question.kind === "mcq" ? <McqAnswer answerId={answerId} question={question} chosen={answer.chosenOption} /> : null}
             {answer.handwriting ? (
               <div className="paper-lines font-hand rounded-lg border border-[#e7e3d6] px-4 py-3 text-[24px] leading-[34px] whitespace-pre-line text-[#1f2a5a]">{answer.handwriting}</div>
             ) : paper.filePath && paper.mimeType?.startsWith("image/") ? (

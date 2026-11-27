@@ -112,10 +112,10 @@ export default async function UploadPage({ params }: PageProps<"/instructor/exam
           <Card className="flex flex-col gap-3 p-5">
             <div className="flex items-center gap-2">
               <FileSpreadsheet size={18} className="text-ink-2" aria-hidden />
-              <h2 className="text-sm font-semibold">No scans? Import reviewed marks</h2>
+              <h2 className="text-sm font-semibold">Multiple choice or no scans? Import a CSV</h2>
             </div>
             <p className="text-[13px] text-ink-2">
-              CSV with columns <code className="font-mono">email,{questions.map((q) => `Q${q.number}`).join(",")}</code>. Imported marks are released straight away and count towards mastery and alerts.
+              CSV with columns <code className="font-mono">email,{questions.map((q) => `Q${q.number}`).join(",")}</code>: a mark for written questions, the chosen letter (A–D) for multiple choice. Multiple choice is scored on your key, results are released straight away, and the AI writes a 2-step fix for every wrong option students chose.
             </p>
             <UploadDropzone endpoint="/api/import-csv" fields={{ examId }} accept=".csv,text/csv" title="Drop a CSV of marks" hint="One row per student" multiple={false} icon={<FileSpreadsheet size={24} aria-hidden />} />
           </Card>

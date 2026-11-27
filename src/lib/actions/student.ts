@@ -10,6 +10,7 @@ import { audit, studentCourse } from "@/lib/data";
 import { ownAnswer, profileFor, resultsFor } from "@/lib/student";
 import { checkSubmission, followupTurn, generateRetest, gradeRetest } from "@/lib/ai/pipelines";
 import { activityFor } from "@/lib/activities";
+import { chainForAnswer } from "@/lib/chains";
 import type { ChatMessage } from "@/lib/db/schema";
 import { PROFILE_QUESTIONS, cleanCheckin, profileFromCheckin } from "@/lib/profile-questions";
 
@@ -237,4 +238,23 @@ export async function toggleOptIn(formData: FormData) {
   const user = await student();
   db.update(s.users).set({ recruitOptIn: formData.get("optIn") === "on" }).where(eq(s.users.id, user.id)).run();
   refresh();
+}
+
+/* ───────── Socratic-style fix: taps only ───────── */
+
+export async function recordChainRun(answerId: string, taps: { step: number; choice: number }[]) {
+  const user = await student();
+  const { answer, question } = ownAnswer(user.id, answerId);
+  const chain = chainForAnswer(question.id, answer.chosenOption);
+  if (!chain) return { ok: false };
+  // Taps are checked against the stored chain on the server, so the result can't be faked from the page.
+  const checked = taps
+    .filter((t) => chain.steps[t.step]?.choices[t.choice])
+    .map((t) => ({ step: t.step, choice: t.choice, correct: chain.steps[t.step]!.choices[t.choice]!.correct }));
+  const firstTaps = chain.steps.map((_, i) => checked.find((t) => t.step === i));
+  const selfFound = firstTaps.every((t) => t?.correct);
+  db.insert(s.chainRuns).values({ id: crypto.randomUUID(), chainId: chain.id, studentId: user.id, answerId, taps: checked, selfFound }).run();
+  audit(user.id, "chain_run", chain.id);
+  refresh();
+  return { ok: true, selfFound };
 }

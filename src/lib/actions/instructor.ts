@@ -12,6 +12,7 @@ import { analyseAnswer, draftCriteriaFor } from "@/lib/jobs";
 import { clusterMisconceptions } from "@/lib/ai/pipelines";
 import { computeAlerts } from "@/lib/alerts";
 import { answerFlags } from "@/lib/review";
+import { draftChainsForExam } from "@/lib/chains";
 
 const staff = () => requireRole("instructor", "ta", "admin");
 const refresh = () => revalidatePath("/", "layout");
@@ -563,5 +564,97 @@ export async function reanalyseExam(formData: FormData) {
   after(async () => {
     for (const id of ids) await analyseAnswer(id);
   });
+  refresh();
+}
+
+/* ───────── Multiple choice & Socratic-style fix ───────── */
+
+export async function addMcqQuestion(formData: FormData) {
+  const user = await staff();
+  const examId = String(formData.get("examId"));
+  examWithAccess(user, examId);
+  const prompt = String(formData.get("prompt") ?? "").trim();
+  const options = ["A", "B", "C", "D"].map((l) => String(formData.get(`option${l}`) ?? "").trim()).filter(Boolean);
+  const correct = String(formData.get("correctOption") ?? "");
+  if (!prompt || options.length < 2 || "ABCD".indexOf(correct) < 0 || "ABCD".indexOf(correct) >= options.length) return;
+  const count = db.select({ id: s.questions.id }).from(s.questions).where(eq(s.questions.examId, examId)).all().length;
+  db.insert(s.questions)
+    .values({
+      id: crypto.randomUUID(),
+      examId,
+      number: count + 1,
+      prompt,
+      maxMarks: Number(formData.get("maxMarks") ?? 1) || 1,
+      kind: "mcq",
+      options,
+      correctOption: correct,
+      conceptId: (formData.get("conceptId") as string) || null,
+    })
+    .run();
+  refresh();
+  redirect(`/instructor/exams/${examId}?q=${count + 1}`);
+}
+
+/** Writes the missing chains for every wrong option students chose (up to 30 per quiz). */
+export async function writeChains(formData: FormData) {
+  const user = await staff();
+  const examId = String(formData.get("examId"));
+  examWithAccess(user, examId);
+  const n = await draftChainsForExam(examId);
+  audit(user.id, "write_chains", `${examId}:${n}`);
+  refresh();
+}
+
+/** One click per question: approves every cited draft chain. Uncited ones stay for an edit. */
+export async function approveQuestionChains(formData: FormData) {
+  const user = await staff();
+  const questionId = String(formData.get("questionId"));
+  const q = db.select().from(s.questions).where(eq(s.questions.id, questionId)).get();
+  if (!q) return;
+  examWithAccess(user, q.examId);
+  const drafts = db.select().from(s.chains).where(and(eq(s.chains.questionId, questionId), eq(s.chains.status, "draft"))).all();
+  const ready = drafts.filter((c) => c.citedSlideId);
+  for (const c of ready) db.update(s.chains).set({ status: "approved" }).where(eq(s.chains.id, c.id)).run();
+  audit(user.id, "approve_chains", `${questionId}:${ready.length}`);
+  refresh();
+}
+
+/** The lecturer's edit is approved text: it cites the slide the chain was written from, or the concept's first slide. */
+export async function updateChain(formData: FormData) {
+  const user = await staff();
+  const chainId = String(formData.get("chainId"));
+  const c = db.select().from(s.chains).where(eq(s.chains.id, chainId)).get();
+  if (!c) return;
+  const q = db.select().from(s.questions).where(eq(s.questions.id, c.questionId)).get()!;
+  examWithAccess(user, q.examId);
+  const steps = c.steps.map((st, i) => ({ ...st, prompt: String(formData.get(`prompt${i}`) ?? st.prompt).trim() || st.prompt, hint: String(formData.get(`hint${i}`) ?? st.hint).trim() }));
+  const fallbackSlide = q.conceptId
+    ? db.select({ id: s.slideConcepts.slideId }).from(s.slideConcepts).where(eq(s.slideConcepts.conceptId, q.conceptId)).get()?.id ?? null
+    : null;
+  db.update(s.chains)
+    .set({
+      misconception: String(formData.get("misconception") ?? c.misconception).trim() || c.misconception,
+      explanation: String(formData.get("explanation") ?? c.explanation).trim() || c.explanation,
+      steps,
+      citedSlideId: c.citedSlideId ?? fallbackSlide,
+      edited: true,
+      status: "approved",
+    })
+    .where(eq(s.chains.id, chainId))
+    .run();
+  audit(user.id, "edit_chain", chainId);
+  refresh();
+}
+
+export async function redraftChain(formData: FormData) {
+  const user = await staff();
+  const chainId = String(formData.get("chainId"));
+  const c = db.select().from(s.chains).where(eq(s.chains.id, chainId)).get();
+  if (!c) return;
+  const q = db.select().from(s.questions).where(eq(s.questions.id, c.questionId)).get()!;
+  examWithAccess(user, q.examId);
+  db.delete(s.chainRuns).where(eq(s.chainRuns.chainId, chainId)).run();
+  db.delete(s.chains).where(eq(s.chains.id, chainId)).run();
+  await draftChainsForExam(q.examId);
   refresh();
 }

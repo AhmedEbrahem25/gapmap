@@ -260,6 +260,184 @@ export function seed(SQL: SqlJsStatic, dbFile = process.env.DATABASE_PATH ?? "da
       })
       .run();
 
+    /* ── An MCQ quiz: scored by rules on the key, with Socratic-style chains for the wrong options students chose ── */
+    const l4 = (title: string) => {
+      const page = lectureDefs.find((l) => l.number === 4)!.slides.findIndex((sl) => sl.title === title) + 1;
+      return { id: slideIds.get(`4:${page}`)!, ...slideText.get(`4:${page}`)! };
+    };
+    const quiz2 = { id: id("exm"), courseId: course.id, title: "Quiz 2 · Keys (MCQ)", kind: "quiz" as const, date: "2026-10-28", status: "released" as const };
+    tx.insert(s.exams).values(quiz2).run();
+    const mcqDefs = [
+      {
+        prompt: "Which column is the best primary key for Student(StudentID, Name, Email, Phone)?",
+        options: ["Name", "StudentID", "Phone", "Name + Phone"],
+        correct: "B",
+        concept: "pk" as ConceptKey,
+        pick: (i: number) => (i % 5 === 0 ? "A" : i % 7 === 3 ? "D" : "B"),
+      },
+      {
+        prompt: "Enrollment(StudentID, CourseCode, Term): what does Enrollment.StudentID refer to?",
+        options: ["Nothing, it is just a number", "The primary key of Student", "The primary key of Course", "A new row in Student"],
+        correct: "B",
+        concept: "fk" as ConceptKey,
+        pick: (i: number) => (i % 4 === 1 ? "C" : i % 9 === 2 ? "A" : "B"),
+      },
+      {
+        prompt: "Can a primary key value be NULL?",
+        options: ["Yes, while the row is new", "Yes, but only once per table", "No, never", "Only for surrogate keys"],
+        correct: "C",
+        concept: "pk" as ConceptKey,
+        pick: (i: number) => (i % 3 === 2 ? "B" : i % 10 === 4 ? "A" : "C"),
+      },
+    ];
+    const mcqIds = mcqDefs.map((q, qi) => {
+      const qid = id("qst");
+      tx.insert(s.questions)
+        .values({ id: qid, examId: quiz2.id, number: qi + 1, prompt: q.prompt, maxMarks: 1, kind: "mcq", options: q.options, correctOption: q.correct, conceptId: conceptIds[q.concept] })
+        .run();
+      return qid;
+    });
+    const mcqAnswerIds = new Map<string, string>(); // "student:q" -> answer id
+    for (const st of students) {
+      const paperId = id("ppr");
+      tx.insert(s.papers).values({ id: paperId, examId: quiz2.id, studentId: st.id, section: st.section, fileName: "quiz2-choices.csv", status: "released" }).run();
+      mcqDefs.forEach((q, qi) => {
+        const chosen = q.pick(st.index);
+        const marks = chosen === q.correct ? 1 : 0;
+        const answerId = id("ans");
+        mcqAnswerIds.set(`${st.index}:${qi}`, answerId);
+        tx.insert(s.answers)
+          .values({
+            id: answerId,
+            paperId,
+            questionId: mcqIds[qi]!,
+            transcription: `${chosen}) ${q.options["ABCD".indexOf(chosen)]}`,
+            chosenOption: chosen,
+            status: "released",
+            paperMarks: marks,
+            suggestedMarks: marks,
+            finalMarks: marks,
+            model: "csv-import",
+            reviewedBy: staff.instructor.id,
+            reviewedAt: new Date("2026-10-29T10:00:00Z"),
+          })
+          .run();
+      });
+    }
+    // Chains as the AI writes them from the question, the options and the slides (no student data).
+    const rules = l4("Rules for primary keys");
+    const fkSlide = l4("Foreign keys");
+    const integrity = l4("Referential integrity");
+    const chainDefs = [
+      {
+        q: 0,
+        option: "A",
+        status: "approved" as const,
+        slide: rules,
+        misconception: "Believes a name can identify a student.",
+        steps: [
+          {
+            prompt: "Two students in your year are both called Mariam Adel. With Name as the key, which row does an update change?",
+            choices: [
+              { text: "The one added first", correct: false },
+              { text: "The database can't tell them apart", correct: true },
+              { text: "Both, and that's fine", correct: false },
+            ],
+            hint: "A primary key must be unique: two rows can never share it.",
+          },
+          {
+            prompt: "So what must a primary key guarantee?",
+            choices: [
+              { text: "It is easy to read", correct: false },
+              { text: "It is the first column", correct: false },
+              { text: "No two rows share its value", correct: true },
+            ],
+            hint: rules.body,
+          },
+        ],
+        explanation: rules.body,
+      },
+      {
+        q: 1,
+        option: "C",
+        status: "approved" as const,
+        slide: fkSlide,
+        misconception: "Mixes up which table a foreign key points to.",
+        steps: [
+          {
+            prompt: "Enrollment.StudentID holds values like 1042. In which table is 1042 a primary key value?",
+            choices: [
+              { text: "Course", correct: false },
+              { text: "Student", correct: true },
+              { text: "Enrollment", correct: false },
+            ],
+            hint: fkSlide.body,
+          },
+          {
+            prompt: "An Enrollment row has StudentID 9999, and no such student exists. What does the DBMS do?",
+            choices: [
+              { text: "Refuses the row", correct: true },
+              { text: "Accepts it", correct: false },
+              { text: "Creates the student", correct: false },
+            ],
+            hint: integrity.body,
+          },
+        ],
+        explanation: fkSlide.body,
+      },
+      {
+        q: 2,
+        option: "B",
+        status: "draft" as const,
+        slide: rules,
+        misconception: "Thinks a single empty key value is harmless.",
+        steps: [
+          {
+            prompt: "If one row's StudentID is NULL, can you point to exactly that row by its key?",
+            choices: [
+              { text: "Yes", correct: false },
+              { text: "No, there is no value to match", correct: true },
+            ],
+            hint: rules.body,
+          },
+          {
+            prompt: "So how many NULL primary key values may a table have?",
+            choices: [
+              { text: "One", correct: false },
+              { text: "None", correct: true },
+              { text: "As many as needed", correct: false },
+            ],
+            hint: rules.body,
+          },
+        ],
+        explanation: rules.body,
+      },
+    ];
+    for (const c of chainDefs) {
+      const chainId = id("chn");
+      tx.insert(s.chains)
+        .values({ id: chainId, questionId: mcqIds[c.q]!, option: c.option, misconception: c.misconception, steps: c.steps, explanation: c.explanation, citedSlideId: c.slide.id, status: c.status, model: "seed" })
+        .run();
+      if (c.status !== "approved") continue;
+      // A few classmates already tapped through (Mariam has not, so the demo starts fresh).
+      students
+        .filter((st) => st.index > 0 && mcqDefs[c.q]!.pick(st.index) === c.option)
+        .slice(0, 4)
+        .forEach((st, k) => {
+          const selfFound = k % 2 === 0;
+          tx.insert(s.chainRuns)
+            .values({
+              id: id("run"),
+              chainId,
+              studentId: st.id,
+              answerId: mcqAnswerIds.get(`${st.index}:${c.q}`)!,
+              taps: c.steps.map((stp, si) => ({ step: si, choice: stp.choices.findIndex((x) => x.correct), correct: true })),
+              selfFound,
+            })
+            .run();
+        });
+    }
+
     /* ── A second course, so students with several courses pick the subject in "My papers" ── */
     const mona = { id: id("usr"), email: "dr.mona@gapmap.demo", name: "Dr. Mona Saad", role: "instructor" as const, title: "Lecturer, Faculty of Computing" };
     tx.insert(s.users).values({ ...mona, universityId: uni.id, passwordHash: hash }).run();

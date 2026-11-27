@@ -13,6 +13,7 @@ http://localhost:3000/login in one window and keep a second, phone-sized window 
 | 5 | Mariam | Answer one quick question → choose a reply | “Two students could write the same answer for different reasons. One question tells them apart.” Show **Try the other reply** if time. |
 | 6 | Mariam | Activity (if asked, take the 5-tap study check-in and pick “Trying small changes myself”) → explain → Check | “She learns by experimenting, so she breaks the rule herself: two rows, same ID, update one.” |
 | 7 | Mariam | Take a fresh test → answer | “A new question on a new table. Partial → Met, per concept.” |
+| 7b | Instructor → Mariam | Exams → **Fix chains · Quiz 2** → Approve 1 for Q3; then Mariam → My papers → Quiz 2 → **Fix it in 2 taps** (tap a wrong answer first) | “Rules pick the wrong options students chose. For each one the AI writes two tap questions and a slide hint, from the question and the slides only: no student data. A wrong tap shows the hint; the explanation comes last, so she finds it herself.” |
 | 8 | Instructor | Class insights | “What to re-teach is computed: any concept 40%+ of the class misses. The AI-quality tile shows how much AI feedback we approved without edits (target 80%). 16 students described the column instead of the rule. Q4 may be worded ambiguously. Decide: reteach next lecture.” |
 | 9 | Instructor | Alerts, Internships | “Youssef passes overall but keeps missing foreign keys — joins depend on them. Later, faculty can nominate students for internships with assessed evidence.” |
 

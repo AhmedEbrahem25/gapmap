@@ -1,14 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { db, schema as s } from "@/lib/db";
 import { staffCourses } from "@/lib/data";
 import { examQuestions } from "@/lib/jobs";
+import { draftChainsForExam } from "@/lib/chains";
+import { parseChoice, scoreChoice } from "@/lib/mcq";
 
 /**
- * Imports reviewed marks from a CSV export: one row per student,
- * columns `email, Q1, Q2, …`. Imported marks are already reviewed, so they
- * are released straight away and feed concept mastery and alerts.
+ * Imports results from a CSV export: one row per student, columns `email, Q1, Q2, …`.
+ * Written questions take the lecturer's mark; multiple-choice questions take the letter the
+ * student chose and are scored by rules on the key. Results are released straight away, then
+ * the AI writes the Socratic-style chains for the wrong options students chose.
  */
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -45,10 +48,25 @@ export async function POST(req: Request) {
     for (const q of questions) {
       const col = header.indexOf(`q${q.number}`);
       if (col < 0 || r[col] === undefined || r[col] === "") continue;
-      const marks = Math.max(0, Math.min(q.maxMarks, Number(r[col])));
+      const chosen = q.kind === "mcq" ? parseChoice(r[col], q.options?.length ?? 4) : null;
+      if (q.kind === "mcq" && !chosen) continue;
+      const marks = q.kind === "mcq" ? scoreChoice(chosen, q.correctOption, q.maxMarks) : Math.max(0, Math.min(q.maxMarks, Number(r[col])));
       if (Number.isNaN(marks)) continue;
       db.insert(s.answers)
-        .values({ id: crypto.randomUUID(), paperId, questionId: q.id, transcription: "", status: "released", paperMarks: marks, suggestedMarks: marks, finalMarks: marks, model: "csv-import", reviewedBy: user.id, reviewedAt: new Date() })
+        .values({
+          id: crypto.randomUUID(),
+          paperId,
+          questionId: q.id,
+          transcription: chosen ? `${chosen}) ${q.options?.["ABCDE".indexOf(chosen)] ?? ""}` : "",
+          chosenOption: chosen,
+          status: "released",
+          paperMarks: marks,
+          suggestedMarks: marks,
+          finalMarks: marks,
+          model: "csv-import",
+          reviewedBy: user.id,
+          reviewedAt: new Date(),
+        })
         .run();
       if (q.conceptId) {
         db.insert(s.attempts)
@@ -58,5 +76,6 @@ export async function POST(req: Request) {
     }
     imported++;
   }
+  if (imported && questions.some((q) => q.kind === "mcq")) after(() => draftChainsForExam(examId).then(() => undefined));
   return NextResponse.json({ ok: true, imported, skipped });
 }

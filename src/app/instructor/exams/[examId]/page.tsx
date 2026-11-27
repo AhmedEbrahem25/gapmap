@@ -14,7 +14,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FadeIn } from "@/components/ui/motion";
 import { ExamSteps } from "./steps";
-import { aiDraftRubric, updateCriterion, addCriterion, deleteCriterion, addQuestion } from "@/lib/actions/instructor";
+import { aiDraftRubric, updateCriterion, addCriterion, deleteCriterion, addQuestion, addMcqQuestion } from "@/lib/actions/instructor";
 import { cn, fmtMarks } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Rubric" };
@@ -45,7 +45,7 @@ export default async function RubricPage({ params, searchParams }: PageProps<"/i
 
   return (
     <>
-      <PageHeader crumb={<>Exams / {course.title}</>} title={`${exam.title} · written answers`} />
+      <PageHeader crumb={<>Exams / {course.title}</>} title={`${exam.title} · questions`} />
       <ExamSteps examId={examId} current="rubric" done={questions.length ? ["rubric"] : []} />
 
       <div className="flex flex-wrap items-start gap-6">
@@ -66,7 +66,37 @@ export default async function RubricPage({ params, searchParams }: PageProps<"/i
             ))}
           </nav>
 
-          {q ? (
+          {q && q.kind === "mcq" ? (
+            <FadeIn key={q.id} className="flex flex-col gap-3">
+              <div>
+                <h2 className="text-lg leading-[26px] font-semibold">
+                  Q{q.number} · {q.prompt}
+                </h2>
+                <p className="mt-1 text-[13px] text-ink-2">
+                  Multiple choice · {fmtMarks(q.maxMarks)} mark{q.maxMarks === 1 ? "" : "s"}
+                  {q.conceptId ? ` · ${conceptName.get(q.conceptId)}` : ""} · scored by rules on your key
+                </p>
+              </div>
+              <ol className="flex flex-col gap-1.5">
+                {(q.options ?? []).map((o, i) => {
+                  const letter = "ABCDE"[i]!;
+                  return (
+                    <li key={letter} className={cn("flex items-center gap-2 rounded-lg border px-3 py-2 text-sm", letter === q.correctOption ? "border-met/40 bg-met-soft" : "border-line")}>
+                      <strong className="w-5">{letter}</strong> {o}
+                      {letter === q.correctOption ? <Badge tone="met" className="ml-auto">Key</Badge> : null}
+                    </li>
+                  );
+                })}
+              </ol>
+              <p className="text-[13px] text-ink-2">
+                After you import results, the AI writes a 2-step fix for each wrong option students chose. Review them in{" "}
+                <Link href={`/instructor/exams/${examId}/chains`} className="font-semibold">
+                  MCQ fix chains
+                </Link>
+                .
+              </p>
+            </FadeIn>
+          ) : q ? (
             <FadeIn key={q.id} className="flex flex-col gap-4">
               <div>
                 <h2 className="text-lg leading-[26px] font-semibold">
@@ -187,6 +217,43 @@ export default async function RubricPage({ params, searchParams }: PageProps<"/i
                 </label>
               </div>
               <SubmitButton>Add question</SubmitButton>
+            </form>
+          </Card>
+          <Card className="p-5">
+            <h2 className="font-semibold">Add a multiple-choice question</h2>
+            <form action={addMcqQuestion} className="mt-4 grid gap-3 text-sm">
+              <input type="hidden" name="examId" value={examId} />
+              <label className="grid gap-1">
+                <span className="text-[13px] font-semibold">Question</span>
+                <textarea name="prompt" rows={2} required className="rounded-lg border border-[#9ca3af] px-3 py-2" />
+              </label>
+              {["A", "B", "C", "D"].map((l) => (
+                <label key={l} className="flex items-center gap-2">
+                  <span className="w-5 text-[13px] font-semibold">{l}</span>
+                  <input name={`option${l}`} required={l < "C"} className="h-9 flex-1 rounded-lg border border-[#9ca3af] px-3" />
+                </label>
+              ))}
+              <div className="grid grid-cols-2 gap-3">
+                <label className="grid gap-1">
+                  <span className="text-[13px] font-semibold">Correct</span>
+                  <select name="correctOption" className="h-10 rounded-lg border border-[#9ca3af] px-2">
+                    {["A", "B", "C", "D"].map((l) => (
+                      <option key={l}>{l}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="grid gap-1">
+                  <span className="text-[13px] font-semibold">Concept</span>
+                  <select name="conceptId" className="h-10 rounded-lg border border-[#9ca3af] px-2">
+                    {concepts.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <SubmitButton>Add MCQ question</SubmitButton>
             </form>
           </Card>
           <Card className="flex flex-col gap-3 p-5">

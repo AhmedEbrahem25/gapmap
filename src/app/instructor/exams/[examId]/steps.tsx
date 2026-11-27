@@ -3,9 +3,10 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const steps = [
-  { key: "rubric", label: "Model answer & rubric", href: "" },
+  { key: "rubric", label: "Questions & rubric", href: "" },
   { key: "upload", label: "Student papers", href: "/upload" },
   { key: "review", label: "Review & release", href: "/review" },
+  { key: "chains", label: "MCQ fix chains", href: "/chains" },
 ] as const;
 
 export function ExamSteps({ examId, current, done }: { examId: string; current: (typeof steps)[number]["key"]; done: string[] }) {
@@ -21,7 +22,7 @@ export function ExamSteps({ examId, current, done }: { examId: string; current: 
               aria-current={isCurrent ? "step" : undefined}
               className={cn(
                 "flex items-center gap-2 rounded-full px-3.5 py-2 font-semibold transition",
-                isCurrent ? "bg-primary-600 text-white shadow-[0_6px_16px_-6px_rgb(36_69_216/0.6)]" : isDone ? "bg-met-soft text-met" : "border border-line bg-white font-normal text-[#374151] hover:border-primary-200",
+                isCurrent ? "bg-primary-600 text-white shadow-[0_6px_16px_-6px_rgb(181_24_52/0.6)]" : isDone ? "bg-met-soft text-met" : "border border-line bg-white font-normal text-[#374151] hover:border-primary-200",
               )}
             >
               {isDone ? <Check size={14} strokeWidth={3} aria-hidden /> : <span>{i + 1}</span>}
