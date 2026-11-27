@@ -52,8 +52,21 @@ export function openDatabase(SQL: SqlJsStatic, file: string, migrationsFolder: s
     const data = client.export(); // export re-opens the db, which resets pragmas
     client.run("PRAGMA foreign_keys = ON");
     const tmp = `${file}.tmp`;
-    fs.writeFileSync(tmp, Buffer.from(data));
-    fs.renameSync(tmp, file);
+    try {
+      fs.writeFileSync(tmp, Buffer.from(data));
+      try {
+        fs.renameSync(tmp, file);
+      } catch {
+        // Windows: a virus scanner or indexer can hold the file for a moment; overwrite it in place instead.
+        fs.copyFileSync(tmp, file);
+        fs.rmSync(tmp, { force: true });
+      }
+    } catch (err) {
+      // The in-memory copy stays the truth; try saving again shortly rather than failing the request.
+      console.warn("GapMap: saving the database failed, retrying", (err as Error).message);
+      dirty = true;
+      timer ??= setTimeout(flush, 500);
+    }
   };
 
   const markDirty = () => {

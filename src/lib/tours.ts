@@ -34,23 +34,24 @@ export const tours = {
 export type TourId = keyof typeof tours;
 
 /**
- * The guided demo: one story across pages and accounts, for judges. `path` is the page the step belongs to;
- * the guide jumps ahead by itself when the visitor reaches a later step's page. `click` steps wait for the
- * visitor to click the lit-up element instead of showing "Next".
+ * The guided demo: one story across pages and accounts, for judges, where the visitor does each step.
+ * `path` is the page the step belongs to; reaching a later step's page moves the guide there.
+ * `click`: wait for a click on the lit-up element. `until`: wait for an element with that data-tour to appear.
+ * Otherwise the card shows "Next". `ok` is the confirmation shown on the next card.
  */
-export type DemoStep = { path: string; target?: string; title: string; body: string; click?: boolean };
+export type DemoStep = { path: string; target?: string; title: string; body: string; click?: boolean; until?: string; ok?: string };
 
 export const demoSteps: DemoStep[] = [
-  { path: "^/login", target: "demo-dr.karim", title: "1 · The lecturer", body: "Dr. Karim marked his midterm on paper. Sign in as him.", click: true },
+  { path: "^/login", target: "demo-dr.karim", title: "1 · Be the lecturer", body: "Dr. Karim marked his midterm on paper. Sign in as him.", click: true },
   { path: "^/instructor$", target: "nav-exams", title: "His exams", body: "Open Exams.", click: true },
   { path: "^/instructor/exams$", target: "review-first", title: "The scanned papers", body: "Open the midterm review.", click: true },
-  { path: "/review$", target: "scan", title: "His mark, read from the scan", body: "The mark is his. The AI never grades." },
-  { path: "/review$", target: "diagnosis", title: "Why the marks were lost", body: "Each gap explained from his own slide, with the page." },
-  { path: "/review$", target: "approve-question", title: "One click per question", body: "Only flagged answers need a look." },
-  { path: "/review$", target: "release", title: "Release", body: "Students see nothing before this." },
-  { path: "/review$", target: "sign-out", title: "2 · The student", body: "Now see it as Mariam. Sign out.", click: true },
-  { path: "^/login", target: "demo-mariam", title: "The student", body: "Sign in as Mariam.", click: true },
-  { path: "^/student$", target: "next-step", title: "One next step", body: "Not a wall of feedback. Tap the button.", click: true },
-  { path: "^/student/(fix|followup|plan|practice)", title: "She works on her own gap", body: "She only taps. Hints come from the slide." },
-  { path: "^/student/(fix|followup|plan|practice)", title: "That's GapMap", body: "Lecturer marks → AI explains from slides → student fixes." },
+  { path: "/review$", target: "scan", title: "His mark, read from the paper", body: "2/4 is his mark. The AI never grades." },
+  { path: "/review$", target: "student-explanation", title: "What Mariam will read", body: "Open the explanation.", click: true, ok: "It quotes his own slide, with the page." },
+  { path: "/review$", target: "approve-answer", title: "Your call", body: "Looks right? Approve it.", click: true, ok: "Approved. Mariam still sees nothing." },
+  { path: "/review$", target: "release", title: "Release", body: "Send the approved feedback.", click: true, ok: "Released to students." },
+  { path: "/review$", target: "sign-out", title: "2 · Be the student", body: "Now be Mariam. Sign out.", click: true },
+  { path: "^/login", target: "demo-mariam", title: "Be Mariam", body: "Sign in as her.", click: true },
+  { path: "^/student$", target: "next-step", title: "Her next step", body: "One thing to do. Tap it.", click: true },
+  { path: "^/student/(fix|followup)", target: "taps", title: "Your turn", body: "Tap an answer. Wrong? You get a hint from the slide.", until: "fix-done", ok: "She found it herself." },
+  { path: "^/student/(fix|followup|plan|practice)", target: "fix-done", title: "That's GapMap", body: "Lecturer marks → AI explains from slides → student fixes it." },
 ];

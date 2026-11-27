@@ -99,6 +99,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
         .orderBy(asc(s.users.name))
         .all();
   const approveId = "approve-form";
+  const firstCitedId = results.find((r) => r.result.explanation && r.result.citedSlideId)?.result.id;
 
   return (
     <>
@@ -390,7 +391,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
                   </p>
                 ) : null}
                 {r.explanation && r.citedSlideId ? (
-                  <details className="text-sm">
+                  <details data-tour={r.id === firstCitedId ? "student-explanation" : undefined} className="text-sm">
                     <summary className="cursor-pointer text-ink-2">Explanation for the student{cited ? ` · L${cited.lectureNumber} p.${cited.page}` : ""}</summary>
                     <p className="mt-1.5 rounded-lg bg-ground px-3 py-2 leading-[21px]">{r.explanation}</p>
                   </details>
@@ -451,7 +452,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
                 Save
               </SubmitButton>
             </form>
-            <form id={approveId} action={approveAnswer} title={markRead ? undefined : "Add your mark first"}>
+            <form id={approveId} data-tour="approve-answer" action={approveAnswer} title={markRead ? undefined : "Add your mark first"}>
               <input type="hidden" name="answerId" value={a.id} />
               <input type="hidden" name="next" value={href(nextPending) ?? `/instructor/exams/${examId}/review?q=${q.number}`} />
               <SubmitButton pendingText="Approving…" variant={reviewed ? "secondary" : "primary"} className={markRead ? "" : "pointer-events-none opacity-50"}>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
+import { CheckCircle2, X } from "lucide-react";
 import { demoSteps } from "@/lib/tours";
 import { logout } from "@/lib/actions/auth";
 
@@ -44,6 +44,17 @@ export function GuidedDemo() {
   const pathname = usePathname();
   const [index, setIndex] = useState<number | null>(null);
   const [rect, setRect] = useState<Rect | null>(null);
+  // Just moved on: a page still loading reads "One moment" instead of "Go back".
+  const [moving, setMoving] = useState(false);
+  useEffect(() => {
+    if (!moving) return;
+    const t = window.setTimeout(() => setMoving(false), 5000);
+    return () => window.clearTimeout(t);
+  }, [moving]);
+  const advance = useCallback((to: number) => {
+    setMoving(true);
+    writeStep(to);
+  }, []);
 
   useEffect(() => {
     const sync = () => setIndex(readStep());
@@ -55,9 +66,12 @@ export function GuidedDemo() {
     };
   }, []);
 
-  // Reaching a later step's page (by clicking the lit-up element) moves the guide there.
+  // Reaching a later step's page moves the guide there. Only on an actual page change: a click step moves
+  // the guide on while the old page is still showing, and that page may match a later step (e.g. /login).
+  const lastPath = useRef<string | null>(null);
   useEffect(() => {
-    if (index === null) return;
+    if (index === null || lastPath.current === pathname) return;
+    lastPath.current = pathname;
     const step = demoSteps[index];
     if (!step || new RegExp(step.path).test(pathname)) return;
     const ahead = demoSteps.findIndex((s, i) => i > index && new RegExp(s.path).test(pathname));
@@ -66,6 +80,21 @@ export function GuidedDemo() {
 
   const step = index === null ? undefined : demoSteps[index];
   const onPage = !!step && new RegExp(step.path).test(pathname);
+
+  // The visitor does the step: a click on the lit-up element, or the awaited element showing up.
+  useEffect(() => {
+    if (index === null || !onPage || !step) return;
+    const next = index + 1;
+    const onClick = (e: MouseEvent) => {
+      if (step.click && step.target && (e.target as HTMLElement).closest?.(`[data-tour="${step.target}"]`)) window.setTimeout(() => advance(next), 150);
+    };
+    document.addEventListener("click", onClick, true);
+    const poll = step.until ? window.setInterval(() => document.querySelector(`[data-tour="${step.until}"]`) && advance(next), 300) : undefined;
+    return () => {
+      document.removeEventListener("click", onClick, true);
+      if (poll) window.clearInterval(poll);
+    };
+  }, [index, onPage, step, advance]);
 
   // Light up the step's element and keep the ring on it while the page moves.
   useEffect(() => {
@@ -97,11 +126,12 @@ export function GuidedDemo() {
   }, [onPage, step]);
 
   const end = useCallback(() => writeStep(null), []);
+  const ok = index ? demoSteps[index - 1]?.ok : undefined;
 
   if (index === null || !step) return null;
   const last = index === demoSteps.length - 1;
   // A click step whose element isn't on the page (e.g. the demo data moved on) falls back to "Next".
-  const waitForClick = onPage && step.click && !!rect;
+  const waitForClick = onPage && (step.click || !!step.until) && !!rect;
 
   return (
     <>
@@ -125,21 +155,26 @@ export function GuidedDemo() {
             <X size={16} />
           </button>
         </div>
+        {ok && onPage ? (
+          <p className="flex items-center gap-1.5 rounded-lg bg-met-soft px-2.5 py-1.5 text-sm font-medium text-met">
+            <CheckCircle2 size={15} aria-hidden /> {ok}
+          </p>
+        ) : null}
         <h2 className="text-base font-semibold text-navy">{step.title}</h2>
-        <p className="text-sm text-ink-2">{onPage ? step.body : "Go back to continue, or restart."}</p>
+        <p className="text-sm text-ink-2">{onPage ? step.body : moving ? "One moment…" : "Go back to continue, or restart."}</p>
         <div className="flex items-center justify-between gap-2 pt-1">
           <button onClick={() => void startGuidedDemo()} className="text-xs font-medium text-ink-2 hover:text-ink">
             Restart
           </button>
           {onPage && !waitForClick ? (
             <button
-              onClick={() => (last ? end() : writeStep(index + 1))}
+              onClick={() => (last ? end() : advance(index + 1))}
               className="h-9 rounded-[10px] bg-primary-600 px-4 text-sm font-semibold text-white hover:bg-primary-700"
             >
               {last ? "Finish" : "Next"}
             </button>
           ) : onPage ? (
-            <span className="text-xs font-semibold text-primary-700">Click the highlighted item</span>
+            <span className="text-xs font-semibold text-primary-700">{step.until ? "Your turn" : "Click the highlighted item"}</span>
           ) : null}
         </div>
       </div>

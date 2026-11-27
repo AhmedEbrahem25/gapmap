@@ -57,7 +57,7 @@ export function ChainRunner({
           <CheckCircle2 size={18} className="mt-0.5 shrink-0" aria-hidden />
           <span>{finished.selfFound ? "You found it yourself, before any hint." : "Got there. The hint did its job."}</span>
         </div>
-        <section className="flex flex-col gap-2 rounded-sheet border border-line bg-white p-4">
+        <section data-tour="fix-done" className="flex flex-col gap-2 rounded-sheet border border-line bg-white p-4">
           <h2 className="text-sm font-semibold">Why</h2>
           <p className="text-base leading-[22px]">{explanation}</p>
           {slide ? (
@@ -90,7 +90,7 @@ export function ChainRunner({
             Step {step + 1} of {steps.length} · tap an answer
           </p>
           <h2 className="text-base leading-[23px] font-semibold">{current?.prompt}</h2>
-          <div className="flex flex-col gap-2">
+          <div data-tour="taps" className="flex flex-col gap-2">
             {current?.choices.map((c, i) => (
               <button
                 key={i}

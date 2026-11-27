@@ -120,7 +120,7 @@ export function FollowupChat(props: {
         </AnimatePresence>
 
         {showQuick ? (
-          <div className="mt-1 flex flex-col gap-2">
+          <div data-tour="taps" className="mt-1 flex flex-col gap-2">
             <p className="text-xs text-ink-2">Tap the reply closest to what you were thinking.</p>
             {props.quickReplies.map((q, i) => (
               <button
@@ -136,7 +136,7 @@ export function FollowupChat(props: {
         ) : null}
 
         {done ? (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mt-1 flex flex-col gap-2.5">
+          <motion.div data-tour="fix-done" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mt-1 flex flex-col gap-2.5">
             {branch === "misconception" && props.slide ? (
               <SlideLink href={`/slides/${props.slide.id}?from=/student/followup/${props.answerId}`} lecture={props.slide.lecture} page={props.slide.page} title={props.slide.title} sub="Read this slide first" />
             ) : null}
