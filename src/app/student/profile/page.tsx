@@ -34,7 +34,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/student/
                   {q.options.map((o) => (
                     <label key={o.value} className="cursor-pointer">
                       <input type="radio" name={q.key} value={o.value} required defaultChecked={profile?.answers[q.key] === o.value} className="peer sr-only" />
-                      <span className="inline-flex min-h-10 items-center rounded-full border border-[#9ca3af] bg-white px-3.5 text-[14px] transition peer-checked:border-primary-600 peer-checked:bg-primary-50 peer-checked:font-semibold peer-checked:text-primary-800 peer-focus-visible:shadow-glow">
+                      <span className="inline-flex min-h-10 items-center rounded-full border border-[#9ca3af] bg-white px-3.5 text-sm transition peer-checked:border-primary-600 peer-checked:bg-primary-50 peer-checked:font-semibold peer-checked:text-primary-800 peer-focus-visible:shadow-glow">
                         {o.label}
                       </span>
                     </label>

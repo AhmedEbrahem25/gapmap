@@ -24,7 +24,7 @@ export function SlideLink({
         className,
       )}
     >
-      <span className="flex h-11 w-16 shrink-0 items-center justify-center rounded-md bg-primary-50 text-[11px] font-semibold text-primary-800 transition group-hover:bg-primary-100">
+      <span className="flex h-11 w-16 shrink-0 items-center justify-center rounded-md bg-primary-50 text-xs font-semibold text-primary-800 transition group-hover:bg-primary-100">
         L{lecture} · {page}
       </span>
       <span className="flex min-w-0 flex-col text-sm">

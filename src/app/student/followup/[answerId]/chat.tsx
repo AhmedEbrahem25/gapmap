@@ -76,13 +76,13 @@ export function FollowupChat(props: {
           <ChevronLeft size={22} />
         </Link>
         <div>
-          <h1 className="text-[17px] leading-[22px] font-semibold">{props.title}</h1>
+          <h1 className="text-lg leading-[22px] font-semibold">{props.title}</h1>
           <p className="text-xs text-ink-2">1 question · about 1 minute</p>
         </div>
       </header>
 
       <div className="flex flex-1 flex-col gap-3 p-4" aria-live="polite">
-        <div className="rounded-xl border border-quote-line bg-quote px-3 py-2.5 text-[13px] leading-[19px]">
+        <div className="rounded-xl border border-quote-line bg-quote px-3 py-2.5 text-sm leading-[19px]">
           <span className="text-ink-2">Your answer</span>
           <br />“{props.excerpt.length > 120 ? props.excerpt.slice(0, 120) + "…" : props.excerpt}”
         </div>
@@ -95,7 +95,7 @@ export function FollowupChat(props: {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               className={cn(
-                "max-w-[86%] px-3.5 py-3 text-[15px] leading-[22px]",
+                "max-w-[86%] px-3.5 py-3 text-base leading-[22px]",
                 m.role === "assistant" ? "self-start rounded-2xl rounded-bl-sm border border-line bg-white" : "self-end rounded-2xl rounded-br-sm bg-primary-600 text-white",
               )}
             >
@@ -141,7 +141,7 @@ export function FollowupChat(props: {
               <SlideLink href={`/slides/${props.slide.id}?from=/student/followup/${props.answerId}`} lecture={props.slide.lecture} page={props.slide.page} title={props.slide.title} sub="Read this slide first" />
             ) : null}
             {activityId ? (
-              <Link href={`/student/plan/${activityId}`} className="flex h-12 items-center justify-center rounded-xl bg-primary-600 text-[15px] font-semibold text-white transition hover:bg-primary-700 active:scale-[0.99]">
+              <Link href={`/student/plan/${activityId}`} className="flex h-12 items-center justify-center rounded-xl bg-primary-600 text-base font-semibold text-white transition hover:bg-primary-700 active:scale-[0.99]">
                 {branch === "understands" ? "Improve my answer" : "Start the activity"}
               </Link>
             ) : null}

@@ -88,8 +88,8 @@ export function UploadDropzone({
             )}
           </motion.span>
         </AnimatePresence>
-        <strong className="text-[15px]">{title}</strong>
-        <span className="text-[13px] leading-5 text-ink-2">{hint}</span>
+        <strong className="text-base">{title}</strong>
+        <span className="text-sm leading-5 text-ink-2">{hint}</span>
         <label className="mt-1 inline-flex h-10 cursor-pointer items-center rounded-[10px] bg-primary-600 px-4 text-sm font-semibold text-white transition hover:bg-primary-700 active:scale-[0.98]">
           Choose files
           <input
@@ -104,7 +104,7 @@ export function UploadDropzone({
           />
         </label>
         {message ? (
-          <p role="status" className={cn("text-[13px]", state === "error" ? "text-missing" : "text-ink-2")}>
+          <p role="status" className={cn("text-sm", state === "error" ? "text-missing" : "text-ink-2")}>
             {message}
           </p>
         ) : null}

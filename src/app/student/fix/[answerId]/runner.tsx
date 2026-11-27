@@ -59,7 +59,7 @@ export function ChainRunner({
         </div>
         <section className="flex flex-col gap-2 rounded-sheet border border-line bg-white p-4">
           <h2 className="text-sm font-semibold">Why</h2>
-          <p className="text-[15px] leading-[22px]">{explanation}</p>
+          <p className="text-base leading-[22px]">{explanation}</p>
           {slide ? (
             <Link href={slide.href} className="text-sm font-semibold">
               {slide.label} →
@@ -89,7 +89,7 @@ export function ChainRunner({
           <p className="text-xs font-semibold text-ink-2">
             Step {step + 1} of {steps.length} · tap an answer
           </p>
-          <h2 className="text-[16px] leading-[23px] font-semibold">{current?.prompt}</h2>
+          <h2 className="text-base leading-[23px] font-semibold">{current?.prompt}</h2>
           <div className="flex flex-col gap-2">
             {current?.choices.map((c, i) => (
               <button
@@ -98,7 +98,7 @@ export function ChainRunner({
                 onClick={() => tap(i)}
                 disabled={pending}
                 className={cn(
-                  "min-h-12 rounded-xl border px-3.5 py-2.5 text-left text-[15px] transition",
+                  "min-h-12 rounded-xl border px-3.5 py-2.5 text-left text-base transition",
                   wrong === i ? "border-missing/50 bg-missing-soft text-[#991b1b]" : "border-line bg-white hover:border-primary-200 hover:bg-primary-50",
                 )}
               >

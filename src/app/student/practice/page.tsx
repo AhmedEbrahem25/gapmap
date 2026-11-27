@@ -30,7 +30,7 @@ export default async function PracticePage() {
       <StudentHeader eyebrow={enrolled?.course.title} title="Practice & fresh tests" />
       <Stagger className="flex flex-col gap-3.5 px-5">
         <StaggerItem>
-          <p className="text-sm leading-[21px] text-ink-2">Each fresh test is a new question written for your gap, so you can see whether studying actually helped.</p>
+          <p className="text-sm leading-[21px] text-ink-2">A new question for each gap, to check you&apos;ve got it.</p>
         </StaggerItem>
         {ranked.map(({ c, m }) => (
           <StaggerItem key={c.id}>

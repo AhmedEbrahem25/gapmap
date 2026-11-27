@@ -28,7 +28,7 @@ export default async function InternshipsPage({ searchParams }: PageProps<"/inst
     .innerJoin(s.companies, eq(s.companies.id, s.vacancies.companyId))
     .where(eq(s.vacancies.status, "open"))
     .all();
-  if (!vacancies.length) return <EmptyState title="No open vacancies" body="Partner companies' vacancies that match your course concepts appear here." />;
+  if (!vacancies.length) return <EmptyState title="No open vacancies" body="Matching vacancies appear here." />;
   const current = vacancies.find((x) => x.v.id === sp.v) ?? vacancies[0]!;
   const courseIds = staffCourses(user).map((c) => c.id);
   const students = courseIds.length
@@ -68,7 +68,7 @@ export default async function InternshipsPage({ searchParams }: PageProps<"/inst
 
   return (
     <>
-      <PageHeader title="Internships" sub="Students from your courses who opted in, ranked by assessed evidence. You decide who to nominate." />
+      <PageHeader title="Internships" sub="Opted-in students, ranked. You nominate." />
       <div className="flex flex-wrap gap-2">
         {vacancies.map((x) => (
           <Link
@@ -85,7 +85,7 @@ export default async function InternshipsPage({ searchParams }: PageProps<"/inst
         <Card className="flex w-full flex-col gap-3 p-5 lg:max-w-[340px]">
           <Briefcase className="text-primary-600" size={22} aria-hidden />
           <h2 className="text-lg font-semibold">{current.v.title}</h2>
-          <p className="text-[13px] text-ink-2">
+          <p className="text-sm text-ink-2">
             {current.company} · closes {formatDate(current.v.closes)}
           </p>
           <p className="text-sm leading-[21px]">{current.v.description}</p>
@@ -114,7 +114,7 @@ export default async function InternshipsPage({ searchParams }: PageProps<"/inst
                   <div className="flex flex-wrap items-center gap-4">
                     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-800">{i + 1}</span>
                     <div className="min-w-[180px] flex-1">
-                      <strong className="text-[15px]">{c.name}</strong>
+                      <strong className="text-base">{c.name}</strong>
                       <div className="mt-1 flex items-center gap-2">
                         <AnimatedBar value={c.score} color={c.score >= 80 ? "#0F766E" : c.score >= 50 ? "#B45309" : "#B91C1C"} height={6} className="max-w-[160px]" />
                         <span className="text-xs text-ink-2">{c.score}% on required concepts</span>
@@ -133,17 +133,17 @@ export default async function InternshipsPage({ searchParams }: PageProps<"/inst
                     )}
                   </div>
                   <details className="mt-3">
-                    <summary className="cursor-pointer text-[13px] font-semibold text-primary-600">View evidence ({ev.length} assessed answers)</summary>
+                    <summary className="cursor-pointer text-sm font-semibold text-primary-600">View evidence ({ev.length} assessed answers)</summary>
                     <div className="mt-3 flex flex-col gap-3">
                       {ev.map((e) => (
                         <div key={e.answer.id} className="flex flex-col gap-1.5">
-                          <div className="flex items-center justify-between gap-2 text-[13px]">
+                          <div className="flex items-center justify-between gap-2 text-sm">
                             <span className="text-ink-2">
                               Q{e.question.number} · {conceptNames.get(e.question.conceptId ?? "")}
                             </span>
                             <StatusChip status={statusFromRatio(e.answer.finalMarks ?? 0, e.question.maxMarks)} suffix={`${fmtMarks(e.answer.finalMarks)}/${fmtMarks(e.question.maxMarks)}`} />
                           </div>
-                          <EvidenceQuote className={e.question.prompt.toLowerCase().includes("query") ? "font-mono text-[13px]" : ""}>{e.answer.transcription}</EvidenceQuote>
+                          <EvidenceQuote className={e.question.prompt.toLowerCase().includes("query") ? "font-mono text-sm" : ""}>{e.answer.transcription}</EvidenceQuote>
                         </div>
                       ))}
                     </div>

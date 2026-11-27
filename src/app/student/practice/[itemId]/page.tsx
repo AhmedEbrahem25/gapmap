@@ -64,7 +64,7 @@ export default async function RetestPage({ params }: PageProps<"/student/practic
                 [before.label, before.score, before.maxScore, beforeStatus!],
                 ["Fresh test", item.score!, item.maxScore, afterStatus!],
               ].map(([label, sc, mx, st], i) => (
-                <div key={label as string} className="grid grid-cols-[96px_1fr_40px] items-center gap-2 text-[13px]">
+                <div key={label as string} className="grid grid-cols-[96px_1fr_40px] items-center gap-2 text-sm">
                   <span className="truncate text-ink-2">{label}</span>
                   <AnimatedBar value={((sc as number) / (mx as number)) * 100} color={color[st as keyof typeof color]} height={10} delay={0.2 + i * 0.25} />
                   <strong>
@@ -77,8 +77,8 @@ export default async function RetestPage({ params }: PageProps<"/student/practic
         ) : null}
         <StaggerItem>
           <section className="flex flex-col gap-2.5 rounded-sheet border border-line bg-white p-4">
-            <p className="text-[13px] text-ink-2">New question</p>
-            <p className="text-[15px] leading-[22px] font-semibold">{item.prompt}</p>
+            <p className="text-sm text-ink-2">New question</p>
+            <p className="text-base leading-[22px] font-semibold">{item.prompt}</p>
             {answered ? (
               <>
                 <p className="rounded-[10px] bg-ground px-3 py-2.5 text-sm leading-[21px]">

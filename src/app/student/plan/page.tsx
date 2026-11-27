@@ -45,8 +45,8 @@ export default async function PlanPage() {
           <StaggerItem>
             <Link href="/student/profile?next=/student/plan" className="flex items-center gap-3 rounded-2xl border border-primary-200 bg-primary-50 p-4 text-sm">
               <span className="flex-1">
-                <strong className="block">Take the 5-question study check-in</strong>
-                <span className="text-ink-2">It orders your plan and matches activities to how you study.</span>
+                <strong className="block">5-question check-in</strong>
+                <span className="text-ink-2">Personalises your plan. 1 minute.</span>
               </span>
               <ChevronRight size={18} className="text-primary-600" aria-hidden />
             </Link>
@@ -78,13 +78,13 @@ export default async function PlanPage() {
               })}
             </ul>
           ) : (
-            <EmptyState title="Nothing queued" body="Answer a follow-up question from your report and GapMap will suggest an activity here." />
+            <EmptyState title="Nothing queued" body="Finish a fix from Home to get an activity." />
           )}
         </StaggerItem>
         {weak.length ? (
           <StaggerItem>
             <section className="rounded-sheet border border-line bg-white p-4">
-              <h2 className="text-sm font-semibold">Gaps by priority</h2>
+              <h2 className="text-sm font-semibold">All exams, weakest first</h2>
               <ol className="mt-2 flex flex-col">
                 {weak.map(({ c, m }, i) => (
                   <li key={c.id} className="flex items-center justify-between gap-2 border-t border-line-2 py-2.5 text-sm first:border-0">

@@ -43,7 +43,7 @@ export function McqAnswer({
           <Sparkles size={16} aria-hidden /> Fix it in 2 taps
         </ButtonLink>
       ) : wrong ? (
-        <p className="rounded-lg bg-ground px-3 py-2 text-[13px] text-ink-2">Your instructor is checking a 2-tap fix for this answer.</p>
+        <p className="rounded-lg bg-ground px-3 py-2 text-sm text-ink-2">Your instructor is checking a 2-tap fix for this answer.</p>
       ) : null}
     </div>
   );

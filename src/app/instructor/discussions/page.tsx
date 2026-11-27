@@ -29,7 +29,7 @@ export default async function DiscussionsPage({ searchParams }: PageProps<"/inst
         .orderBy(asc(s.threads.status), desc(s.threads.createdAt))
         .all()
     : [];
-  if (!threads.length) return <EmptyState title="No questions yet" body="Students can ask about a marking comment without revealing their name. Their questions appear here." />;
+  if (!threads.length) return <EmptyState title="No questions yet" body="Anonymous student questions appear here." />;
   const current = threads.find((t) => t.id === sp.t) ?? threads[0]!;
   const messages = db.select().from(s.threadMessages).where(eq(s.threadMessages.threadId, current.id)).orderBy(asc(s.threadMessages.createdAt)).all();
   const context = current.answerId
@@ -51,7 +51,7 @@ export default async function DiscussionsPage({ searchParams }: PageProps<"/inst
 
   return (
     <>
-      <PageHeader title="Discussions" sub="Anonymous questions about marking comments. You see the answer and criterion, never the student's name." />
+      <PageHeader title="Discussions" sub="Anonymous. You never see the name." />
       <div className="flex flex-wrap items-start gap-5">
         <Card className="w-full overflow-hidden lg:max-w-[360px]">
           <ul>
@@ -73,13 +73,13 @@ export default async function DiscussionsPage({ searchParams }: PageProps<"/inst
         </Card>
         <FadeIn key={current.id} className="flex min-w-0 flex-[999_1_480px] flex-col gap-4">
           <Card className="flex flex-col gap-4 p-5">
-            <div className="flex items-center gap-2 text-[13px] text-ink-2">
+            <div className="flex items-center gap-2 text-sm text-ink-2">
               <ShieldCheck size={16} className="text-met" aria-hidden /> Identity hidden · {current.alias}
             </div>
             <h2 className="text-lg font-semibold">{current.subject}</h2>
             {context ? (
               <div className="flex flex-col gap-2 rounded-card bg-ground p-4">
-                <p className="text-[13px] text-ink-2">
+                <p className="text-sm text-ink-2">
                   Q{context.question.number} · {context.question.prompt}
                 </p>
                 <EvidenceQuote label="Their answer">{context.answer.transcription}</EvidenceQuote>
@@ -92,17 +92,17 @@ export default async function DiscussionsPage({ searchParams }: PageProps<"/inst
             ) : null}
             <ol className="flex flex-col gap-3">
               {messages.map((m) => (
-                <li key={m.id} className={cn("max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-[22px]", m.authorRole === "instructor" ? "self-end rounded-br-sm bg-primary-600 text-white" : "self-start rounded-bl-sm border border-line bg-white")}>
+                <li key={m.id} className={cn("max-w-[85%] rounded-2xl px-4 py-3 text-base leading-[22px]", m.authorRole === "instructor" ? "self-end rounded-br-sm bg-primary-600 text-white" : "self-start rounded-bl-sm border border-line bg-white")}>
                   {m.body}
                 </li>
               ))}
             </ol>
             <form action={replyThread} className="flex flex-col gap-2">
               <input type="hidden" name="threadId" value={current.id} />
-              <label htmlFor="reply" className="text-[13px] font-semibold">
+              <label htmlFor="reply" className="text-sm font-semibold">
                 Your reply
               </label>
-              <textarea id="reply" name="body" rows={3} required className="rounded-lg border border-[#9ca3af] p-3 text-[15px]" />
+              <textarea id="reply" name="body" rows={3} required className="rounded-lg border border-[#9ca3af] p-3 text-base" />
               <SubmitButton className="self-end">Send reply</SubmitButton>
             </form>
           </Card>

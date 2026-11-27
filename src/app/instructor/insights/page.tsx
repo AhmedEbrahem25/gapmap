@@ -135,7 +135,7 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
         }
         title={weakest ? `${weakest.concept.name} need${weakest.concept.name.endsWith("s") ? "" : "s"} another pass before the next unit` : "Class insights"}
         actions={
-          <form className="flex flex-wrap items-center gap-2 text-[13px] text-ink-2">
+          <form className="flex flex-wrap items-center gap-2 text-sm text-ink-2">
             {courses.length > 1 ? (
               <>
                 <label htmlFor="course">Course</label>
@@ -174,7 +174,7 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
         {[
           { label: "Papers analysed", value: <CountUp to={papers.length} /> },
           { label: "Students needing review", value: <CountUp to={needing.size} /> },
-          { label: "Weakest concept", value: <span className="text-xl">{weakest?.concept.name ?? "—"}</span> },
+          { label: "Weakest concept", value: <span className="text-lg">{weakest?.concept.name ?? "—"}</span> },
           {
             label: "Improved on fresh test",
             value: (
@@ -194,8 +194,8 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
         ].map((k) => (
           <StaggerItem key={k.label}>
             <Card className="flex h-full flex-col gap-1 p-5">
-              <span className="text-[13px] text-ink-2">{k.label}</span>
-              <strong className="text-[26px] leading-8">{k.value}</strong>
+              <span className="text-sm text-ink-2">{k.label}</span>
+              <strong className="text-2xl leading-8">{k.value}</strong>
             </Card>
           </StaggerItem>
         ))}
@@ -213,7 +213,7 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
           ))}
           <div className="mt-1 border-t border-line-2 pt-3">
             <h3 className="text-sm font-semibold">By question</h3>
-            <div className="mt-2 grid grid-cols-5 gap-2 text-center text-[13px]">
+            <div className="mt-2 grid grid-cols-5 gap-2 text-center text-sm">
               {qStats.map(({ q, rate }) => (
                 <Link
                   key={q.id}
@@ -250,8 +250,8 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
             misconceptions.map((m, i) => (
               <FadeIn key={m.id} delay={i * 0.06} className={cn("flex flex-col gap-2", i < misconceptions.length - 1 && "border-b border-line-2 pb-3.5")}>
                 <div className="flex justify-between gap-2">
-                  <strong className="text-[15px]">{m.title}</strong>
-                  <span className="text-[13px] whitespace-nowrap text-ink-2">{m.studentCount} students</span>
+                  <strong className="text-base">{m.title}</strong>
+                  <span className="text-sm whitespace-nowrap text-ink-2">{m.studentCount} students</span>
                 </div>
                 {m.examples.map((ex) => (
                   <p key={ex} className="rounded-lg bg-ground px-3 py-2 text-sm leading-[21px] text-[#374151]">
@@ -261,7 +261,7 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
               </FadeIn>
             ))
           ) : (
-            <p className="text-sm text-ink-2">No grouped misconceptions for this question yet. Click Re-group to analyse the answers.</p>
+            <p className="text-sm text-ink-2">Nothing grouped yet. Click Re-group.</p>
           )}
           <p className="text-xs text-ink-2">Examples are anonymous.</p>
         </Card>
@@ -341,7 +341,7 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
                   {f.decision ? <CheckCircle2 size={12} aria-hidden /> : <TriangleAlert size={12} aria-hidden />}
                   {f.decision ? `Decided · Q${q.number}` : `Question may be ambiguous · Q${q.number}`}
                 </Badge>
-                <p className="text-[15px] leading-[23px]">{f.reason}</p>
+                <p className="text-base leading-[23px]">{f.reason}</p>
                 {f.decision ? <p className="text-sm font-semibold text-met">Decision: {decisionLabel[f.decision]}</p> : null}
               </div>
               {!f.decision ? (
@@ -387,7 +387,7 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
           <form action={addClassDecision} className="mt-3 grid gap-3 text-sm">
             <input type="hidden" name="examId" value={exam.id} />
             <label className="grid gap-1">
-              <span className="text-[13px] font-semibold">Concept</span>
+              <span className="text-sm font-semibold">Concept</span>
               <select name="conceptId" defaultValue={weakest?.concept.id} className="h-10 rounded-lg border border-[#9ca3af] px-2">
                 {concepts.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -397,7 +397,7 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
               </select>
             </label>
             <label className="grid gap-1">
-              <span className="text-[13px] font-semibold">Action</span>
+              <span className="text-sm font-semibold">Action</span>
               <select name="decision" className="h-10 rounded-lg border border-[#9ca3af] px-2">
                 <option value="reteach">Reteach in the next lecture</option>
                 <option value="clarify">Clarify the wording</option>
@@ -405,7 +405,7 @@ export default async function InsightsPage({ searchParams }: PageProps<"/instruc
               </select>
             </label>
             <label className="grid gap-1">
-              <span className="text-[13px] font-semibold">Note</span>
+              <span className="text-sm font-semibold">Note</span>
               <input name="note" placeholder="10 minutes on why keys must be unique" className="h-10 rounded-lg border border-[#9ca3af] px-3" />
             </label>
             <SubmitButton>Add to plan</SubmitButton>

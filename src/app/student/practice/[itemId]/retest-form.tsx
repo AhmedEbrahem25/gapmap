@@ -15,7 +15,7 @@ export function RetestForm({ itemId, options }: { itemId: string; options?: stri
           {options.map((o, i) => (
             <label key={i} className="cursor-pointer">
               <input type="radio" name="choice" value={"ABCDE"[i]} required className="peer sr-only" />
-              <span className="flex min-h-12 items-center gap-2 rounded-xl border border-line bg-white px-3.5 py-2.5 text-[15px] transition peer-checked:border-primary-600 peer-checked:bg-primary-50 peer-focus-visible:shadow-glow">
+              <span className="flex min-h-12 items-center gap-2 rounded-xl border border-line bg-white px-3.5 py-2.5 text-base transition peer-checked:border-primary-600 peer-checked:bg-primary-50 peer-focus-visible:shadow-glow">
                 <strong className="w-5">{"ABCDE"[i]}</strong> {o}
               </span>
             </label>
@@ -31,7 +31,7 @@ export function RetestForm({ itemId, options }: { itemId: string; options?: stri
             name="answer"
             rows={4}
             placeholder="Write your answer in a sentence or two…"
-            className="resize-none rounded-[10px] border border-[#9ca3af] px-3 py-2.5 text-[15px] outline-none focus:border-primary-600 focus:shadow-glow"
+            className="resize-none rounded-[10px] border border-[#9ca3af] px-3 py-2.5 text-base outline-none focus:border-primary-600 focus:shadow-glow"
           />
         </>
       )}

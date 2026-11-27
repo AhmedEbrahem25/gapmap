@@ -41,7 +41,7 @@ export default async function AlertsPage() {
     <>
       <PageHeader
         title="Early support alerts"
-        sub="Students who are passing overall but keep missing a concept the next unit builds on."
+        sub="Passing overall, but missing a key concept."
         actions={
           <>
             {precision !== null ? <Badge tone="primary">{precision}% rated useful</Badge> : null}
@@ -64,14 +64,14 @@ export default async function AlertsPage() {
               <StaggerItem key={a.id}>
                 <Card className="flex h-full flex-col gap-4 p-5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h2 className="flex items-center gap-2 text-[17px] font-semibold">
+                    <h2 className="flex items-center gap-2 text-lg font-semibold">
                       <BellRing size={18} className="text-partial" aria-hidden /> {student}
                     </h2>
                     <Badge tone={a.status === "open" ? "partial" : a.status === "actioned" ? "met" : "neutral"}>
                       {a.status === "open" ? "Prerequisite at risk" : a.status === "actioned" ? "Action taken" : "Dismissed"}
                     </Badge>
                   </div>
-                  <p className="text-[15px] leading-[23px]">{a.summary}</p>
+                  <p className="text-base leading-[23px]">{a.summary}</p>
                   <table className="text-sm">
                     <thead className="text-left text-xs font-semibold text-ink-2">
                       <tr>
@@ -115,7 +115,7 @@ export default async function AlertsPage() {
                   ) : (
                     <p className="text-sm text-met">{a.action === "assign_practice" ? "Practice set added to the student's study plan." : a.action === "check_in" ? "Check-in scheduled." : "Dismissed."}</p>
                   )}
-                  <div className="mt-auto flex items-center gap-2 border-t border-line-2 pt-3 text-[13px] text-ink-2">
+                  <div className="mt-auto flex items-center gap-2 border-t border-line-2 pt-3 text-sm text-ink-2">
                     Was this alert useful?
                     {a.useful === null ? (
                       ["useful", "not_useful"].map((v) => (

@@ -50,7 +50,7 @@ export default async function ActivityPage({ params }: PageProps<"/student/plan/
           <section aria-label="Study profile" className="flex flex-col gap-2 rounded-2xl border border-line bg-white px-4 py-3.5">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">How you like to study</h2>
-              <Link href={`/student/profile?next=/student/plan/${a.id}`} className="text-[13px] font-medium">
+              <Link href={`/student/profile?next=/student/plan/${a.id}`} className="text-sm font-medium">
                 {profile ? "Edit" : "Set up"}
               </Link>
             </div>
@@ -63,16 +63,16 @@ export default async function ActivityPage({ params }: PageProps<"/student/plan/
                 ))}
               </div>
             ) : null}
-            <p className="text-[13px] leading-[19px] text-ink-2">{a.reason}</p>
+            <p className="text-sm leading-[19px] text-ink-2">{a.reason}</p>
           </section>
         </StaggerItem>
 
         {isExperiment ? (
           <StaggerItem>
             <section aria-label="Experiment" className="flex flex-col gap-2.5 rounded-sheet border-2 border-primary-600 bg-white p-4">
-              <p className="text-[15px] leading-[22px]">{p.intro}</p>
+              <p className="text-base leading-[22px]">{p.intro}</p>
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse font-mono text-[13px]">
+                <table className="w-full border-collapse font-mono text-sm">
                   <thead>
                     <tr className="text-left text-ink-2">
                       {p.table.columns.map((c) => (
@@ -98,13 +98,13 @@ export default async function ActivityPage({ params }: PageProps<"/student/plan/
               <p className="text-sm leading-[21px]">
                 <strong>Your task:</strong> {p.task}
               </p>
-              <pre className="overflow-x-auto rounded-[10px] bg-ink px-3 py-2.5 font-mono text-[12.5px] leading-[19px] text-[#e5e7eb]">{p.sql}</pre>
+              <pre className="overflow-x-auto rounded-[10px] bg-ink px-3 py-2.5 font-mono text-xs leading-[19px] text-[#e5e7eb]">{p.sql}</pre>
               <RunResult result={p.result} />
             </section>
           </StaggerItem>
         ) : (
           <StaggerItem>
-            <section className="rounded-sheet border-2 border-primary-600 bg-white p-4 text-[15px] leading-[22px]">{String(p.prompt ?? a.title)}</section>
+            <section className="rounded-sheet border-2 border-primary-600 bg-white p-4 text-base leading-[22px]">{String(p.prompt ?? a.title)}</section>
           </StaggerItem>
         )}
 
@@ -178,7 +178,7 @@ export default async function ActivityPage({ params }: PageProps<"/student/plan/
 
 function RunResult({ result }: { result: string }) {
   return (
-    <div className="flex items-center gap-2 rounded-[10px] bg-missing-soft px-3 py-2 text-[13px] font-semibold text-[#991b1b]">
+    <div className="flex items-center gap-2 rounded-[10px] bg-missing-soft px-3 py-2 text-sm font-semibold text-[#991b1b]">
       <TriangleAlert size={16} aria-hidden /> {result}
     </div>
   );
