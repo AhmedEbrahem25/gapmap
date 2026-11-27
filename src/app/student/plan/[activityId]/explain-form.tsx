@@ -32,7 +32,7 @@ export function ExplainForm({
         rows={3}
         defaultValue={initialText}
         placeholder="Because the ID…"
-        className="resize-none rounded-[10px] border border-[#9ca3af] bg-white px-3 py-2.5 text-[15px] outline-none focus:border-primary-600 focus:shadow-glow"
+        className="resize-none rounded-[10px] border border-[#9ca3af] bg-white px-3 py-2.5 text-base outline-none focus:border-primary-600 focus:shadow-glow"
       />
       {state.error ? (
         <p role="alert" className="text-sm text-missing">

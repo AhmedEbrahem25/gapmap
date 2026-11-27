@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 export function EvidenceQuote({ children, label, className }: { children: ReactNode; label?: string; className?: string }) {
   return (
-    <blockquote className={cn("m-0 rounded-[10px] border border-quote-line bg-quote px-3.5 py-2.5 text-[15px] leading-6", className)}>
+    <blockquote className={cn("m-0 rounded-[10px] border border-quote-line bg-quote px-3.5 py-2.5 text-base leading-6", className)}>
       {label ? <span className="mb-0.5 block text-xs text-ink-2">{label}</span> : null}
       {children}
     </blockquote>

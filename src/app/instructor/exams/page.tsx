@@ -27,7 +27,7 @@ export default async function ExamsPage() {
 
   return (
     <>
-      <PageHeader title="Exams" sub="Upload marked papers, review the AI's feedback, then release it to students." />
+      <PageHeader title="Exams" sub="Upload → review → release." />
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <Stagger className="flex flex-col gap-3">
           {exams.map((e) => {
@@ -41,7 +41,7 @@ export default async function ExamsPage() {
                       <h2 className="text-base font-semibold">{e.title}</h2>
                       <Badge tone={statusTone[e.status]}>{statusLabel[e.status]}</Badge>
                     </div>
-                    <p className="mt-1 text-[13px] text-ink-2">
+                    <p className="mt-1 text-sm text-ink-2">
                       {e.course.title} · {formatDate(e.date)} · {qCount(e.id)} questions · {ps.length} papers · {done} reviewed
                     </p>
                   </div>
@@ -70,7 +70,7 @@ export default async function ExamsPage() {
           <h2 className="font-semibold">New exam or quiz</h2>
           <form action={createExam} className="mt-4 grid gap-3 text-sm">
             <label className="grid gap-1">
-              <span className="text-[13px] font-semibold">Course</span>
+              <span className="text-sm font-semibold">Course</span>
               <select name="courseId" className="h-10 rounded-lg border border-[#9ca3af] px-2">
                 {courses.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -80,12 +80,12 @@ export default async function ExamsPage() {
               </select>
             </label>
             <label className="grid gap-1">
-              <span className="text-[13px] font-semibold">Title</span>
+              <span className="text-sm font-semibold">Title</span>
               <input name="title" required placeholder="Quiz 3" className="h-10 rounded-lg border border-[#9ca3af] px-3" />
             </label>
             <div className="grid grid-cols-2 gap-3">
               <label className="grid gap-1">
-                <span className="text-[13px] font-semibold">Type</span>
+                <span className="text-sm font-semibold">Type</span>
                 <select name="kind" className="h-10 rounded-lg border border-[#9ca3af] px-2">
                   <option value="quiz">Quiz</option>
                   <option value="midterm">Midterm</option>
@@ -93,7 +93,7 @@ export default async function ExamsPage() {
                 </select>
               </label>
               <label className="grid gap-1">
-                <span className="text-[13px] font-semibold">Date</span>
+                <span className="text-sm font-semibold">Date</span>
                 <input name="date" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} className="h-10 rounded-lg border border-[#9ca3af] px-2" />
               </label>
             </div>

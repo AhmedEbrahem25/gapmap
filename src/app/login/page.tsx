@@ -33,7 +33,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <FadeIn className="relative max-w-md">
           <p className="text-sm font-semibold tracking-wide text-marker uppercase">From marked paper to next step</p>
           <h1 className="mt-3 text-4xl leading-[1.15] font-bold">Every gap gets a slide, a question and a second chance.</h1>
-          <p className="mt-4 text-[15px] leading-6 text-primary-100">
+          <p className="mt-4 text-base leading-6 text-primary-100">
             GapMap reads the exam your class already took, explains each lost mark with the student&apos;s own words, and checks whether
             the next step actually helped.
           </p>

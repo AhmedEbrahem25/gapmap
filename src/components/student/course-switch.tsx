@@ -14,7 +14,7 @@ export function CourseSwitch({ userId, activeId, next }: { userId: string; activ
           href={`/student/course/${course.id}?next=${encodeURIComponent(next)}`}
           aria-current={course.id === activeId ? "page" : undefined}
           className={cn(
-            "inline-flex h-8 shrink-0 items-center rounded-full px-3 text-[13px] font-semibold transition",
+            "inline-flex h-8 shrink-0 items-center rounded-full px-3 text-sm font-semibold transition",
             course.id === activeId ? "bg-primary-600 text-white" : "border border-line bg-white text-ink-2 hover:border-primary-200",
           )}
         >

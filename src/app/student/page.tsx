@@ -29,7 +29,7 @@ export default async function StudentHome() {
   const profile = profileFor(user.id);
   const switcher = <CourseSwitch userId={user.id} activeId={enrolled?.course.id} next="/student" />;
   const avatar = (
-    <Link href="/student/me" aria-label="My profile" className="flex h-10 w-10 items-center justify-center rounded-full bg-met-soft text-[15px] font-bold text-met">
+    <Link href="/student/me" aria-label="My profile" className="flex h-10 w-10 items-center justify-center rounded-full bg-met-soft text-base font-bold text-met">
       {initials(user.name).slice(0, 1)}
     </Link>
   );
@@ -133,14 +133,14 @@ export default async function StudentHome() {
               <h2 className="text-lg leading-6 font-semibold">
                 {concepts.get(step.question.conceptId ?? "") ?? "Question"} · Q{step.question.number}
               </h2>
-              <p className="text-[15px] leading-[22px]">
+              <p className="text-base leading-[22px]">
                 {quoted?.result.evidence ? (
                   <>
                     Your answer said “<Mark tone={quoted.result.status === "met" ? "met" : "partial"}>{quoted.result.evidence}</Mark>”.{" "}
                   </>
                 ) : null}
                 {step.question.kind === "mcq"
-                  ? `You chose “${step.question.options?.["ABCDE".indexOf(step.answer.chosenOption ?? "")] ?? step.answer.chosenOption}”. Two quick questions will show why it doesn't fit.`
+                  ? `You chose “${step.question.options?.["ABCDE".indexOf(step.answer.chosenOption ?? "")] ?? step.answer.chosenOption}”.`
                   : (gap?.result.gap ?? "Review the marking comments for this question.")}
               </p>
               {stepSlide ? (
@@ -153,7 +153,7 @@ export default async function StudentHome() {
           <StaggerItem>
             <section className="flex flex-col gap-2 rounded-sheet border border-met/30 bg-met-soft p-5 text-[#0b5d56]">
               <span className="text-xs font-semibold tracking-[0.06em] uppercase">Gap closed</span>
-              <p className="text-[15px] leading-[22px]">
+              <p className="text-base leading-[22px]">
                 {closed.length ? (
                   <>
                     Your fresh test on <strong>{closed.join(", ")}</strong> met every criterion. Nice work.
@@ -172,8 +172,8 @@ export default async function StudentHome() {
         <StaggerItem>
           <section aria-label="By concept" className="rounded-sheet border border-line bg-white px-[18px] pt-4 pb-1.5">
             <div className="flex items-baseline justify-between">
-              <h2 className="text-base font-semibold">By concept</h2>
-              <span className="text-[13px] text-ink-2">
+              <h2 className="text-base font-semibold">This quiz, by concept</h2>
+              <span className="text-sm text-ink-2">
                 Score {fmtMarks(total)} / {fmtMarks(max)}
               </span>
             </div>
@@ -214,7 +214,7 @@ export default async function StudentHome() {
             <span>
               <strong className="block">Ask about a marking comment</strong>
               <span className="flex items-center gap-1 text-xs text-ink-2">
-                <ShieldCheck size={12} aria-hidden /> Your name stays hidden from the instructor
+                <ShieldCheck size={12} aria-hidden /> Anonymous
               </span>
             </span>
             <ChevronRight size={18} className="text-ink-2" aria-hidden />

@@ -20,7 +20,7 @@ export default async function CoordinatorPage() {
     <div className="min-h-screen">
       <PortalHeader user={user} label="Coordinator" />
       <main className="mx-auto flex max-w-[1200px] flex-col gap-6 px-5 py-8">
-        <PageHeader title="Programme overview" sub="Class-level trends across courses. Individual papers stay with each course's instructors." />
+        <PageHeader title="Programme overview" sub="Class-level trends only." />
         {courses.map(({ c, instructor }) => {
           const concepts = db.select().from(s.concepts).where(eq(s.concepts.courseId, c.id)).all();
           const enrol = db.select().from(s.enrollments).where(and(eq(s.enrollments.courseId, c.id), eq(s.enrollments.role, "student"))).all();
@@ -36,7 +36,7 @@ export default async function CoordinatorPage() {
           return (
             <section key={c.id} className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-xl font-bold">
+                <h2 className="text-lg font-bold">
                   {c.code} · {c.title} <span className="text-base font-normal text-ink-2">· {instructor} · {c.term}</span>
                 </h2>
                 <a href={`/api/export?course=${c.id}`} className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-[#d1d5db] bg-white px-4 text-sm font-semibold hover:bg-ground">
@@ -52,8 +52,8 @@ export default async function CoordinatorPage() {
                 ].map(([label, value]) => (
                   <StaggerItem key={label as string}>
                     <Card className="flex flex-col gap-1 p-5">
-                      <span className="text-[13px] text-ink-2">{label}</span>
-                      <strong className="text-[26px] leading-8">{value}</strong>
+                      <span className="text-sm text-ink-2">{label}</span>
+                      <strong className="text-2xl leading-8">{value}</strong>
                     </Card>
                   </StaggerItem>
                 ))}

@@ -36,7 +36,7 @@ export default async function ChainsPage({ params }: PageProps<"/instructor/exam
     return (
       <>
         {header}
-        <EmptyState title="No multiple-choice questions" body="Add MCQ questions with a key on the first step, then import the letters students chose." />
+        <EmptyState title="No multiple-choice questions" body="Add MCQ questions with a key first." />
       </>
     );
   }
@@ -77,10 +77,10 @@ export default async function ChainsPage({ params }: PageProps<"/instructor/exam
           <Card key={q.id} className="flex flex-col gap-4 p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-[1_1_360px]">
-                <h2 className="text-[17px] leading-6 font-semibold">
+                <h2 className="text-lg leading-6 font-semibold">
                   Q{q.number} · {q.prompt}
                 </h2>
-                <p className="mt-0.5 text-[13px] text-ink-2">
+                <p className="mt-0.5 text-sm text-ink-2">
                   {own.length} answers{tricky ? ` · most common wrong answer: ${LETTERS[tricky.i]} (${pct(tricky.n, own.length)}%)` : " · no wrong answers"}
                 </p>
               </div>
@@ -114,7 +114,7 @@ export default async function ChainsPage({ params }: PageProps<"/instructor/exam
                     <span className="h-2 overflow-hidden rounded-full bg-line-2">
                       <span className={cn("block h-full rounded-full", letter === q.correctOption ? "bg-met" : "bg-partial")} style={{ width: `${share}%` }} />
                     </span>
-                    <span className="text-right text-[13px] text-ink-2">{share}%</span>
+                    <span className="text-right text-sm text-ink-2">{share}%</span>
                   </li>
                 );
               })}
@@ -142,13 +142,13 @@ export default async function ChainsPage({ params }: PageProps<"/instructor/exam
                         <span className="font-medium">{st.prompt}</span>
                         <ul className="flex flex-col gap-1">
                           {st.choices.map((ch, j) => (
-                            <li key={j} className={cn("rounded-md border px-2 py-1 text-[13px]", ch.correct ? "border-met/40 bg-white text-met" : "border-line bg-white")}>
+                            <li key={j} className={cn("rounded-md border px-2 py-1 text-sm", ch.correct ? "border-met/40 bg-white text-met" : "border-line bg-white")}>
                               {ch.correct ? "✓ " : ""}
                               {ch.text}
                             </li>
                           ))}
                         </ul>
-                        {st.hint ? <span className="text-[13px] text-ink-2">Hint after a wrong tap: {st.hint}</span> : null}
+                        {st.hint ? <span className="text-sm text-ink-2">Hint after a wrong tap: {st.hint}</span> : null}
                       </li>
                     ))}
                   </ol>

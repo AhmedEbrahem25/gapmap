@@ -154,7 +154,7 @@ function Lectures({
                     active ? "border-2 border-primary-600" : "border-line",
                   )}
                 >
-                  <span className={cn("w-7 text-[13px] font-semibold", active ? "text-primary-800" : "text-ink-2")}>L{l.number}</span>
+                  <span className={cn("w-7 text-sm font-semibold", active ? "text-primary-800" : "text-ink-2")}>L{l.number}</span>
                   <span className="min-w-0 flex-1 text-sm">
                     <span className={cn("block truncate", active && "font-semibold")}>{l.title}</span>
                     <span className="block text-xs text-ink-2">
@@ -184,7 +184,7 @@ function Lectures({
               <h2 className="text-lg font-semibold">
                 L{current.number} · {current.title}
               </h2>
-              <p className="text-[13px] text-ink-2">Each slide is tagged with the concepts it teaches, so feedback can link straight to it.</p>
+              <p className="text-sm text-ink-2">Feedback links to these slides.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <form action={retagLecture}>
@@ -254,8 +254,8 @@ function Lectures({
                           suggested ? "border-2 border-[#7c3aed]" : "border-line",
                         )}
                       >
-                        <span className="line-clamp-2 text-[12px] leading-4 font-semibold text-ink">{sl.title}</span>
-                        <span className="line-clamp-3 text-[10px] leading-[13px] text-ink-2">{sl.body}</span>
+                        <span className="line-clamp-2 text-xs leading-4 font-semibold text-ink">{sl.title}</span>
+                        <span className="line-clamp-3 text-xs leading-[13px] text-ink-2">{sl.body}</span>
                       </Link>
                       <span className="text-xs text-ink-2">Slide {sl.page}</span>
                       <details className="relative">
@@ -277,7 +277,7 @@ function Lectures({
                               <form key={c.id} action={toggleSlideConcept}>
                                 <input type="hidden" name="slideId" value={sl.id} />
                                 <input type="hidden" name="conceptId" value={c.id} />
-                                <button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-ground">
+                                <button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-ground">
                                   <span
                                     className={cn("h-3.5 w-3.5 rounded border", on ? "border-primary-600 bg-primary-600" : "border-[#9ca3af]")}
                                     aria-hidden
@@ -387,20 +387,20 @@ function Concepts({ courseId, concepts }: { courseId: string; concepts: (typeof 
         <form action={addConcept} className="mt-4 grid gap-3 text-sm">
           <input type="hidden" name="courseId" value={courseId} />
           <label className="grid gap-1">
-            <span className="text-[13px] font-semibold">Name</span>
+            <span className="text-sm font-semibold">Name</span>
             <input name="name" required className="h-10 rounded-lg border border-[#9ca3af] px-3" />
           </label>
           <label className="grid gap-1">
-            <span className="text-[13px] font-semibold">Short description</span>
+            <span className="text-sm font-semibold">Short description</span>
             <input name="description" className="h-10 rounded-lg border border-[#9ca3af] px-3" />
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="grid gap-1">
-              <span className="text-[13px] font-semibold">Unit</span>
+              <span className="text-sm font-semibold">Unit</span>
               <input name="unit" type="number" min={1} defaultValue={1} className="h-10 rounded-lg border border-[#9ca3af] px-3" />
             </label>
             <label className="grid gap-1">
-              <span className="text-[13px] font-semibold">Builds on</span>
+              <span className="text-sm font-semibold">Builds on</span>
               <select name="prerequisiteId" className="h-10 rounded-lg border border-[#9ca3af] px-2">
                 <option value="">None</option>
                 {concepts.map((c) => (
@@ -446,11 +446,11 @@ function Students({ courseId, concepts }: { courseId: string; concepts: (typeof 
         <form action={enrollStudents} className="mt-3 grid gap-3 text-sm sm:grid-cols-[1fr_120px_auto] sm:items-end">
           <input type="hidden" name="courseId" value={courseId} />
           <label className="grid gap-1">
-            <span className="text-[13px] font-semibold">Student emails (one per line or comma-separated)</span>
+            <span className="text-sm font-semibold">Student emails (one per line or comma-separated)</span>
             <textarea name="emails" rows={2} required className="rounded-lg border border-[#9ca3af] px-3 py-2" />
           </label>
           <label className="grid gap-1">
-            <span className="text-[13px] font-semibold">Section</span>
+            <span className="text-sm font-semibold">Section</span>
             <input name="section" defaultValue="A" className="h-10 rounded-lg border border-[#9ca3af] px-3" />
           </label>
           <SubmitButton>Enrol</SubmitButton>

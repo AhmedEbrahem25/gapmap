@@ -10,7 +10,7 @@ export function LoginForm({ next }: { next?: string }) {
     <form action={action} className="mt-6 grid gap-4" noValidate>
       {next ? <input type="hidden" name="next" value={next} /> : null}
       <div className="grid gap-1.5">
-        <label htmlFor="email" className="text-[13px] font-semibold">
+        <label htmlFor="email" className="text-sm font-semibold">
           Email
         </label>
         <input
@@ -20,11 +20,11 @@ export function LoginForm({ next }: { next?: string }) {
           autoComplete="email"
           defaultValue={state.email}
           required
-          className="h-11 rounded-lg border border-[#9ca3af] bg-white px-3 text-[15px] transition outline-none focus:border-primary-600 focus:shadow-glow"
+          className="h-11 rounded-lg border border-[#9ca3af] bg-white px-3 text-base transition outline-none focus:border-primary-600 focus:shadow-glow"
         />
       </div>
       <div className="grid gap-1.5">
-        <label htmlFor="password" className="text-[13px] font-semibold">
+        <label htmlFor="password" className="text-sm font-semibold">
           Password
         </label>
         <input
@@ -33,7 +33,7 @@ export function LoginForm({ next }: { next?: string }) {
           type="password"
           autoComplete="current-password"
           required
-          className="h-11 rounded-lg border border-[#9ca3af] bg-white px-3 text-[15px] transition outline-none focus:border-primary-600 focus:shadow-glow"
+          className="h-11 rounded-lg border border-[#9ca3af] bg-white px-3 text-base transition outline-none focus:border-primary-600 focus:shadow-glow"
         />
       </div>
       {state.error ? (

@@ -36,7 +36,7 @@ export default async function CompanyPage() {
     <div className="min-h-screen">
       <PortalHeader user={user} label={company?.name ?? "Partner"} />
       <main className="mx-auto flex max-w-[1200px] flex-col gap-6 px-5 py-8">
-        <PageHeader title="Vacancies & nominations" sub="You see only students that faculty nominated, with the assessed work they reviewed." />
+        <PageHeader title="Vacancies & nominations" sub="Students nominated by faculty." />
         <div className="flex flex-wrap items-start gap-6">
           <Stagger className="flex min-w-0 flex-[999_1_560px] flex-col gap-5">
             {vacancies.length === 0 ? <EmptyState title="No vacancies yet" body="Post a vacancy and map it to the skills you need." /> : null}
@@ -48,7 +48,7 @@ export default async function CompanyPage() {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <h2 className="text-lg font-semibold">{v.title}</h2>
-                        <p className="text-[13px] text-ink-2">Closes {formatDate(v.closes)}</p>
+                        <p className="text-sm text-ink-2">Closes {formatDate(v.closes)}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge tone={v.status === "open" ? "met" : "neutral"}>{v.status === "open" ? "Open" : "Closed"}</Badge>
@@ -108,11 +108,11 @@ export default async function CompanyPage() {
                             )}
                           </div>
                           <details className="mt-3">
-                            <summary className="cursor-pointer text-[13px] font-semibold text-primary-600">Assessed evidence ({evidence.length})</summary>
+                            <summary className="cursor-pointer text-sm font-semibold text-primary-600">Assessed evidence ({evidence.length})</summary>
                             <div className="mt-3 flex flex-col gap-3">
                               {evidence.map((e) => (
                                 <div key={e.answer.id} className="flex flex-col gap-1.5">
-                                  <div className="flex items-center justify-between text-[13px] text-ink-2">
+                                  <div className="flex items-center justify-between text-sm text-ink-2">
                                     <span>{e.question.prompt}</span>
                                     <StatusChip status={statusFromRatio(e.answer.finalMarks ?? 0, e.question.maxMarks)} suffix={`${fmtMarks(e.answer.finalMarks)}/${fmtMarks(e.question.maxMarks)}`} />
                                   </div>
@@ -134,19 +134,19 @@ export default async function CompanyPage() {
               <h2 className="font-semibold">Post a vacancy</h2>
               <form action={createVacancy} className="mt-4 grid gap-3 text-sm">
                 <label className="grid gap-1">
-                  <span className="text-[13px] font-semibold">Title</span>
+                  <span className="text-sm font-semibold">Title</span>
                   <input name="title" required placeholder="Junior data engineer" className="h-10 rounded-lg border border-[#9ca3af] px-3" />
                 </label>
                 <label className="grid gap-1">
-                  <span className="text-[13px] font-semibold">Description</span>
+                  <span className="text-sm font-semibold">Description</span>
                   <textarea name="description" rows={3} className="rounded-lg border border-[#9ca3af] px-3 py-2" />
                 </label>
                 <label className="grid gap-1">
-                  <span className="text-[13px] font-semibold">Required skills (comma separated)</span>
+                  <span className="text-sm font-semibold">Required skills (comma separated)</span>
                   <input name="skills" required placeholder="SQL joins, Foreign keys" className="h-10 rounded-lg border border-[#9ca3af] px-3" />
                 </label>
                 <label className="grid gap-1">
-                  <span className="text-[13px] font-semibold">Closes</span>
+                  <span className="text-sm font-semibold">Closes</span>
                   <input name="closes" type="date" className="h-10 rounded-lg border border-[#9ca3af] px-3" />
                 </label>
                 <SubmitButton>Post vacancy</SubmitButton>

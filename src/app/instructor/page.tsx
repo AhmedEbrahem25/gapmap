@@ -33,7 +33,7 @@ export default async function InstructorHome() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <h2 className="text-base font-semibold">{c.title}</h2>
-                    <span className="text-[13px] text-ink-2">
+                    <span className="text-sm text-ink-2">
                       {c.code} · {c.term} · {lectures(c.id)} lectures · {students(c.id)} students
                     </span>
                   </span>
@@ -50,15 +50,15 @@ export default async function InstructorHome() {
             <h2 className="font-semibold">New course</h2>
             <form action={createCourse} className="mt-4 grid gap-3 text-sm">
               <label className="grid gap-1">
-                <span className="text-[13px] font-semibold">Code</span>
+                <span className="text-sm font-semibold">Code</span>
                 <input name="code" required placeholder="CSE241" className="h-10 rounded-lg border border-[#9ca3af] px-3" />
               </label>
               <label className="grid gap-1">
-                <span className="text-[13px] font-semibold">Title</span>
+                <span className="text-sm font-semibold">Title</span>
                 <input name="title" required placeholder="Information Security" className="h-10 rounded-lg border border-[#9ca3af] px-3" />
               </label>
               <label className="grid gap-1">
-                <span className="text-[13px] font-semibold">Term</span>
+                <span className="text-sm font-semibold">Term</span>
                 <input name="term" required placeholder="Spring 2026" className="h-10 rounded-lg border border-[#9ca3af] px-3" />
               </label>
               <SubmitButton>Create course</SubmitButton>

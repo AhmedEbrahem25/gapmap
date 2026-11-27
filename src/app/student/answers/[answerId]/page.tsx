@@ -25,9 +25,9 @@ export default async function AnswerPage({ params }: PageProps<"/student/answers
       <Stagger className="flex flex-col gap-3.5 px-5">
         <StaggerItem>
           <section className="flex flex-col gap-2 rounded-sheet border border-line bg-white p-4">
-            <p className="text-[15px] leading-[22px] font-semibold">{question.prompt}</p>
+            <p className="text-base leading-[22px] font-semibold">{question.prompt}</p>
             <div className="flex items-center justify-between">
-              <span className="text-[13px] text-ink-2">Your mark</span>
+              <span className="text-sm text-ink-2">Your mark</span>
               <StatusChip status={statusFromRatio(answer.finalMarks ?? 0, question.maxMarks)} suffix={`${fmtMarks(answer.finalMarks)}/${fmtMarks(question.maxMarks)}`} />
             </div>
           </section>
@@ -42,7 +42,7 @@ export default async function AnswerPage({ params }: PageProps<"/student/answers
               // eslint-disable-next-line @next/next/no-img-element
               <img src={`/api/files/${paper.id}`} alt="Your scanned answer" className="rounded-lg border border-line" />
             ) : null}
-            <p className="text-[15px] leading-6">
+            <p className="text-base leading-6">
               <HighlightedText text={answer.transcription} marks={results.filter((r) => r.result.evidence).map((r) => ({ quote: r.result.evidence, tone: r.result.status }))} />
             </p>
           </section>

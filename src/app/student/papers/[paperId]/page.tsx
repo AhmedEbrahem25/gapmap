@@ -44,7 +44,7 @@ export default async function PaperPage({ params }: PageProps<"/student/papers/[
             <section className="flex flex-col gap-2 rounded-sheet border border-line bg-white p-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold">Scanned paper</h2>
-                <a href={scan} target="_blank" rel="noreferrer" className="text-[13px] font-medium">
+                <a href={scan} target="_blank" rel="noreferrer" className="text-sm font-medium">
                   Open full size
                 </a>
               </div>
@@ -67,7 +67,7 @@ export default async function PaperPage({ params }: PageProps<"/student/papers/[
             <StaggerItem key={answer.id}>
               <section className="flex flex-col gap-2.5 rounded-sheet border border-line bg-white p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-[15px] leading-[22px] font-semibold">
+                  <p className="text-base leading-[22px] font-semibold">
                     <span className="mr-1.5 text-primary-600">Q{question.number}.</span>
                     {question.prompt}
                   </p>
@@ -89,7 +89,7 @@ export default async function PaperPage({ params }: PageProps<"/student/papers/[
                     </span>
                   </div>
                 ) : answer.transcription ? (
-                  <p className="rounded-lg bg-ground px-3 py-2 text-[15px] leading-6">{answer.transcription}</p>
+                  <p className="rounded-lg bg-ground px-3 py-2 text-base leading-6">{answer.transcription}</p>
                 ) : null}
                 {question.kind === "mcq" ? null : (
                   <Link

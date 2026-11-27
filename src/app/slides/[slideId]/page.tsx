@@ -54,7 +54,7 @@ export default async function SlidePage({ params, searchParams }: PageProps<"/sl
           <ArrowLeft size={18} aria-hidden /> Back
         </Link>
         <Logo className="hidden sm:inline-flex" />
-        <span className="text-[13px] text-ink-2">
+        <span className="text-sm text-ink-2">
           Lecture {lecture.number} · slide {slide.page} of {siblings.length}
         </span>
       </header>
@@ -66,11 +66,11 @@ export default async function SlidePage({ params, searchParams }: PageProps<"/sl
               L{lecture.number} · {lecture.title}
             </p>
             <h1 className="mt-3 text-2xl leading-tight font-bold sm:text-4xl">{slide.title}</h1>
-            <ul className="mt-5 flex flex-col gap-3 text-[15px] leading-relaxed text-[#1f2937] sm:text-lg">
+            <ul className="mt-5 flex flex-col gap-3 text-base leading-relaxed text-[#1f2937] sm:text-lg">
               {bullets.map((b, i) => (
                 <li key={i} className="flex gap-3">
                   <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-marker" aria-hidden />
-                  <span className={/SELECT|PRIMARY KEY|JOIN/.test(b) ? "font-mono text-[14px] sm:text-base" : ""}>{b}</span>
+                  <span className={/SELECT|PRIMARY KEY|JOIN/.test(b) ? "font-mono text-sm sm:text-base" : ""}>{b}</span>
                 </li>
               ))}
             </ul>

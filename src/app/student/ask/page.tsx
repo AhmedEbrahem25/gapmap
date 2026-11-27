@@ -30,7 +30,7 @@ export default async function AskPage({ searchParams }: PageProps<"/student/ask"
         <div className="flex flex-col gap-3 px-5">
           <ol className="flex flex-col gap-3">
             {messages.map((m) => (
-              <li key={m.id} className={cn("max-w-[86%] rounded-2xl px-3.5 py-3 text-[15px] leading-[22px]", m.authorRole === "student" ? "self-end rounded-br-sm bg-primary-600 text-white" : "self-start rounded-bl-sm border border-line bg-white")}>
+              <li key={m.id} className={cn("max-w-[86%] rounded-2xl px-3.5 py-3 text-base leading-[22px]", m.authorRole === "student" ? "self-end rounded-br-sm bg-primary-600 text-white" : "self-start rounded-bl-sm border border-line bg-white")}>
                 {m.authorRole === "instructor" ? <span className="mb-1 block text-xs font-semibold text-primary-700">Instructor</span> : null}
                 {m.body}
               </li>
@@ -41,7 +41,7 @@ export default async function AskPage({ searchParams }: PageProps<"/student/ask"
             <label htmlFor="body" className="text-sm font-semibold">
               Reply
             </label>
-            <textarea id="body" name="body" rows={2} required className="resize-none rounded-[10px] border border-[#9ca3af] bg-white px-3 py-2.5 text-[15px]" />
+            <textarea id="body" name="body" rows={2} required className="resize-none rounded-[10px] border border-[#9ca3af] bg-white px-3 py-2.5 text-base" />
             <SubmitButton>Send</SubmitButton>
           </form>
         </div>
@@ -62,7 +62,7 @@ export default async function AskPage({ searchParams }: PageProps<"/student/ask"
           <form action={askQuestion} className="flex flex-col gap-3 rounded-sheet border border-line bg-white p-4">
             <label className="flex flex-col gap-1.5 text-sm font-semibold">
               About
-              <select name="answerId" defaultValue={preset} className="h-11 rounded-[10px] border border-[#9ca3af] bg-white px-2 text-[15px] font-normal">
+              <select name="answerId" defaultValue={preset} className="h-11 rounded-[10px] border border-[#9ca3af] bg-white px-2 text-base font-normal">
                 <option value="">General question</option>
                 {answers.map((a) => (
                   <option key={a.answer.id} value={a.answer.id}>
@@ -73,11 +73,11 @@ export default async function AskPage({ searchParams }: PageProps<"/student/ask"
             </label>
             <label className="flex flex-col gap-1.5 text-sm font-semibold">
               Subject
-              <input name="subject" required maxLength={140} placeholder="Why is my Q3 reason only partial?" className="h-11 rounded-[10px] border border-[#9ca3af] px-3 text-[15px] font-normal" />
+              <input name="subject" required maxLength={140} placeholder="Why is my Q3 reason only partial?" className="h-11 rounded-[10px] border border-[#9ca3af] px-3 text-base font-normal" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm font-semibold">
               Your question
-              <textarea name="body" rows={3} required className="resize-none rounded-[10px] border border-[#9ca3af] px-3 py-2.5 text-[15px] font-normal" />
+              <textarea name="body" rows={3} required className="resize-none rounded-[10px] border border-[#9ca3af] px-3 py-2.5 text-base font-normal" />
             </label>
             <SubmitButton size="lg">Send anonymously</SubmitButton>
           </form>

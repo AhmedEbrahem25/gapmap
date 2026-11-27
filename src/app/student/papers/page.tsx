@@ -43,7 +43,7 @@ export default async function PapersPage({ searchParams }: PageProps<"/student/p
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "inline-flex h-9 shrink-0 items-center rounded-full px-3.5 text-[13px] font-semibold transition",
+        "inline-flex h-9 shrink-0 items-center rounded-full px-3.5 text-sm font-semibold transition",
         active ? "bg-primary-600 text-white" : "border border-line bg-white text-ink-2 hover:border-primary-200",
       )}
     >
