@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   serverExternalPackages: ["sql.js"],
   // Let phones reach the dev server over the LAN or a Cloudflare quick tunnel.
-  allowedDevOrigins: ["*.trycloudflare.com", "**.pinggy.link", "192.168.*.*", "10.*.*.*", "172.*.*.*"],
+  allowedDevOrigins: ["127.0.0.1", "*.trycloudflare.com", "**.pinggy.link", "192.168.*.*", "10.*.*.*", "172.*.*.*"],
   experimental: {
     serverActions: { bodySizeLimit: "25mb" },
   },

@@ -151,7 +151,7 @@ export default async function StudentHome() {
           </StaggerItem>
         ) : (
           <StaggerItem>
-            <section className="flex flex-col gap-2 rounded-sheet border border-met/30 bg-met-soft p-5 text-[#0b5d56]">
+            <section data-tour="next-step" className="flex flex-col gap-2 rounded-sheet border border-met/30 bg-met-soft p-5 text-[#0b5d56]">
               <span className="text-xs font-semibold tracking-[0.06em] uppercase">Gap closed</span>
               <p className="text-base leading-[22px]">
                 {closed.length ? (

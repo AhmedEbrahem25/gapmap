@@ -9,6 +9,7 @@ import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
 import "@fontsource/caveat/500.css";
 import "./globals.css";
+import { GuidedDemo } from "@/components/guided-demo";
 
 export const metadata: Metadata = {
   title: { default: "GapMap — every gap, a next step", template: "%s · GapMap" },
@@ -26,7 +27,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <GuidedDemo />
+      </body>
     </html>
   );
 }

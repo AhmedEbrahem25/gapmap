@@ -4,6 +4,7 @@ import { Logo } from "@/components/ui/logo";
 import { FadeIn } from "@/components/ui/motion";
 import { LoginForm } from "./login-form";
 import { demoLogin, resetDemo } from "@/lib/actions/auth";
+import { GuidedDemoButton } from "@/components/guided-demo";
 import { GraduationCap, Presentation, ClipboardCheck, LineChart, Building2, RotateCcw } from "lucide-react";
 
 import { partnersEnabled } from "@/lib/features";
@@ -74,6 +75,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
                   </button>
                 </form>
               </div>
+              <GuidedDemoButton className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-navy text-sm font-semibold text-white hover:opacity-90" />
               <ul className="mt-3 grid gap-2">
                 {demoAccounts.filter((a) => partnersEnabled() || a.role !== "Partner company").map((a) => (
                   <li key={a.email}>
@@ -81,6 +83,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
                       <input type="hidden" name="email" value={a.email} />
                       <button
                         type="submit"
+                        data-tour={`demo-${a.email.split("@")[0]}`}
                         className="group flex w-full items-center gap-3 rounded-xl border border-line bg-white p-3 text-left transition hover:-translate-y-px hover:border-primary-200 hover:shadow-lift"
                       >
                         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50 text-primary-700 transition group-hover:bg-primary-600 group-hover:text-white">

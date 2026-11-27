@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { tours, type TourId, type TourStep } from "@/lib/tours";
+import { demoActive, startGuidedDemo } from "@/components/guided-demo";
 
 const EVENT = "gm:tour";
 const seenKey = (id: TourId) => `gm-tour-${id}`;
@@ -65,7 +66,7 @@ export function Tour({ id }: { id: TourId }) {
     };
     window.addEventListener(EVENT, onStart);
     // Shown once by itself: leaving half-way still counts as seen; the "Take the tour" buttons replay it.
-    const auto = !readSeen(id) && !navigator.webdriver ? window.setTimeout(() => (markSeen(id), setOpen(true)), 900) : undefined;
+    const auto = !readSeen(id) && !navigator.webdriver && !demoActive() ? window.setTimeout(() => (markSeen(id), setOpen(true)), 900) : undefined;
     return () => {
       window.removeEventListener(EVENT, onStart);
       if (auto) window.clearTimeout(auto);
@@ -208,7 +209,7 @@ export function Tour({ id }: { id: TourId }) {
                 </button>
               ) : null}
               <button
-                onClick={() => (last ? close() : setIndex(index + 1))}
+                onClick={() => (last ? (close(), step.demo && void startGuidedDemo()) : setIndex(index + 1))}
                 className="h-10 rounded-[10px] bg-primary-600 px-4 text-sm font-semibold text-white hover:bg-primary-700"
               >
                 {last ? (step.done ?? "Start exploring") : "Next"}

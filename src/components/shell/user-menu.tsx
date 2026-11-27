@@ -14,7 +14,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
         <span className="block truncate text-ink-2">{user.title ?? user.role}</span>
       </span>
       <form action={logout}>
-        <button aria-label="Sign out" title="Sign out" className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-2 hover:bg-ground hover:text-ink">
+        <button data-tour="sign-out" aria-label="Sign out" title="Sign out" className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-2 hover:bg-ground hover:text-ink">
           <LogOut size={16} />
         </button>
       </form>

@@ -2,7 +2,7 @@
  * The guided tours. Each step lights up the element with data-tour="<target>"; a step without a target
  * (or whose element is hidden, e.g. the sidebar on a phone) shows as a centred card.
  */
-export type TourStep = { target?: string; eyebrow?: string; title: string; body: string; done?: string };
+export type TourStep = { target?: string; eyebrow?: string; title: string; body: string; done?: string; demo?: boolean };
 
 export const tours = {
   landing: [
@@ -11,7 +11,7 @@ export const tours = {
     { target: "instructors", title: "For lecturers", body: "Approve a whole question in one click." },
     { target: "students", title: "For students", body: "One next step. Fix it in 2 taps." },
     { target: "principles", title: "Private and in control", body: "The AI never grades and never sees names." },
-    { target: "try", title: "Try it", body: "One click, no sign-up.", done: "Got it" },
+    { target: "try", title: "See the whole story", body: "A 2-minute guided demo: lecturer, then student.", done: "Start the guided demo", demo: true },
   ],
   instructor: [
     { target: "nav-courses", title: "Courses", body: "Lectures, slides and students." },
@@ -32,3 +32,25 @@ export const tours = {
 } satisfies Record<string, TourStep[]>;
 
 export type TourId = keyof typeof tours;
+
+/**
+ * The guided demo: one story across pages and accounts, for judges. `path` is the page the step belongs to;
+ * the guide jumps ahead by itself when the visitor reaches a later step's page. `click` steps wait for the
+ * visitor to click the lit-up element instead of showing "Next".
+ */
+export type DemoStep = { path: string; target?: string; title: string; body: string; click?: boolean };
+
+export const demoSteps: DemoStep[] = [
+  { path: "^/login", target: "demo-dr.karim", title: "1 · The lecturer", body: "Dr. Karim marked his midterm on paper. Sign in as him.", click: true },
+  { path: "^/instructor$", target: "nav-exams", title: "His exams", body: "Open Exams.", click: true },
+  { path: "^/instructor/exams$", target: "review-first", title: "The scanned papers", body: "Open the midterm review.", click: true },
+  { path: "/review$", target: "scan", title: "His mark, read from the scan", body: "The mark is his. The AI never grades." },
+  { path: "/review$", target: "diagnosis", title: "Why the marks were lost", body: "Each gap explained from his own slide, with the page." },
+  { path: "/review$", target: "approve-question", title: "One click per question", body: "Only flagged answers need a look." },
+  { path: "/review$", target: "release", title: "Release", body: "Students see nothing before this." },
+  { path: "/review$", target: "sign-out", title: "2 · The student", body: "Now see it as Mariam. Sign out.", click: true },
+  { path: "^/login", target: "demo-mariam", title: "The student", body: "Sign in as Mariam.", click: true },
+  { path: "^/student$", target: "next-step", title: "One next step", body: "Not a wall of feedback. Tap the button.", click: true },
+  { path: "^/student/(fix|followup|plan|practice)", title: "She works on her own gap", body: "She only taps. Hints come from the slide." },
+  { path: "^/student/(fix|followup|plan|practice)", title: "That's GapMap", body: "Lecturer marks → AI explains from slides → student fixes." },
+];

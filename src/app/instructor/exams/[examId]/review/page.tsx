@@ -129,7 +129,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
                 <ChevronRight size={18} />
               </Link>
             ) : null}
-            <form action={releaseApproved}>
+            <form action={releaseApproved} data-tour="release">
               <input type="hidden" name="examId" value={examId} />
               <SubmitButton variant="dark" pendingText="Releasing…" className={approvedCount ? "" : "opacity-60"}>
                 Release {approvedCount} to students
@@ -162,7 +162,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
         </span>
       </nav>
 
-      <Card className="flex flex-wrap items-center gap-x-5 gap-y-3 p-4">
+      <Card data-tour="approve-question" className="flex flex-wrap items-center gap-x-5 gap-y-3 p-4">
         <div className="min-w-0 flex-[1_1_320px]">
           <h2 className="text-sm font-semibold" title="Ready = your mark read clearly, answer readable, diagnosis matches the mark, explanations cited.">
             Q{q.number}: {readyCount} ready{flagged.length ? ` · ${flagged.length} to check` : ""}
@@ -212,7 +212,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
 
       <FadeIn key={a.id} className="flex flex-wrap items-start gap-5">
         <section aria-label="Student answer" className="flex min-w-0 flex-[1_1_380px] flex-col gap-4">
-          <Card className="flex flex-col gap-2.5 p-4">
+          <Card data-tour="scan" className="flex flex-col gap-2.5 p-4">
             <div className="flex justify-between text-sm text-ink-2">
               <span>Scan</span>
               {current.paper.filePath ? (
@@ -296,7 +296,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/i
           ) : null}
         </section>
 
-        <section aria-label="AI feedback by criterion" className="flex min-w-0 flex-[1_1_460px] flex-col overflow-hidden rounded-card border border-line bg-white shadow-card">
+        <section aria-label="AI feedback by criterion" data-tour="diagnosis" className="flex min-w-0 flex-[1_1_460px] flex-col overflow-hidden rounded-card border border-line bg-white shadow-card">
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
             <div>
               <h2 className="text-lg font-semibold">Diagnosis</h2>

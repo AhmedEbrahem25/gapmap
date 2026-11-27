@@ -30,7 +30,7 @@ export default async function ExamsPage() {
       <PageHeader title="Exams" sub="Upload → review → release." />
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <Stagger className="flex flex-col gap-3">
-          {exams.map((e) => {
+          {exams.map((e, i) => {
             const ps = papers.filter((p) => p.examId === e.id);
             const done = ps.filter((p) => ["reviewed", "released"].includes(p.status)).length;
             return (
@@ -57,7 +57,7 @@ export default async function ExamsPage() {
                         Fix chains
                       </Link>
                     ) : null}
-                    <Link aria-label={`Review · ${e.title}`} className="rounded-lg bg-primary-600 px-3 py-2 text-white hover:bg-primary-700" href={`/instructor/exams/${e.id}/review`}>
+                    <Link aria-label={`Review · ${e.title}`} data-tour={i === 0 ? "review-first" : undefined} className="rounded-lg bg-primary-600 px-3 py-2 text-white hover:bg-primary-700" href={`/instructor/exams/${e.id}/review`}>
                       Review
                     </Link>
                   </div>
