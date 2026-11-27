@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { studentCourses } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -7,9 +6,10 @@ export function CourseSwitch({ userId, activeId, next }: { userId: string; activ
   const courses = studentCourses(userId);
   if (courses.length < 2) return null;
   return (
-    <nav aria-label="Course" className="-mx-5 mb-1 flex gap-2 overflow-x-auto px-5 pb-1">
+    <nav aria-label="Course" className="mb-1 flex flex-wrap gap-2">
       {courses.map(({ course }) => (
-        <Link
+        // A plain link on purpose: the target sets the course cookie, and <Link> would prefetch (= switch to) every chip.
+        <a
           key={course.id}
           href={`/student/course/${course.id}?next=${encodeURIComponent(next)}`}
           aria-current={course.id === activeId ? "page" : undefined}
@@ -19,7 +19,7 @@ export function CourseSwitch({ userId, activeId, next }: { userId: string; activ
           )}
         >
           {course.title}
-        </Link>
+        </a>
       ))}
     </nav>
   );

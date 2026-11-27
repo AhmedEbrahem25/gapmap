@@ -4,6 +4,7 @@ import { desc, eq } from "drizzle-orm";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { activeCourse } from "@/lib/student";
+import { CourseSwitch } from "@/components/student/course-switch";
 import { db, schema as s } from "@/lib/db";
 import { masteryByConcept } from "@/lib/data";
 import { StudentHeader } from "@/components/shell/student-header";
@@ -29,6 +30,7 @@ export default async function PracticePage() {
     <>
       <StudentHeader eyebrow={enrolled?.course.title} title="Practice & fresh tests" />
       <Stagger className="flex flex-col gap-3.5 px-5">
+        <CourseSwitch userId={user.id} activeId={enrolled?.course.id} next="/student/practice" />
         <StaggerItem>
           <p className="text-sm leading-[21px] text-ink-2">A new question for each gap, to check you&apos;ve got it.</p>
         </StaggerItem>
