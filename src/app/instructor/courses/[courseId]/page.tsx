@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { adaptiveEnabled } from "@/lib/features";
+import { classPolicy } from "@/lib/adaptive-data";
+import { WhatWorks, timesText } from "@/components/student/what-works";
 import Link from "next/link";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { FileText, Sparkles, Plus, Users } from "lucide-react";
@@ -334,6 +337,7 @@ function Concepts({ courseId, concepts }: { courseId: string; concepts: (typeof 
         .all()
     : [];
   const name = new Map(concepts.map((c) => [c.id, c.name]));
+  const works = adaptiveEnabled() ? classPolicy(courseId) : null;
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
       <Card className="overflow-x-auto">
@@ -380,6 +384,14 @@ function Concepts({ courseId, concepts }: { courseId: string; concepts: (typeof 
           </tbody>
         </table>
       </Card>
+      <div className="flex h-fit flex-col gap-6">
+      {works ? (
+        <WhatWorks
+          title="What works in this class"
+          rows={works.map((w) => ({ type: w.type, value: w.n ? w.wins / w.n : 0, detail: w.n ? `helped ${timesText(w.wins, w.n)}` : "not tried yet" }))}
+          note="From students' fresh tests after an activity, else their own ratings. No names. Each student's plan starts from this, then learns from their own results."
+        />
+      ) : null}
       <Card className="h-fit p-5">
         <h2 className="flex items-center gap-2 font-semibold">
           <Plus size={16} aria-hidden /> Add a concept
@@ -414,6 +426,7 @@ function Concepts({ courseId, concepts }: { courseId: string; concepts: (typeof 
           <SubmitButton>Add concept</SubmitButton>
         </form>
       </Card>
+      </div>
     </div>
   );
 }
