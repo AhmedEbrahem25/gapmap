@@ -10,6 +10,8 @@ import { nanoid } from "nanoid";
 import * as s from "../src/lib/db/schema";
 import { loadSqlJs, openDatabase } from "../src/lib/db/sqlite";
 import { explainFromSlide, followupChoicesFor } from "../src/lib/ai/fallback";
+import { ARMS, rng } from "../src/lib/adaptive";
+import { ACTIVITY_LABEL } from "../src/lib/profile-rules";
 import {
   DEMO_PASSWORD,
   conceptDefs,
@@ -448,6 +450,36 @@ export function seed(SQL: SqlJsStatic, dbFile = process.env.DATABASE_PATH ?? "da
             })
             .run();
         });
+    }
+
+    /* ── Demo class history for the adaptive plan ── */
+    // Simulated: each classmate did two activities on keys after the midterm and rated them. In this demo class
+    // experiments helped most and mind maps least. Ratings only (no fresh tests), so nobody's marks change.
+    // Mariam has no history of her own: her first activity is picked from the class's results.
+    const helps: Record<(typeof ARMS)[number], number> = { experiment: 0.8, worked_example: 0.6, try_first: 0.5, mind_map: 0.3 };
+    const roll = rng("gapmap-demo-class");
+    for (const st of students.slice(1)) {
+      (["pk", "fk"] as const).forEach((key, k) => {
+        const type = ARMS[(st.index + k * 2) % ARMS.length]!;
+        const u = roll();
+        const usefulness = u < helps[type] * 0.8 ? "a_lot" : u < helps[type] ? "a_little" : "not_really";
+        const concept = conceptDefs.find((c) => c.key === key)!.name;
+        tx.insert(s.activities)
+          .values({
+            id: id("act"),
+            studentId: st.id,
+            conceptId: conceptIds[key],
+            type,
+            title: { experiment: "Change one thing", worked_example: "Worked example", try_first: "Try it first", mind_map: "Concept map" }[type],
+            reason: "Practice after the midterm.",
+            payload: { prompt: `${ACTIVITY_LABEL[type]} on ${concept}, from the linked slides.` },
+            status: "done",
+            usefulness,
+            priority: 2,
+            createdAt: new Date(`2026-11-${14 + k * 2}T09:00:00Z`),
+          })
+          .run();
+      });
     }
 
     /* ── A second course, so students with several courses pick the subject in "My papers" ── */

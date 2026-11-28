@@ -16,6 +16,9 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { switchApproach } from "@/lib/actions/student";
 import { ACTIVITY_LABEL, NOT_HELPING_IN_A_ROW, shouldSuggestSwitch } from "@/lib/profile-rules";
 import type { ActivityType } from "@/lib/db/schema";
+import { adaptiveEnabled } from "@/lib/features";
+import { conceptMastery, planPolicy } from "@/lib/adaptive-data";
+import { WhatWorks, timesText } from "@/components/student/what-works";
 
 export const metadata: Metadata = { title: "Study plan" };
 
@@ -26,10 +29,18 @@ export default async function PlanPage() {
   const activities = db.select({ a: s.activities, concept: s.concepts.name }).from(s.activities).innerJoin(s.concepts, eq(s.concepts.id, s.activities.conceptId)).where(eq(s.activities.studentId, user.id)).orderBy(asc(s.activities.priority)).all();
   const enrolled = await activeCourse(user.id);
   const concepts = enrolled ? db.select().from(s.concepts).where(eq(s.concepts.courseId, enrolled.course.id)).all() : [];
+  const adaptive = adaptiveEnabled();
   const mastery = masteryByConcept(user.id);
+  // With the adaptive model on, "weakest" is the knowledge-tracing estimate, not the plain average of marks.
+  const traced = adaptive ? conceptMastery(user.id) : null;
   const weak = concepts
-    .map((c) => ({ c, m: mastery.get(c.id) }))
+    .map((c) => {
+      const t = traced?.get(c.id);
+      const m = t ? { score: t.p, max: 1 } : mastery.get(c.id);
+      return { c, m };
+    })
     .filter((x) => x.m && x.m.score / x.m.max < 0.8);
+  const policy = adaptive && enrolled ? planPolicy(user.id, enrolled.course.id) : null;
   const profile = profileFor(user.id);
   // The check-in orders the plan: "master it" puts concepts that later units build on first, otherwise weakest first.
   const buildsOn = (id: string) => concepts.filter((c) => c.prerequisiteId === id).length;
@@ -107,6 +118,19 @@ export default async function PlanPage() {
             <EmptyState title="Nothing queued" body="Finish a fix from Home to get an activity." />
           )}
         </StaggerItem>
+        {policy ? (
+          <StaggerItem>
+            <WhatWorks
+              title="What works for you"
+              rows={policy.stats.map((a) => ({
+                type: a.type,
+                value: a.mean,
+                detail: a.own.n ? `you ${timesText(a.own.wins, a.own.n)} · class ${timesText(a.cls.wins, a.cls.n)}` : `class ${timesText(a.cls.wins, a.cls.n)}`,
+              }))}
+              note={`Your plan picks the next activity type from this and now and then tries another. A fresh test right after an activity counts most, then your rating. Class results count for a quarter${policy.preferred ? ", and your check-in gives a head start" : ""}.`}
+            />
+          </StaggerItem>
+        ) : null}
         {weak.length ? (
           <StaggerItem>
             <section className="rounded-sheet border border-line bg-white p-4">

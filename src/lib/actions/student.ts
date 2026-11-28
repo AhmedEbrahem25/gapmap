@@ -12,6 +12,8 @@ import { checkSubmission, generateMcqRetest, generateRetest, gradeRetest } from 
 import { LETTERS, parseChoice, scoreChoice } from "@/lib/mcq";
 import { followupChoicesFor, followupResponse } from "@/lib/ai/fallback";
 import { activityFor } from "@/lib/activities";
+import { pickActivityType } from "@/lib/adaptive-data";
+import { adaptiveEnabled } from "@/lib/features";
 import { chainForAnswer } from "@/lib/chains";
 import type { ChatMessage } from "@/lib/db/schema";
 import { cleanCheckin, profileFromCheckin } from "@/lib/profile-questions";
@@ -66,11 +68,14 @@ export async function sendFollowup(answerId: string, choice: number): Promise<Fo
   let activityId: string | null = null;
   if (turn.done && concept) {
     const profile = profileFor(user.id);
-    const pick = await activityFor({ conceptId: concept.id, branch: turn.branch, preferred: profile?.preferredActivity ?? "experiment", answerId });
+    // The adaptive plan picks the activity type from the student's own outcomes, the class's and the check-in.
+    const adaptive = adaptiveEnabled() && turn.branch !== "understands" ? pickActivityType(user.id, concept.id) : null;
+    const pick = await activityFor({ conceptId: concept.id, branch: turn.branch, preferred: adaptive?.type ?? profile?.preferredActivity ?? "experiment", answerId });
     if (pick) {
       activityId = crypto.randomUUID();
+      const reason = adaptive && pick.type === adaptive.type ? adaptive.reason : pick.reason;
       db.insert(s.activities)
-        .values({ id: activityId, studentId: user.id, conceptId: concept.id, answerId, type: pick.type, title: pick.title, reason: pick.reason, payload: pick.payload, priority: 0 })
+        .values({ id: activityId, studentId: user.id, conceptId: concept.id, answerId, type: pick.type, title: pick.title, reason, payload: pick.payload, priority: 0 })
         .run();
     }
   }

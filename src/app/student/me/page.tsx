@@ -16,10 +16,14 @@ import { toggleOptIn } from "@/lib/actions/student";
 import { logout } from "@/lib/actions/auth";
 import { formatDate, initials, pct } from "@/lib/utils";
 import { profileEvidence } from "@/lib/profile-evidence";
+import { adaptiveEnabled } from "@/lib/features";
+import { conceptMastery } from "@/lib/adaptive-data";
 
 export const metadata: Metadata = { title: "Me" };
 
 const barColor = { met: "#0F766E", partial: "#B45309", missing: "#B91C1C" } as const;
+
+const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
 
 export default async function MePage() {
   const user = await requireRole("student");
@@ -27,6 +31,7 @@ export default async function MePage() {
   const profile = profileFor(user.id);
   const concepts = enrolled ? db.select().from(s.concepts).where(eq(s.concepts.courseId, enrolled.course.id)).all() : [];
   const mastery = masteryByConcept(user.id);
+  const traced = adaptiveEnabled() ? conceptMastery(user.id) : null;
   const evidence = profileEvidence(user.id, enrolled?.course.id ?? null);
   const vacancies = concepts.length
     ? db
@@ -113,23 +118,54 @@ export default async function MePage() {
         ) : null}
 
         <StaggerItem>
-          <section className="rounded-sheet border border-line bg-white px-4 pt-4 pb-2">
-            <h2 className="text-sm font-semibold">Progress by concept</h2>
-            {concepts.map((c, i) => {
-              const m = mastery.get(c.id);
-              if (!m) return null;
-              const st = statusFromRatio(m.score, m.max);
-              return (
-                <div key={c.id} className="flex flex-col gap-1.5 border-t border-line-2 py-2.5 first-of-type:border-0">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>{c.name}</span>
-                    <StatusChip status={st} suffix={`${pct(m.score, m.max)}%`} className="h-[22px]" />
+          {traced ? (
+            <section aria-label="How sure GapMap is you've got each concept" className="rounded-sheet border border-line bg-white px-4 pt-4 pb-3">
+              <h2 className="text-sm font-semibold">How sure we are you&apos;ve got it</h2>
+              {concepts.map((c, i) => {
+                const m = traced.get(c.id);
+                if (!m) return null;
+                const now = Math.round(m.p * 100);
+                const last = m.steps.at(-1);
+                const change = last ? now - Math.round(last.before * 100) : 0;
+                const st = statusFromRatio(m.p, 1);
+                return (
+                  <div key={c.id} className="flex flex-col gap-1.5 border-t border-line-2 py-2.5 first-of-type:border-0">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{c.name}</span>
+                      <StatusChip status={st} suffix={`${now}%`} className="h-[22px]" />
+                    </div>
+                    <AnimatedBar value={now} color={barColor[st]} height={6} delay={0.1 + i * 0.06} />
+                    {last ? (
+                      <span className="text-xs text-ink-2">
+                        {change >= 0 ? "Up" : "Down"} {Math.abs(change)} after {last.label} · from {plural(m.steps.length, "answer")}
+                      </span>
+                    ) : null}
                   </div>
-                  <AnimatedBar value={pct(m.score, m.max)} color={barColor[st]} height={6} delay={0.1 + i * 0.06} />
-                </div>
-              );
-            })}
-          </section>
+                );
+              })}
+              <p className="border-t border-line-2 pt-2.5 text-xs leading-[18px] text-ink-2">
+                Updated after every marked answer and fresh test (knowledge tracing). Recent answers count most, and it is not a grade.
+              </p>
+            </section>
+          ) : (
+            <section className="rounded-sheet border border-line bg-white px-4 pt-4 pb-2">
+              <h2 className="text-sm font-semibold">Progress by concept</h2>
+              {concepts.map((c, i) => {
+                const m = mastery.get(c.id);
+                if (!m) return null;
+                const st = statusFromRatio(m.score, m.max);
+                return (
+                  <div key={c.id} className="flex flex-col gap-1.5 border-t border-line-2 py-2.5 first-of-type:border-0">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{c.name}</span>
+                      <StatusChip status={st} suffix={`${pct(m.score, m.max)}%`} className="h-[22px]" />
+                    </div>
+                    <AnimatedBar value={pct(m.score, m.max)} color={barColor[st]} height={6} delay={0.1 + i * 0.06} />
+                  </div>
+                );
+              })}
+            </section>
+          )}
         </StaggerItem>
 
         {partnersEnabled() ? (
