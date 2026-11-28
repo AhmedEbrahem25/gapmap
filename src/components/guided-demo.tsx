@@ -52,6 +52,8 @@ export function GuidedDemo() {
     return () => window.clearTimeout(t);
   }, [moving]);
   const advance = useCallback((to: number) => {
+    // A click advances after a short delay; if the new page already moved the guide further, don't pull it back.
+    if ((readStep() ?? -1) >= to) return;
     setMoving(true);
     writeStep(to);
   }, []);
