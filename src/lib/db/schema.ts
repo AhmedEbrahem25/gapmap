@@ -258,8 +258,12 @@ export const practiceItems = sqliteTable("practice_items", {
   /** Multiple-choice fresh test: the options and the key (scored by rules). */
   options: text("options", { mode: "json" }).$type<string[]>(),
   correctOption: text("correct_option"),
+  /** The student's own tap before submitting: how sure they were. Separate from any scan-reading confidence. */
+  confidence: text("confidence").$type<Confidence>(),
   createdAt: createdAt(),
 });
+
+export type Confidence = "sure" | "unsure" | "guess";
 
 export const attempts = sqliteTable("attempts", {
   id: id(),

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { submitRetest, type SubmitState } from "@/lib/actions/student";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { CONFIDENCE_OPTIONS } from "@/lib/profile-rules";
 
 export function RetestForm({ itemId, options }: { itemId: string; options?: string[] | null }) {
   const [state, action] = useActionState<SubmitState, FormData>(submitRetest, {});
@@ -35,6 +36,21 @@ export function RetestForm({ itemId, options }: { itemId: string; options?: stri
           />
         </>
       )}
+      <fieldset className="mt-1 flex flex-col gap-2">
+        <legend className="mb-2 text-sm font-semibold">
+          How sure are you? <span className="font-normal text-ink-2">(optional)</span>
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {CONFIDENCE_OPTIONS.map((o) => (
+            <label key={o.value} className="cursor-pointer">
+              <input type="radio" name="confidence" value={o.value} className="peer sr-only" />
+              <span className="inline-flex min-h-10 items-center rounded-full border border-[#9ca3af] bg-white px-3.5 text-sm transition peer-checked:border-primary-600 peer-checked:bg-primary-50 peer-checked:font-semibold peer-checked:text-primary-800 peer-focus-visible:shadow-glow">
+                {o.label}
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       {state.error ? (
         <p role="alert" className="text-sm text-missing">
           {state.error}

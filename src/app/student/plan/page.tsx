@@ -12,6 +12,10 @@ import { Badge, StatusChip, statusFromRatio } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/page-header";
 import { Stagger, StaggerItem } from "@/components/ui/motion";
 import { pct } from "@/lib/utils";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { switchApproach } from "@/lib/actions/student";
+import { ACTIVITY_LABEL, NOT_HELPING_IN_A_ROW, shouldSuggestSwitch } from "@/lib/profile-rules";
+import type { ActivityType } from "@/lib/db/schema";
 
 export const metadata: Metadata = { title: "Study plan" };
 
@@ -34,6 +38,10 @@ export default async function PlanPage() {
   // About 15 minutes per step, so the daily time from the check-in decides how many steps are for today.
   const todaySteps = profile ? Math.max(1, Math.floor(profile.minutesPerDay / 15)) : 0;
   const todo = activities.filter((x) => x.a.status !== "done");
+  // The student's own ratings: two "not really" in a row for their preferred type brings a suggestion, never an automatic change.
+  const rated = [...activities].sort((x, y) => x.a.createdAt.getTime() - y.a.createdAt.getTime()).map((x) => x.a);
+  const suggestSwitch = profile && todo.length ? shouldSuggestSwitch(rated, profile.preferredActivity) : false;
+  const others = (Object.keys(ACTIVITY_LABEL) as ActivityType[]).filter((t) => t !== profile?.preferredActivity);
   const done = activities.filter((x) => x.a.status === "done");
 
   return (
@@ -50,6 +58,24 @@ export default async function PlanPage() {
               </span>
               <ChevronRight size={18} className="text-primary-600" aria-hidden />
             </Link>
+          </StaggerItem>
+        ) : null}
+        {suggestSwitch && profile ? (
+          <StaggerItem>
+            <section aria-label="Try another approach" className="flex flex-col gap-2.5 rounded-sheet border border-primary-200 bg-primary-50 p-4">
+              <h2 className="text-sm font-semibold">{ACTIVITY_LABEL[profile.preferredActivity]} haven&apos;t helped much lately</h2>
+              <p className="text-sm leading-[21px] text-ink-2">You rated the last {NOT_HELPING_IN_A_ROW} &ldquo;not really&rdquo;. Want to try another approach for your next activities?</p>
+              <div className="flex flex-wrap gap-2">
+                {others.map((t) => (
+                  <form key={t} action={switchApproach}>
+                    <input type="hidden" name="type" value={t} />
+                    <SubmitButton variant="secondary" size="sm">
+                      {ACTIVITY_LABEL[t]}
+                    </SubmitButton>
+                  </form>
+                ))}
+              </div>
+            </section>
           </StaggerItem>
         ) : null}
         <StaggerItem>

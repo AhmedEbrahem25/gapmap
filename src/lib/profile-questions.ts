@@ -64,7 +64,7 @@ function optionLabel(key: CheckinKey, value: string | undefined) {
   return PROFILE_QUESTIONS.find((q) => q.key === key)?.options.find((o) => o.value === value)?.label;
 }
 
-/** Keeps only values that exist in the check-in, so stored answers are always valid choices. */
+/** Keeps only values that exist in the check-in, so stored answers are always valid choices. "Skip" is not one, so it is dropped. */
 export function cleanCheckin(raw: Record<string, unknown>): CheckinAnswers {
   const out: CheckinAnswers = {};
   for (const q of PROFILE_QUESTIONS) {
@@ -91,7 +91,8 @@ export function profileFromCheckin(a: CheckinAnswers): {
   const traits = [
     optionLabel("habit", a.habit),
     a.stuck ? `Stuck → ${optionLabel("stuck", a.stuck)!.toLowerCase()}` : undefined,
-    `~${minutes} min a day`,
+    // A skipped question leaves no trait: missing evidence stays missing.
+    a.minutes ? `~${minutes} min a day` : undefined,
     optionLabel("goal", a.goal),
   ].filter((t): t is string => !!t);
 

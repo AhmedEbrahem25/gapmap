@@ -47,6 +47,7 @@ test("hackathon demo: one answer from paper to class decision", async ({ page })
   // 7 · Fresh test shows the change
   await expect(page.getByText(/Course table/)).toBeVisible();
   await page.getByLabel("Your answer").fill("CourseCode, because no two courses can share a code, and it never changes and can't be empty.");
+  await page.getByRole("radio", { name: "Sure", exact: true }).check({ force: true });
   await page.getByRole("button", { name: "Submit answer" }).click();
   await expect(page.getByRole("heading", { name: /you've got it/ })).toBeVisible();
   await page.goto("/student/me");
@@ -89,8 +90,18 @@ test("socratic-style fix: lecturer approves per question, student taps through",
   await page.getByRole("button", { name: /Take a fresh test/ }).click();
   await expect(page.getByText(/Course\(CourseCode, Title, Credits, Instructor\)/)).toBeVisible();
   await page.getByRole("radio", { name: "C CourseCode" }).check({ force: true });
+  await page.getByRole("radio", { name: "Not sure" }).check({ force: true });
   await page.getByRole("button", { name: "Submit answer" }).click();
   await expect(page.getByRole("heading", { name: /you've got it/ })).toBeVisible();
+  // Right but unsure: a rule (not the AI) offers one more question.
+  await expect(page.getByText("Right, but you weren't sure")).toBeVisible();
+  await expect(page.getByRole("button", { name: "One more question" })).toBeVisible();
+
+  // The profile shows what it rests on, with sources.
+  await page.goto("/student/me");
+  await expect(page.getByRole("heading", { name: "What your profile is based on" })).toBeVisible();
+  await expect(page.getByText(/1 found before a hint|0 found before a hint/)).toBeVisible();
+  await expect(page.getByText(/1 right but unsure/)).toBeVisible();
 });
 
 test("roles cannot cross into other areas", async ({ page }) => {

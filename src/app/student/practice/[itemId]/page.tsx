@@ -11,6 +11,9 @@ import { HighlightedText } from "@/components/ui/quote";
 import { AnimatedBar, Stagger, StaggerItem } from "@/components/ui/motion";
 import { ButtonLink } from "@/components/ui/button";
 import { RetestForm } from "./retest-form";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { startMcqRetest, startRetest } from "@/lib/actions/student";
+import { CALIBRATION_NOTE, calibration, isRight } from "@/lib/profile-rules";
 import { fmtMarks } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Fresh test" };
@@ -34,6 +37,13 @@ export default async function RetestPage({ params }: PageProps<"/student/practic
   const answered = item.score !== null && item.result;
   const beforeStatus = before ? statusFromRatio(before.score, before.maxScore) : null;
   const afterStatus = answered ? statusFromRatio(item.score!, item.maxScore) : null;
+  // Rules, not AI: compare the student's own confidence tap with how the answer went.
+  const cal = answered ? calibration(isRight(item.score!, item.maxScore), item.confidence) : null;
+  const note = cal && cal !== "matched" ? CALIBRATION_NOTE[cal] : null;
+  // For a multiple-choice fresh test, "one more question" comes from the course bank on the same concept.
+  const bankQuestion = item.options?.length
+    ? db.select({ id: s.questions.id }).from(s.questions).where(and(eq(s.questions.conceptId, item.conceptId), eq(s.questions.kind, "mcq"))).get()
+    : null;
   const mastery = masteryByConcept(user.id);
   const nextWeak = db
     .select()
@@ -104,6 +114,22 @@ export default async function RetestPage({ params }: PageProps<"/student/practic
             )}
           </section>
         </StaggerItem>
+        {note ? (
+          <StaggerItem>
+            <section aria-label="How sure you were" className={`flex flex-col gap-2 rounded-sheet border p-4 ${cal === "overconfident" ? "border-partial/40 bg-partial-soft" : "border-primary-200 bg-primary-50"}`}>
+              <h2 className="text-sm font-semibold">{note.title}</h2>
+              <p className="text-sm leading-[21px]">{note.body}</p>
+              {cal === "underconfident" ? (
+                <form action={bankQuestion ? startMcqRetest : startRetest}>
+                  {bankQuestion ? <input type="hidden" name="questionId" value={bankQuestion.id} /> : <input type="hidden" name="conceptId" value={item.conceptId} />}
+                  <SubmitButton variant="secondary" className="w-full" pendingText="Finding a question…">
+                    One more question
+                  </SubmitButton>
+                </form>
+              ) : null}
+            </section>
+          </StaggerItem>
+        ) : null}
         {answered ? (
           <StaggerItem className="flex flex-col gap-2">
             <ButtonLink size="lg" href={afterStatus === "met" ? "/student/practice" : `/student/plan`}>

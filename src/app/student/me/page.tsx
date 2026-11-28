@@ -14,7 +14,8 @@ import { AnimatedBar, Stagger, StaggerItem } from "@/components/ui/motion";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { toggleOptIn } from "@/lib/actions/student";
 import { logout } from "@/lib/actions/auth";
-import { initials, pct } from "@/lib/utils";
+import { formatDate, initials, pct } from "@/lib/utils";
+import { profileEvidence } from "@/lib/profile-evidence";
 
 export const metadata: Metadata = { title: "Me" };
 
@@ -26,6 +27,7 @@ export default async function MePage() {
   const profile = profileFor(user.id);
   const concepts = enrolled ? db.select().from(s.concepts).where(eq(s.concepts.courseId, enrolled.course.id)).all() : [];
   const mastery = masteryByConcept(user.id);
+  const evidence = profileEvidence(user.id, enrolled?.course.id ?? null);
   const vacancies = concepts.length
     ? db
         .select({ v: s.vacancies, company: s.companies.name })
@@ -82,10 +84,33 @@ export default async function MePage() {
                 <p className="text-[13px] leading-[19px] text-ink-2">{profile.summary}</p>
               </>
             ) : (
-              <p className="text-[13px] text-ink-2">Answer 4 short questions so activities match how you learn.</p>
+              <p className="text-[13px] text-ink-2">Answer 5 short questions so activities match how you learn.</p>
             )}
           </section>
         </StaggerItem>
+
+        {evidence.length ? (
+          <StaggerItem>
+            <section aria-label="What your profile is based on" className="rounded-sheet border border-line bg-white px-4 pt-4 pb-3">
+              <h2 className="text-sm font-semibold">What your profile is based on</h2>
+              <ul className="mt-1 flex flex-col">
+                {evidence.map((e) => (
+                  <li key={e.key} className="flex flex-col gap-0.5 border-t border-line-2 py-2.5 first:border-0">
+                    <span className="flex items-center justify-between gap-2 text-xs font-semibold text-ink-2">
+                      <span>{e.source}</span>
+                      {e.date ? <span className="font-normal">{formatDate(e.date)}</span> : null}
+                    </span>
+                    <span className="text-sm leading-5">{e.text}</span>
+                    {e.detail ? <span className="text-xs leading-[18px] text-ink-2">{e.detail}</span> : null}
+                  </li>
+                ))}
+              </ul>
+              <p className="border-t border-line-2 pt-2.5 text-xs leading-[18px] text-ink-2">
+                Habits and recent answers, not ability. It stays on GapMap&apos;s server and is never sent to the AI.
+              </p>
+            </section>
+          </StaggerItem>
+        ) : null}
 
         <StaggerItem>
           <section className="rounded-sheet border border-line bg-white px-4 pt-4 pb-2">

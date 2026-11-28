@@ -43,6 +43,13 @@
       "when": 1795794360099,
       "tag": "0005_mcq_retest",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1795856514301,
+      "tag": "0006_student_confidence",
+      "breakpoints": true
     }
   ]
 }

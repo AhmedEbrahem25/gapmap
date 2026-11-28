@@ -14,7 +14,9 @@ import { followupChoicesFor, followupResponse } from "@/lib/ai/fallback";
 import { activityFor } from "@/lib/activities";
 import { chainForAnswer } from "@/lib/chains";
 import type { ChatMessage } from "@/lib/db/schema";
-import { PROFILE_QUESTIONS, cleanCheckin, profileFromCheckin } from "@/lib/profile-questions";
+import { cleanCheckin, profileFromCheckin } from "@/lib/profile-questions";
+import { changedReason, parseConfidence } from "@/lib/profile-rules";
+import type { ActivityType } from "@/lib/db/schema";
 
 const student = () => requireRole("student");
 const refresh = () => revalidatePath("/student", "layout");
@@ -91,23 +93,53 @@ export async function saveProfile(formData: FormData) {
   const user = await student();
   // Taps only, scored by rules: the check-in never reaches the AI.
   const answers = cleanCheckin(Object.fromEntries(formData));
-  if (Object.keys(answers).length < PROFILE_QUESTIONS.length) redirect("/student/profile");
+  const next = String(formData.get("next") ?? "");
+  const back = next.startsWith("/student") ? next : "/student/me";
+  // Every question can be skipped; skipping them all is the same as having no check-in.
+  if (!Object.keys(answers).length) {
+    db.delete(s.studyProfiles).where(eq(s.studyProfiles.studentId, user.id)).run();
+    refresh();
+    redirect(back);
+  }
   const p = profileFromCheckin(answers);
   const row = { studentId: user.id, answers, traits: p.traits, preferredActivity: p.preferred, minutesPerDay: p.minutes, summary: p.summary };
   db.insert(s.studyProfiles)
     .values(row)
     .onConflictDoUpdate({ target: s.studyProfiles.studentId, set: { ...row, updatedAt: new Date() } })
     .run();
-  // Re-shape any open activity to the new preference.
-  const open = db.select().from(s.activities).where(and(eq(s.activities.studentId, user.id), eq(s.activities.status, "todo"))).all();
+  await reshapeOpenActivities(user.id, p.preferred, "after you updated your check-in");
+  refresh();
+  redirect(back);
+}
+
+/** Re-shapes open activities to a new preferred type, and says on each one what changed and why. */
+async function reshapeOpenActivities(studentId: string, preferred: ActivityType, why: string) {
+  const open = db.select().from(s.activities).where(and(eq(s.activities.studentId, studentId), eq(s.activities.status, "todo"))).all();
   for (const a of open) {
     if (a.type === "own_words") continue;
-    const pick = await activityFor({ conceptId: a.conceptId, branch: "misconception", preferred: p.preferred, answerId: a.answerId });
-    if (pick) db.update(s.activities).set({ type: pick.type, title: pick.title, reason: pick.reason, payload: pick.payload }).where(eq(s.activities.id, a.id)).run();
+    const pick = await activityFor({ conceptId: a.conceptId, branch: "misconception", preferred, answerId: a.answerId });
+    if (!pick) continue;
+    const reason = pick.type !== a.type ? changedReason(a.type, pick.type, why) : a.reason;
+    db.update(s.activities).set({ type: pick.type, title: pick.title, reason, payload: pick.payload }).where(eq(s.activities.id, a.id)).run();
   }
+}
+
+/** Deletes the check-in. Marks and course evidence stay; only the student's own answers about habits go. */
+export async function resetProfile() {
+  const user = await student();
+  db.delete(s.studyProfiles).where(eq(s.studyProfiles.studentId, user.id)).run();
+  audit(user.id, "profile_reset", user.id);
   refresh();
-  const next = String(formData.get("next") ?? "");
-  redirect(next.startsWith("/student") ? next : "/student/me");
+  redirect("/student/me");
+}
+
+/** The student accepted a suggestion to try another approach after rating the current one "not really". */
+export async function switchApproach(formData: FormData) {
+  const user = await student();
+  const type = z.enum(["experiment", "mind_map", "worked_example", "own_words", "try_first"]).parse(formData.get("type"));
+  db.update(s.studyProfiles).set({ preferredActivity: type }).where(eq(s.studyProfiles.studentId, user.id)).run();
+  await reshapeOpenActivities(user.id, type, "because the last two activities did not help much");
+  refresh();
 }
 
 export async function setPreferredActivity(formData: FormData) {
@@ -188,6 +220,8 @@ export async function submitRetest(_prev: SubmitState, formData: FormData): Prom
   const item = db.select().from(s.practiceItems).where(and(eq(s.practiceItems.id, id), eq(s.practiceItems.studentId, user.id))).get();
   if (!item) return { error: "Question not found." };
   if (item.answer) return { ok: true };
+  // Optional tap: with no answer, nothing about confidence is recorded or guessed.
+  const confidence = parseConfidence(formData.get("confidence"));
   if (item.options?.length) {
     // Multiple choice: scored by rules on the key.
     const chosen = parseChoice(String(formData.get("choice") ?? ""), item.options.length);
@@ -199,6 +233,7 @@ export async function submitRetest(_prev: SubmitState, formData: FormData): Prom
         answer: `${chosen}) ${item.options[LETTERS.indexOf(chosen as (typeof LETTERS)[number])] ?? ""}`,
         result: [{ code: "C1", status: score ? "met" : "missing", evidence: "", gap: score ? "" : `The answer is ${item.correctOption}) ${right}.` }],
         score,
+        confidence,
       })
       .where(eq(s.practiceItems.id, id))
       .run();
@@ -214,7 +249,7 @@ export async function submitRetest(_prev: SubmitState, formData: FormData): Prom
   const results = await gradeRetest({ prompt: item.prompt, criteria: item.criteria, answer });
   const score = results.reduce((t, r) => t + r.marks, 0);
   db.update(s.practiceItems)
-    .set({ answer, result: results.map((r) => ({ code: r.code, status: r.status, evidence: r.evidence, gap: r.gap })), score })
+    .set({ answer, result: results.map((r) => ({ code: r.code, status: r.status, evidence: r.evidence, gap: r.gap })), score, confidence })
     .where(eq(s.practiceItems.id, id))
     .run();
   db.insert(s.attempts)
@@ -306,7 +341,9 @@ export async function startMcqRetest(formData: FormData) {
       .all()
       .map((a) => a.questionId),
   );
-  const pick = bank.find((x) => !answered.has(x.id)) ?? bank[0];
+  // Skip questions already used as this student's fresh tests, so "one more question" is really a new one.
+  const taken = new Set(db.select({ prompt: s.practiceItems.prompt }).from(s.practiceItems).where(eq(s.practiceItems.studentId, user.id)).all().map((p) => p.prompt));
+  const pick = bank.find((x) => !answered.has(x.id) && !taken.has(x.prompt)) ?? bank.find((x) => !taken.has(x.prompt)) ?? bank[0];
   const concept = db.select().from(s.concepts).where(eq(s.concepts.id, q.conceptId)).get()!;
   let fresh: { prompt: string; options: string[]; correct: string } | null = pick ? { prompt: pick.prompt, options: pick.options!, correct: pick.correctOption! } : null;
   if (!fresh) {
